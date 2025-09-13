@@ -1,36 +1,152 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Guía de Colaboración
 
-## Getting Started
+Este documento te guiará paso a paso para comenzar a colaborar en este proyecto.
 
-First, run the development server:
+---
 
+## 📋 Prerrequisitos
+Antes de comenzar, asegúrate de tener instalado:
+
+- Node.js (versión 18 o superior)
+- Git
+- Una cuenta de GitHub
+
+---
+
+## 🚀 Primeros Pasos
+
+### 1. Clonar el repositorio
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/rcarlosdev/proyecto01
+cd proyecto01
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Instalar dependencias
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Configurar variables de entorno
+Copia el archivo `.env.example` a `.env` y configura las variables necesarias:
+Edita el archivo `.env` con los valores apropiados para tu entorno de desarrollo.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Configurar la base de datos (si es necesario)
+Si el proyecto utiliza una base de datos, asegúrate de tenerla configurada y ejecuta las migraciones:
 
-## Learn More
+```bash
+npm run db:push
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 5. Ejecutar el servidor de desarrollo
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la aplicación.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🎨 Tecnologías Utilizadas
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Este proyecto utiliza:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js** - Framework de React
+- **Tailwind CSS** - Framework de CSS utility-first
+- **shadcn/ui** - Biblioteca de componentes de UI
+- **Drizzle ORM** - ORM para TypeScript
+
+---
+
+## 📊 Drizzle ORM - Operaciones Básicas
+
+Drizzle es el ORM que utilizamos para interactuar con la base de datos.
+
+### Estructura básica
+Nuestras definiciones de tablas se encuentran en `src/db/schema.ts`.  
+Ejemplo:
+
+```typescript
+// Ejemplo de definición de tabla
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 256 }),
+  email: varchar('email', { length: 256 }).unique(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+```
+
+### Operaciones CRUD básicas
+
+#### Crear registros
+```typescript
+import { db } from '@/db';
+import { users } from '@/db/schema';
+
+// Insertar un nuevo usuario
+const newUser = await db.insert(users).values({
+  name: 'John Doe',
+  email: 'john@example.com'
+}).returning();
+```
+
+#### Leer registros
+```typescript
+// Obtener todos los usuarios
+const allUsers = await db.select().from(users);
+
+// Obtener usuario por ID
+const user = await db.select().from(users).where(eq(users.id, 1));
+```
+
+#### Actualizar registros
+```typescript
+// Actualizar usuario
+await db.update(users)
+  .set({ name: 'Jane Doe' })
+  .where(eq(users.id, 1));
+```
+
+#### Eliminar registros
+```typescript
+// Eliminar usuario
+await db.delete(users).where(eq(users.id, 1));
+```
+
+### Ejecutar el estudio de la base de datos
+Para visualizar y manipular la base de datos localmente, ejecuta:
+
+```bash
+npm run db:studio
+```
+
+Esto abrirá una interfaz web en tu navegador donde podrás ver y editar los datos.
+
+---
+
+## 🎛️ Comandos Disponibles
+
+- `npm run dev` - Inicia el servidor de desarrollo  
+- `npm run build` - Construye la aplicación para producción  
+- `npm run start` - Inicia el servidor de producción  
+- `npm run lint` - Ejecuta ESLint  
+- `npm run db:studio` - Abre el estudio de la base de datos  
+- `npm run db:push` - Ejecuta migraciones de la base de datos  
+
+---
+
+## 🧩 Componentes con shadcn/ui
+
+Este proyecto utiliza componentes de **shadcn/ui**, que están preconfigurados con **Tailwind CSS**.
+
+### Uso de componentes
+```tsx
+import { Button } from "@/components/ui/button";
+
+export default function MyComponent() {
+  return (
+    <div>
+      <Button variant="default">Haz clic aquí</Button>
+    </div>
+  );
+}
+```
