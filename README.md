@@ -5,6 +5,7 @@ Este documento te guiará paso a paso para comenzar a colaborar en este proyecto
 ---
 
 ## 📋 Prerrequisitos
+
 Antes de comenzar, asegúrate de tener instalado:
 
 - Node.js (versión 18 o superior)
@@ -16,21 +17,25 @@ Antes de comenzar, asegúrate de tener instalado:
 ## 🚀 Primeros Pasos
 
 ### 1. Clonar el repositorio
+
 ```bash
 git clone https://github.com/rcarlosdev/proyecto01
 cd proyecto01
 ```
 
 ### 2. Instalar dependencias
+
 ```bash
 npm install
 ```
 
 ### 3. Configurar variables de entorno
+
 Copia el archivo `.env.example` a `.env` y configura las variables necesarias:
 Edita el archivo `.env` con los valores apropiados para tu entorno de desarrollo.
 
 ### 4. Configurar la base de datos (si es necesario)
+
 Si el proyecto utiliza una base de datos, asegúrate de tenerla configurada y ejecuta las migraciones:
 
 ```bash
@@ -38,6 +43,7 @@ npm run db:push
 ```
 
 ### 5. Ejecutar el servidor de desarrollo
+
 ```bash
 npm run dev
 ```
@@ -62,6 +68,7 @@ Este proyecto utiliza:
 Drizzle es el ORM que utilizamos para interactuar con la base de datos.
 
 ### Estructura básica
+
 Nuestras definiciones de tablas se encuentran en `src/db/schema.ts`.  
 Ejemplo:
 
@@ -78,6 +85,7 @@ export const users = pgTable('users', {
 ### Operaciones CRUD básicas
 
 #### Crear registros
+
 ```typescript
 import { db } from '@/db';
 import { users } from '@/db/schema';
@@ -90,6 +98,7 @@ const newUser = await db.insert(users).values({
 ```
 
 #### Leer registros
+
 ```typescript
 // Obtener todos los usuarios
 const allUsers = await db.select().from(users);
@@ -99,6 +108,7 @@ const user = await db.select().from(users).where(eq(users.id, 1));
 ```
 
 #### Actualizar registros
+
 ```typescript
 // Actualizar usuario
 await db.update(users)
@@ -107,12 +117,14 @@ await db.update(users)
 ```
 
 #### Eliminar registros
+
 ```typescript
 // Eliminar usuario
 await db.delete(users).where(eq(users.id, 1));
 ```
 
 ### Ejecutar el estudio de la base de datos
+
 Para visualizar y manipular la base de datos localmente, ejecuta:
 
 ```bash
@@ -139,6 +151,7 @@ Esto abrirá una interfaz web en tu navegador donde podrás ver y editar los dat
 Este proyecto utiliza componentes de **shadcn/ui**, que están preconfigurados con **Tailwind CSS**.
 
 ### Uso de componentes
+
 ```tsx
 import { Button } from "@/components/ui/button";
 
