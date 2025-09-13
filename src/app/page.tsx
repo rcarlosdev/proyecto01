@@ -1,47 +1,21 @@
-"use client"
+import { HomeView } from "@/modules/home/ui/views/home-view";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 
-import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
+const Home = async () => {
 
-export default function Home() {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
 
-  const { data: session } = authClient.useSession();
-
-  const onClick = () => {
-    authClient.signIn.social(
-      {
-        provider: "google"
-      },
-      {
-        onSuccess: () => {
-          //redirect to the dashboard or sign in page
-          // window.alert("Bienvenido!!")
-        },
-        onError: () => {
-          // display the error message}
-          window.alert("Ocurrio un error, por favor intente más tarde.")
-        },
-      }
-    )
-  }
-
-  if (session) {
-    return (
-      <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-        <div className="text-center">
-          <h1>BIENVENIDO!! {session.user.name}</h1>
-          <Button className="mt-8" variant="destructive" onClick={() => authClient.signOut()}>Cerrar Sesión</Button>
-        </div>
-      </div>
-    )
+  if (!session) {
+    redirect("/sing-in");
   }
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <div className="text-center">
-        <h1>INICIAR SESIÓN!!</h1>
-        <Button className="mt-8 bg-amber-600" variant="default" onClick={onClick}>Iniciar Con GOOGLE</Button>
-      </div>
-    </div>
+    <HomeView />
   );
 }
+
+export default Home;
