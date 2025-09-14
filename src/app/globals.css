@@ -43,7 +43,17 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* 🎨 Variables de color personalizadas */
 :root {
+  /* Paleta principal */
+  --naranja-principal: #FF7700;
+  --naranja-claro: #FFA34D;
+  --naranja-oscuro: #CC5500;
+  --negro: #222222;
+  --gris-oscuro: #444444;
+  --blanco: #FFFFFF;
+
+  /* Base actual del proyecto */
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -76,8 +86,23 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Tema por defecto → oscuro */
+  --bg-color: var(--negro);
+  --text-color: var(--blanco);
+  --button-bg: var(--naranja-principal);
+  --button-text: var(--blanco);
 }
 
+/* Tema claro manual */
+[data-theme="light"] {
+  --bg-color: var(--blanco);
+  --text-color: var(--negro);
+  --button-bg: var(--naranja-oscuro);
+  --button-text: var(--blanco);
+}
+
+/* Tema oscuro usando la clase .dark (Tailwind) */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -118,5 +143,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }

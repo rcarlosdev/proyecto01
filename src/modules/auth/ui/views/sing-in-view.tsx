@@ -1,7 +1,7 @@
+// src/modules/auth/ui/views/sing-in-view.tsx
 "use client";
 
 import { useState } from "react";
-
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -14,10 +14,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { authClient } from "@/lib/auth-client";
 import { useForm } from "react-hook-form";
 import { OctagonAlertIcon } from "lucide-react";
-
 import GoogleIcon from "@/../public/icons/google-icon";
 import { useRouter } from "next/navigation";
-
 
 const formSchema = z.object({
   email: z.string().min(1, "El correo es obligatorio.").email("Introduce un correo válido."),
@@ -29,8 +27,6 @@ const formSchema = z.object({
 });
 
 export const SingInView = () => {
-  // const { data: session } = authClient.useSession();
-
   const route = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,10 +54,7 @@ export const SingInView = () => {
     setError(null);
     setLoading(true);
     authClient.signIn.email(
-      {
-        email: data.email,
-        password: data.password
-      },
+      { email: data.email, password: data.password },
       {
         onSuccess: () => {
           setLoading(false);
@@ -69,20 +62,16 @@ export const SingInView = () => {
         },
         onError: ({ error }) => {
           setLoading(false);
-          // traducir el mensaje de error
-          const translatedError = translateErrorMessage(error.message);
-          setError(translatedError || "Ocurrió un error, por favor intente nuevamente.");
+          setError(translateErrorMessage(error.message) || "Ocurrió un error, por favor intente nuevamente.");
         },
       }
     )
-  }
+  };
 
   const handleGoogleSignin = () => {
     setLoading(true);
     authClient.signIn.social(
-      {
-        provider: "google"
-      },
+      { provider: "google" },
       {
         onSuccess: () => {
           setLoading(false);
@@ -98,12 +87,24 @@ export const SingInView = () => {
 
   return (
     <>
-      <Card className="w-full max-w-md mx-auto">
+      <Card
+        className="w-full max-w-md mx-auto shadow-xl rounded-2xl"
+        style={{
+          backgroundColor: "var(--bg-color)",
+          color: "var(--text-color)",
+        }}
+      >
         <CardContent className="p-6 md:p-10">
-          <h1 className="mb-2 text-2xl font-bold ">Bienvenido!</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1
+            className="mb-2 text-2xl font-bold"
+            style={{ color: "var(--naranja-principal)" }}
+          >
+            Bienvenido!
+          </h1>
+          <p className="text-sm opacity-80">
             Inicia sesión para acceder a todas las funcionalidades de la aplicación.
           </p>
+
           <Form {...form}>
             <form className="mt-6 space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
               <FormField
@@ -117,12 +118,18 @@ export const SingInView = () => {
                         {...field}
                         type="email"
                         placeholder="m@ejemplo.com"
+                        style={{
+                          backgroundColor: "var(--card)",
+                          color: "var(--text-color)",
+                          borderColor: "var(--border)",
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="password"
@@ -135,6 +142,11 @@ export const SingInView = () => {
                           {...field}
                           type={showPassword ? "text" : "password"}
                           placeholder="********"
+                          style={{
+                            backgroundColor: "var(--card)",
+                            color: "var(--text-color)",
+                            borderColor: "var(--border)",
+                          }}
                         />
                         <Button
                           type="button"
@@ -152,31 +164,44 @@ export const SingInView = () => {
                   </FormItem>
                 )}
               />
+
               {!!error && (
                 <Alert className="bg-destructive/10 border-none text-red-600">
                   <OctagonAlertIcon className="h-4 w-4 !text-destructive" />
                   <AlertTitle className="select-none">{error}</AlertTitle>
                 </Alert>
               )}
-              <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
+
+              <Button
+                type="submit"
+                className="w-full cursor-pointer"
+                disabled={loading}
+                style={{
+                  backgroundColor: "var(--button-bg)",
+                  color: "var(--button-text)",
+                }}
+              >
                 {loading ? "Cargando..." : "Iniciar Sesión"}
               </Button>
 
               {/* Divider */}
-              <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-                <span className="bg-card text-muted-foreground relative z-10 px-2">
+              <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+                <span className="bg-card relative z-10 px-2">
                   O continúa con
                 </span>
               </div>
 
-              {/* Social login */}
               <Button
                 type="button"
                 className="w-full flex items-center justify-center cursor-pointer"
                 variant="outline"
                 onClick={handleGoogleSignin}
                 disabled={loading}
-                aria-label="Iniciar sesión con Google"
+                style={{
+                  backgroundColor: "var(--card)",
+                  color: "var(--text-color)",
+                  borderColor: "var(--border)",
+                }}
               >
                 <GoogleIcon />
                 Iniciar sesión con Google
@@ -186,9 +211,11 @@ export const SingInView = () => {
         </CardContent>
       </Card>
 
-      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline:offset-4 mt-5">
-        Al hacer clic en continuar, aceptas nuestros <a href="#">Términos de Servicio</a> y nuestra <a href="#">Política de Privacidad</a>.
+      <div className="text-center text-xs mt-5 opacity-75">
+        Al hacer clic en continuar, aceptas nuestros{" "}
+        <a href="#" style={{ color: "var(--button-bg)" }}>Términos de Servicio</a> y nuestra{" "}
+        <a href="#" style={{ color: "var(--button-bg)" }}>Política de Privacidad</a>.
       </div>
     </>
   );
-}
+};
