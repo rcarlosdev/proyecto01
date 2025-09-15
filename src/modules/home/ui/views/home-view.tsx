@@ -1,30 +1,115 @@
-"use client"
+// src/modules/home/ui/views/home-view.tsx
+"use client";
 
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
-export const HomeView = () => {
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  image?: string | null;
+  emailVerified: boolean;
+  role: string;
+  status: string;
+  balance: number;
+  createdAt: string;
+  updatedAt: string;
+};
 
-  const { data: session } = authClient.useSession();
+export const HomeView = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const route = useRouter();
 
-  if (!session) {
-    return (
-      <>
-        <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-          <div>Deberías iniciar sesión</div>
-          <Button onClick={() => route.push("/sing-in")}>Ir a Iniciar Sesión</Button>
-        </div>
-      </>
-    );
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
+        if (!res.ok) {
+          route.push("/sign-in");
+          return;
+        }
+        const data: User = await res.json();
+        setUser(data);
+      } catch (err) {
+        console.error(err);
+        route.push("/sign-in");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [route]);
+
+  if (loading) {
+    return <div className="text-center mt-10">Cargando...</div>;
   }
+
+  if (!user) {
+    return null; // Ya redirige arriba
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <div className="text-center">
-        <h1>BIENVENIDO!! {session.user.name}</h1>
-        <Button className="mt-8" variant="destructive" onClick={() => authClient.signOut()}>Cerrar Sesión</Button>
+    <div className="flex items-center justify-center min-h-screen">
+      <div
+        className="rounded-2xl shadow-xl p-8 max-w-md w-full text-center"
+        style={{
+          backgroundColor: "var(--card)",
+          color: "var(--text-color)",
+        }}
+      >
+        <h1
+          className="text-2xl font-bold mb-4"
+          style={{ color: "var(--amarillo-principal)" }}
+        >
+          Bienvenido {user.name?.toUpperCase()}
+        </h1>
+
+        {user.image && (
+          <img
+            src={user.image}
+            alt={user.name}
+            className="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-[var(--amarillo-principal)]"
+          />
+        )}
+
+        <div className="space-y-1 text-sm text-left mt-4">
+          <p><strong>Email:</strong> {user.email}</p>
+          <p><strong>Verificado:</strong> {user.emailVerified ? "✅ Sí" : "❌ No"}</p>
+          <p><strong>Rol:</strong> {user.role}</p>
+          <p><strong>Estado:</strong> {user.status}</p>
+          <p><strong>Balance:</strong> ${user.balance.toLocaleString()}</p>
+          <p><strong>Creado:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
+          <p><strong>Última actualización:</strong> {new Date(user.updatedAt).toLocaleDateString()}</p>
+        </div>
+
+        {/* 🔹 Acciones visibles solo para admin */}
+        {user.role === "admin" && (
+          <div className="flex justify-center gap-2 mt-6">
+            <Button variant="outline">Suspender</Button>
+            <Button variant="outline">Banear</Button>
+            <Button variant="outline">Cambiar Rol</Button>
+          </div>
+        )}
+
+        {/* 🔹 Botón de logout */}
+        <Button
+          className="mt-6 w-full font-semibold"
+          style={{
+            backgroundColor: "var(--amarillo-principal)",
+            color: "var(--negro)",
+          }}
+          onClick={async () => {
+            await authClient.signOut();
+            route.push("/sign-in"); // 👈 redirige al login después de cerrar sesión
+          }}
+        >
+          Cerrar sesión
+        </Button>
       </div>
     </div>
-  )
-}
+  );
+};

@@ -43,17 +43,16 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* 🎨 Variables de color personalizadas */
+/* 🎨 Paleta Binance Style */
 :root {
-  /* Paleta principal */
-  --naranja-principal: #FF7700;
-  --naranja-claro: #FFA34D;
-  --naranja-oscuro: #CC5500;
-  --negro: #222222;
-  --gris-oscuro: #444444;
+  --amarillo-principal: #F0B90B; /* Binance Gold */
+  --amarillo-claro: #FFD666;
+  --amarillo-oscuro: #C79400;
+  --negro: #181A20;
+  --gris-oscuro: #2B3139;
   --blanco: #FFFFFF;
 
-  /* Base actual del proyecto */
+  /* Base */
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -73,70 +72,46 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
 
   /* Tema por defecto → oscuro */
   --bg-color: var(--negro);
   --text-color: var(--blanco);
-  --button-bg: var(--naranja-principal);
-  --button-text: var(--blanco);
+  --button-bg: var(--amarillo-principal);
+  --button-text: var(--negro);
+  --emoji-button: #838180;
 }
 
-/* Tema claro manual */
+/* Tema claro */
 [data-theme="light"] {
   --bg-color: var(--blanco);
   --text-color: var(--negro);
-  --button-bg: var(--naranja-oscuro);
+  --button-bg: var(--amarillo-oscuro);
   --button-text: var(--blanco);
 }
 
-/* Tema oscuro usando la clase .dark (Tailwind) */
+/* Tema oscuro */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --card: var(--gris-oscuro);
+  --card-foreground: var(--blanco);
+  --popover: var(--gris-oscuro);
+  --popover-foreground: var(--blanco);
+  --primary: var(--amarillo-principal);
+  --primary-foreground: var(--negro);
   --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary-foreground: var(--blanco);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: var(--amarillo-claro);
+  --accent-foreground: var(--negro);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Base */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -146,5 +121,17 @@
     background-color: var(--bg-color);
     color: var(--text-color);
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* Componentes */
+@layer components {
+  .btn-emoji {
+    @apply rounded-xl px-4 py-2 text-lg transition-colors duration-300;
+    background-color: var(--emoji-button);
+  }
+  .btn-emoji:hover {
+    background-color: var(--amarillo-principal);
+    color: var(--negro);
   }
 }

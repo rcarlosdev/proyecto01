@@ -1,4 +1,4 @@
-// src/modules/auth/ui/views/sing-in-view.tsx
+// src/modules/auth/ui/views/sign-in-view.tsx
 "use client";
 
 import { useState } from "react";
@@ -9,7 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertTitle } from "@/components/ui/alert";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 import { authClient } from "@/lib/auth-client";
 import { useForm } from "react-hook-form";
@@ -18,15 +25,20 @@ import GoogleIcon from "@/../public/icons/google-icon";
 import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
-  email: z.string().min(1, "El correo es obligatorio.").email("Introduce un correo válido."),
-  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres.")
-    .regex(/[A-Z]/, "La contraseña debe tener al menos una letra mayúscula.")
-    .regex(/[a-z]/, "La contraseña debe tener al menos una letra minúscula.")
-    .regex(/[0-9]/, "La contraseña debe tener al menos un número.")
-    .regex(/[^A-Za-z0-9]/, "La contraseña debe tener al menos un carácter especial."),
+  email: z
+    .string()
+    .min(1, "El correo es obligatorio.")
+    .email("Introduce un correo válido."),
+  password: z
+    .string()
+    .min(8, "La contraseña debe tener al menos 8 caracteres.")
+    .regex(/[A-Z]/, "Debe tener al menos una letra mayúscula.")
+    .regex(/[a-z]/, "Debe tener al menos una letra minúscula.")
+    .regex(/[0-9]/, "Debe tener al menos un número.")
+    .regex(/[^A-Za-z0-9]/, "Debe tener al menos un carácter especial."),
 });
 
-export const SingInView = () => {
+export const SignInView = () => {
   const route = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,16 +48,17 @@ export const SingInView = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
-      password: ""
-    }
+      password: "",
+    },
   });
 
   const translateErrorMessage = (message: string) => {
     const translations: Record<string, string> = {
-      "Invalid email or password": "Credenciales de inicio de sesión inválidas.",
-      "User not found": "Usuario no encontrado",
-      "Email not verified": "Correo no verificado",
-      "Too many requests": "Demasiadas solicitudes. Por favor, inténtalo de nuevo más tarde.",
+      "Invalid email or password": "Credenciales inválidas.",
+      "User not found": "Usuario no encontrado.",
+      "Email not verified": "Correo no verificado.",
+      "Too many requests":
+        "Demasiadas solicitudes. Intenta de nuevo más tarde.",
     };
     return translations[message] || message;
   };
@@ -62,10 +75,13 @@ export const SingInView = () => {
         },
         onError: ({ error }) => {
           setLoading(false);
-          setError(translateErrorMessage(error.message) || "Ocurrió un error, por favor intente nuevamente.");
+          setError(
+            translateErrorMessage(error.message) ||
+              "Ocurrió un error, intenta nuevamente."
+          );
         },
       }
-    )
+    );
   };
 
   const handleGoogleSignin = () => {
@@ -79,7 +95,7 @@ export const SingInView = () => {
         },
         onError: () => {
           setLoading(false);
-          setError("Ocurrió un error, por favor intente nuevamente.");
+          setError("Ocurrió un error, intenta nuevamente.");
         },
       }
     );
@@ -88,25 +104,30 @@ export const SingInView = () => {
   return (
     <>
       <Card
-        className="w-full max-w-md mx-auto shadow-xl rounded-2xl"
+        className="w-full max-w-md mx-auto shadow-2xl rounded-2xl"
         style={{
-          backgroundColor: "var(--bg-color)",
+          backgroundColor: "var(--card)",
           color: "var(--text-color)",
         }}
       >
         <CardContent className="p-6 md:p-10">
           <h1
-            className="mb-2 text-2xl font-bold"
-            style={{ color: "var(--naranja-principal)" }}
+            className="mb-2 text-2xl font-bold text-center"
+            style={{ color: "var(--amarillo-principal)" }}
           >
-            Bienvenido!
+            Bienvenido
           </h1>
-          <p className="text-sm opacity-80">
-            Inicia sesión para acceder a todas las funcionalidades de la aplicación.
+          <p className="text-sm opacity-80 text-center">
+            Inicia sesión para acceder a todas las funcionalidades.
           </p>
 
           <Form {...form}>
-            <form className="mt-6 space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+            <form
+              className="mt-6 space-y-4"
+              onSubmit={form.handleSubmit(onSubmit)}
+              noValidate
+            >
+              {/* Email */}
               <FormField
                 control={form.control}
                 name="email"
@@ -130,6 +151,7 @@ export const SingInView = () => {
                 )}
               />
 
+              {/* Password */}
               <FormField
                 control={form.control}
                 name="password"
@@ -165,6 +187,7 @@ export const SingInView = () => {
                 )}
               />
 
+              {/* Errores */}
               {!!error && (
                 <Alert className="bg-destructive/10 border-none text-red-600">
                   <OctagonAlertIcon className="h-4 w-4 !text-destructive" />
@@ -172,28 +195,29 @@ export const SingInView = () => {
                 </Alert>
               )}
 
+              {/* Botón principal */}
               <Button
                 type="submit"
-                className="w-full cursor-pointer"
+                className="w-full cursor-pointer font-semibold"
                 disabled={loading}
                 style={{
-                  backgroundColor: "var(--button-bg)",
-                  color: "var(--button-text)",
+                  backgroundColor: "var(--amarillo-principal)",
+                  color: "var(--negro)",
                 }}
               >
                 {loading ? "Cargando..." : "Iniciar Sesión"}
               </Button>
 
               {/* Divider */}
-              <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-                <span className="bg-card relative z-10 px-2">
-                  O continúa con
-                </span>
+              <div className="relative text-center text-sm text-muted-foreground">
+                <span className="bg-card relative z-10 px-2">O continúa con</span>
+                <div className="absolute inset-0 top-1/2 border-t"></div>
               </div>
 
+              {/* Google Signin */}
               <Button
                 type="button"
-                className="w-full flex items-center justify-center cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 cursor-pointer font-medium"
                 variant="outline"
                 onClick={handleGoogleSignin}
                 disabled={loading}
@@ -211,10 +235,17 @@ export const SingInView = () => {
         </CardContent>
       </Card>
 
+      {/* Footer */}
       <div className="text-center text-xs mt-5 opacity-75">
-        Al hacer clic en continuar, aceptas nuestros{" "}
-        <a href="#" style={{ color: "var(--button-bg)" }}>Términos de Servicio</a> y nuestra{" "}
-        <a href="#" style={{ color: "var(--button-bg)" }}>Política de Privacidad</a>.
+        Al continuar, aceptas nuestros{" "}
+        <a href="#" style={{ color: "var(--amarillo-principal)" }}>
+          Términos de Servicio
+        </a>{" "}
+        y nuestra{" "}
+        <a href="#" style={{ color: "var(--amarillo-principal)" }}>
+          Política de Privacidad
+        </a>
+        .
       </div>
     </>
   );
