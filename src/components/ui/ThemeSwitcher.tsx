@@ -1,51 +1,63 @@
+// src/components/ui/ThemeSwitcher.tsx
 "use client";
+
 import { useEffect, useState } from "react";
-import { Sun, Moon } from "lucide-react";
 
 export default function ThemeSwitcher() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light" | null>(null);
 
+  // Inicialización del tema
   useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem("theme") as "dark" | "light" | null;
-    const initial =
-      stored ??
-      (window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light");
+    try {
+      const stored = localStorage.getItem("theme") as "dark" | "light" | null;
+      const initial =
+        stored ??
+        (window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light");
 
-    setTheme(initial);
-    document.documentElement.setAttribute("data-theme", initial);
-    document.documentElement.classList.toggle("dark", initial === "dark");
+      setTheme(initial);
+      applyTheme(initial);
+    } catch (e) {
+      console.error("Error al leer el tema:", e);
+    }
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    document.documentElement.setAttribute("data-theme", theme);
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme, mounted]);
+  // Aplicar tema en <html>
+  const applyTheme = (newTheme: "dark" | "light") => {
+    const root = document.documentElement;
+    root.setAttribute("data-theme", newTheme);
+    root.classList.toggle("dark", newTheme === "dark");
+    localStorage.setItem("theme", newTheme);
+  };
 
-  if (!mounted) {
-    // 🔹 No renderiza nada hasta que se monte en cliente
-    return null;
-  }
+  // Toggle al hacer clic
+  const toggleTheme = () => {
+    if (!theme) return;
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    applyTheme(newTheme);
+  };
+
+  if (!theme) return null; // evita parpadeo inicial
 
   return (
     <button
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onClick={toggleTheme}
       className="
         group relative flex items-center rounded-full border
-        bg-[var(--button-bg)] text-[var(--button-text)]
+        btn-emoji text-[var(--button-text)]
         h-10 w-10 hover:w-36
         px-2 transition-all duration-300 overflow-hidden
       "
       title="Cambiar tema"
     >
-      <div className="flex items-center justify-center w-6 min-w-[24px]">
-        {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+      {/* Emoji siempre visible */}
+      <div className="flex items-center justify-center w-6 min-w-[24px] text-lg">
+        {theme === "dark" ? "☀️" : "🌙"}
       </div>
+
+      {/* Texto que aparece al hacer hover */}
       <span
         className="
           ml-2 text-sm whitespace-nowrap
