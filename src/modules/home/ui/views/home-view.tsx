@@ -19,6 +19,14 @@ type User = {
   updatedAt: string;
 };
 
+// 🔹 Wrapper para renderizar solo en cliente
+function ClientOnly({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return <>{children}</>;
+}
+
 export const HomeView = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,9 +89,13 @@ export const HomeView = () => {
           <p><strong>Verificado:</strong> {user.emailVerified ? "✅ Sí" : "❌ No"}</p>
           <p><strong>Rol:</strong> {user.role}</p>
           <p><strong>Estado:</strong> {user.status}</p>
-          <p><strong>Balance:</strong> ${user.balance.toLocaleString()}</p>
-          <p><strong>Creado:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
-          <p><strong>Última actualización:</strong> {new Date(user.updatedAt).toLocaleDateString()}</p>
+
+          {/* 🔹 Renderizado seguro solo en cliente */}
+          <ClientOnly>
+            <p><strong>Balance:</strong> ${user.balance.toLocaleString("es-CO")}</p>
+            <p><strong>Creado:</strong> {new Date(user.createdAt).toLocaleDateString("es-CO")}</p>
+            <p><strong>Última actualización:</strong> {new Date(user.updatedAt).toLocaleDateString("es-CO")}</p>
+          </ClientOnly>
         </div>
 
         {/* 🔹 Acciones visibles solo para admin */}
@@ -104,7 +116,7 @@ export const HomeView = () => {
           }}
           onClick={async () => {
             await authClient.signOut();
-            route.push("/sign-in"); // 👈 redirige al login después de cerrar sesión
+            route.push("/sign-in");
           }}
         >
           Cerrar sesión

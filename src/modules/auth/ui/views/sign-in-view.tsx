@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import Image from "next/image";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
   Form,
@@ -23,6 +24,8 @@ import { useForm } from "react-hook-form";
 import { OctagonAlertIcon } from "lucide-react";
 import GoogleIcon from "@/../public/icons/google-icon";
 import { useRouter } from "next/navigation";
+import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
+
 
 const formSchema = z.object({
   email: z
@@ -103,6 +106,10 @@ export const SignInView = () => {
 
   return (
     <>
+      <div className="absolute top-4 right-4 md:top-8 md:right-8">
+        <ThemeSwitcher />
+      </div>
+
       <Card
         className="w-full max-w-md mx-auto shadow-2xl rounded-2xl"
         style={{
@@ -111,15 +118,18 @@ export const SignInView = () => {
         }}
       >
         <CardContent className="p-6 md:p-10">
-          <h1
-            className="mb-2 text-2xl font-bold text-center"
-            style={{ color: "var(--amarillo-principal)" }}
-          >
-            Bienvenido
-          </h1>
-          <p className="text-sm opacity-80 text-center">
+          <div className="flex items-center gap-2">
+            <Image src="/logo.png" alt="Logo" width={80} height={80} className="" />
+            <h1
+              className="mb-2 text-2xl font-bold text-center"
+              style={{ color: "var(--amarillo-principal)" }}
+            >
+              BitLance
+            </h1>
+          </div>
+          {/* <p className="text-sm opacity-80 text-center">
             Inicia sesión para acceder a todas las funcionalidades.
-          </p>
+          </p> */}
 
           <Form {...form}>
             <form
