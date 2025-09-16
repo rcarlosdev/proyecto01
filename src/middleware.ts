@@ -51,6 +51,11 @@ export async function middleware(req: NextRequest) {
 }
 
 // 🔹 Configuración para aplicar middleware solo en rutas específicas
+// export const config = {
+//   matcher: ["/dashboard/:path*", "/profile/:path*", "/account/:path*", "/admin/:path*"],
+// };
 export const config = {
-  matcher: ["/dashboard/:path*", "/profile/:path*", "/account/:path*", "/admin/:path*"],
+  matcher: [
+    "/((?!sign-in|_next|api|favicon.ico|public).*)",
+  ],
 };

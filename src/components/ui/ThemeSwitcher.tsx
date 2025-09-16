@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Sun, Moon } from "lucide-react";
 
 export default function ThemeSwitcher() {
   const [theme, setTheme] = useState<"dark" | "light" | null>(null);
@@ -23,7 +24,6 @@ export default function ThemeSwitcher() {
     }
   }, []);
 
-  // Aplicar tema en <html>
   const applyTheme = (newTheme: "dark" | "light") => {
     const root = document.documentElement;
     root.setAttribute("data-theme", newTheme);
@@ -31,7 +31,6 @@ export default function ThemeSwitcher() {
     localStorage.setItem("theme", newTheme);
   };
 
-  // Toggle al hacer clic
   const toggleTheme = () => {
     if (!theme) return;
     const newTheme = theme === "dark" ? "light" : "dark";
@@ -39,30 +38,38 @@ export default function ThemeSwitcher() {
     applyTheme(newTheme);
   };
 
-  if (!theme) return null; // evita parpadeo inicial
+  if (!theme) return null;
 
   return (
     <button
       onClick={toggleTheme}
       className="
-        group relative flex items-center rounded-full border
-        btn-emoji text-[var(--button-text)]
-        h-10 w-10 hover:w-36
-        px-2 transition-all duration-300 overflow-hidden
+        group relative flex items-center gap-3
+        h-12 px-3 w-full
+        rounded-lg
+        bg-[var(--card)] text-[var(--amarillo-principal)]
+        hover:bg-[var(--amarillo-principal)] hover:text-black
+        transition-all duration-300
+        overflow-hidden
       "
       title="Cambiar tema"
     >
-      {/* Emoji siempre visible */}
-      <div className="flex items-center justify-center w-6 min-w-[24px] text-lg">
-        {theme === "dark" ? "☀️" : "🌙"}
+      {/* Icono */}
+      <div className="flex items-center justify-center w-6">
+        {theme === "dark" ? (
+          <Sun size={20} strokeWidth={2} />
+        ) : (
+          <Moon size={20} strokeWidth={2} />
+        )}
       </div>
 
-      {/* Texto que aparece al hacer hover */}
+      {/* Texto que aparece expandido */}
       <span
         className="
-          ml-2 text-sm whitespace-nowrap
+          text-sm font-medium
           opacity-0 group-hover:opacity-100
           transition-opacity duration-200
+          whitespace-nowrap
         "
       >
         {theme === "dark" ? "Modo Claro" : "Modo Oscuro"}
