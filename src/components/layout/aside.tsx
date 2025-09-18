@@ -13,7 +13,7 @@ const Aside = () => {
   return (
     <aside
       className={cn(
-        "fixed top-0 left-0 h-screen transition-all duration-300 shadow-lg",
+        "fixed left-0 top-16 h-[calc(100vh-4rem)] transition-all duration-300 shadow-lg", 
         "bg-[var(--card)] text-[var(--text-color)]",
         isExpanded ? "w-52" : "w-16"
       )}

@@ -61,7 +61,7 @@ export const HomeView = () => {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="flex items-center justify-center h-full">
       <div
         className="rounded-2xl shadow-xl p-8 max-w-md w-full text-center"
         style={{

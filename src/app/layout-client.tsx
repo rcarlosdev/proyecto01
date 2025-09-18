@@ -3,8 +3,9 @@
 
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import Aside from "@/components/ui/aside";
-import Header from "@/components/ui/Header";
+import Aside from "@/components/layout/aside";
+import Header from "@/components/layout/header";
+import Main from "@/components/layout/main";
 
 export default function LayoutClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,13 +23,24 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div className="flex">
-      <Aside isMobileOpen={mobileAsideOpen} onCloseMobile={() => setMobileAsideOpen(false)} />
-      <div className="flex-1 ml-16 md:ml-16">
+    <div className="flex flex-col min-h-screen">
+      {/* HEADER FIJO */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-16">
         <Header onToggleAside={() => setMobileAsideOpen((s) => !s)} />
-        <main className="p-6">{children}</main>
+      </div>
+
+      {/* CONTENEDOR INTERNO */}
+      <div className="flex flex-1 pt-16 overflow-hidden">
+        {/* ASIDE STICKY */}
+        <Aside
+          isMobileOpen={mobileAsideOpen}
+          onCloseMobile={() => setMobileAsideOpen(false)}
+          className="sticky top-16 self-start h-[calc(100vh-4rem)]"
+        />
+
+        {/* MAIN GLOBAL */}
+        <Main>{children}</Main>
       </div>
     </div>
   );
 }
-
