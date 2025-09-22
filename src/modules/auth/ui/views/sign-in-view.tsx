@@ -106,156 +106,155 @@ export const SignInView = () => {
 
   return (
     <>
-      <div className="absolute top-4 right-4 md:top-8 md:right-8">
-        <ThemeSwitcher />
-      </div>
+      <div className="min-h-screen flex-1 flex flex-col items-center justify-center px-6 text-center">
 
-      <Card
-        className="w-full max-w-md mx-auto shadow-2xl rounded-2xl"
-        style={{
-          backgroundColor: "var(--card)",
-          color: "var(--text-color)",
-        }}
-      >
-        <CardContent className="p-6 md:p-10">
-          <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Logo" width={80} height={80} className="" />
-            <h1
-              className="mb-2 text-2xl font-bold text-center"
-              style={{ color: "var(--amarillo-principal)" }}
-            >
-              BitLance
-            </h1>
-          </div>
-          {/* <p className="text-sm opacity-80 text-center">
-            Inicia sesión para acceder a todas las funcionalidades.
-          </p> */}
+        <Card
+          className="w-full max-w-md mx-auto shadow-2xl rounded-2xl"
+          style={{
+            backgroundColor: "var(--card)",
+            color: "var(--text-color)",
+          }}
+        >
+          <CardContent className="p-6 md:p-10">
+            <div className="flex items-center gap-2">
+              <Image src="/logo.png" alt="Logo" width={80} height={80} className="" />
+              <h1
+                className="mb-2 text-2xl font-bold text-center"
+                style={{ color: "var(--amarillo-principal)" }}
+              >
+                BitLance
+              </h1>
+            </div>
+            {/* <p className="text-sm opacity-80 text-center">
+              Inicia sesión para acceder a todas las funcionalidades.
+            </p> */}
 
-          <Form {...form}>
-            <form
-              className="mt-6 space-y-4"
-              onSubmit={form.handleSubmit(onSubmit)}
-              noValidate
-            >
-              {/* Email */}
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Correo Electrónico</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="email"
-                        placeholder="m@ejemplo.com"
-                        style={{
-                          backgroundColor: "var(--card)",
-                          color: "var(--text-color)",
-                          borderColor: "var(--border)",
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Password */}
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contraseña</FormLabel>
-                    <FormControl>
-                      <div className="relative">
+            <Form {...form}>
+              <form
+                className="mt-6 space-y-4"
+                onSubmit={form.handleSubmit(onSubmit)}
+                noValidate
+              >
+                {/* Email */}
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Correo Electrónico</FormLabel>
+                      <FormControl>
                         <Input
                           {...field}
-                          type={showPassword ? "text" : "password"}
-                          placeholder="********"
+                          type="email"
+                          placeholder="m@ejemplo.com"
                           style={{
                             backgroundColor: "var(--card)",
                             color: "var(--text-color)",
                             borderColor: "var(--border)",
                           }}
                         />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 opacity-75 hover:opacity-100 cursor-pointer"
-                          onClick={() => setShowPassword((s) => !s)}
-                          aria-pressed={showPassword}
-                        >
-                          {showPassword ? "Ocultar" : "Mostrar"}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Password */}
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contraseña</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            type={showPassword ? "text" : "password"}
+                            placeholder="********"
+                            style={{
+                              backgroundColor: "var(--card)",
+                              color: "var(--text-color)",
+                              borderColor: "var(--border)",
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 opacity-75 hover:opacity-100 cursor-pointer"
+                            onClick={() => setShowPassword((s) => !s)}
+                            aria-pressed={showPassword}
+                          >
+                            {showPassword ? "Ocultar" : "Mostrar"}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Errores */}
+                {!!error && (
+                  <Alert className="bg-destructive/10 border-none text-red-600">
+                    <OctagonAlertIcon className="h-4 w-4 !text-destructive" />
+                    <AlertTitle className="select-none">{error}</AlertTitle>
+                  </Alert>
                 )}
-              />
 
-              {/* Errores */}
-              {!!error && (
-                <Alert className="bg-destructive/10 border-none text-red-600">
-                  <OctagonAlertIcon className="h-4 w-4 !text-destructive" />
-                  <AlertTitle className="select-none">{error}</AlertTitle>
-                </Alert>
-              )}
+                {/* Botón principal */}
+                <Button
+                  type="submit"
+                  className="w-full cursor-pointer font-semibold"
+                  disabled={loading}
+                  style={{
+                    backgroundColor: "var(--amarillo-principal)",
+                    color: "var(--negro)",
+                  }}
+                >
+                  {loading ? "Cargando..." : "Iniciar Sesión"}
+                </Button>
 
-              {/* Botón principal */}
-              <Button
-                type="submit"
-                className="w-full cursor-pointer font-semibold"
-                disabled={loading}
-                style={{
-                  backgroundColor: "var(--amarillo-principal)",
-                  color: "var(--negro)",
-                }}
-              >
-                {loading ? "Cargando..." : "Iniciar Sesión"}
-              </Button>
+                {/* Divider */}
+                <div className="relative text-center text-sm text-muted-foreground">
+                  <span className="bg-card relative z-10 px-2">O continúa con</span>
+                  <div className="absolute inset-0 top-1/2 border-t"></div>
+                </div>
 
-              {/* Divider */}
-              <div className="relative text-center text-sm text-muted-foreground">
-                <span className="bg-card relative z-10 px-2">O continúa con</span>
-                <div className="absolute inset-0 top-1/2 border-t"></div>
-              </div>
+                {/* Google Signin */}
+                <Button
+                  type="button"
+                  className="w-full flex items-center justify-center gap-2 cursor-pointer font-medium"
+                  variant="outline"
+                  onClick={handleGoogleSignin}
+                  disabled={loading}
+                  style={{
+                    backgroundColor: "var(--card)",
+                    color: "var(--text-color)",
+                    borderColor: "var(--border)",
+                  }}
+                >
+                  <GoogleIcon />
+                  Iniciar sesión con Google
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
 
-              {/* Google Signin */}
-              <Button
-                type="button"
-                className="w-full flex items-center justify-center gap-2 cursor-pointer font-medium"
-                variant="outline"
-                onClick={handleGoogleSignin}
-                disabled={loading}
-                style={{
-                  backgroundColor: "var(--card)",
-                  color: "var(--text-color)",
-                  borderColor: "var(--border)",
-                }}
-              >
-                <GoogleIcon />
-                Iniciar sesión con Google
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      {/* Footer */}
-      <div className="text-center text-xs mt-5 opacity-75">
-        Al continuar, aceptas nuestros{" "}
-        <a href="#" style={{ color: "var(--amarillo-principal)" }}>
-          Términos de Servicio
-        </a>{" "}
-        y nuestra{" "}
-        <a href="#" style={{ color: "var(--amarillo-principal)" }}>
-          Política de Privacidad
-        </a>
-        .
+        {/* Footer */}
+        <div className="text-center text-xs mt-5 opacity-75">
+          Al continuar, aceptas nuestros{" "}
+          <a href="#" style={{ color: "var(--amarillo-principal)" }}>
+            Términos de Servicio
+          </a>{" "}
+          y nuestra{" "}
+          <a href="#" style={{ color: "var(--amarillo-principal)" }}>
+            Política de Privacidad
+          </a>
+          .
+        </div>
       </div>
     </>
   );
