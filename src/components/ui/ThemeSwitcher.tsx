@@ -3,11 +3,16 @@
 
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export default function ThemeSwitcher() {
+interface ThemeSwitcherProps {
+  expandedWidth?: string; // ancho cuando se expande, por ejemplo "w-36"
+}
+
+export default function ThemeSwitcher({ expandedWidth = "w-36" }: ThemeSwitcherProps) {
   const [theme, setTheme] = useState<"dark" | "light" | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  // Inicialización del tema
   useEffect(() => {
     try {
       const stored = localStorage.getItem("theme") as "dark" | "light" | null;
@@ -43,37 +48,29 @@ export default function ThemeSwitcher() {
   return (
     <button
       onClick={toggleTheme}
-      className="
-        group relative flex items-center gap-3
-        h-12 px-3 w-full
-        rounded-lg
-        bg-[var(--card)] text-[var(--amarillo-principal)]
-        hover:bg-[var(--amarillo-principal)] hover:text-black
-        transition-all duration-300
-        overflow-hidden
-      "
-      title="Cambiar tema"
+      onMouseEnter={() => setIsExpanded(true)}
+      onMouseLeave={() => setIsExpanded(false)}
+      className={cn(
+        "group flex items-center h-12 px-3 rounded-2xl",
+        "bg-[var(--card)] text-[var(--amarillo-principal)]",
+        "hover:bg-[var(--amarillo-principal)] hover:text-black",
+        "transition-all duration-300 cursor-pointer overflow-hidden",
+        isExpanded ? `${expandedWidth} justify-start gap-3` : "w-12 justify-center"
+      )}
     >
       {/* Icono */}
-      <div className="flex items-center justify-center w-6">
-        {theme === "dark" ? (
-          <Sun size={20} strokeWidth={2} />
-        ) : (
-          <Moon size={20} strokeWidth={2} />
-        )}
+      <div className="flex items-center justify-center w-6 h-6">
+        {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
       </div>
 
-      {/* Texto que aparece expandido */}
-      <span
-        className="
-          text-sm font-medium
-          opacity-0 group-hover:opacity-100
-          transition-opacity duration-200
-          whitespace-nowrap
-        "
-      >
-        {theme === "dark" ? "Modo Claro" : "Modo Oscuro"}
-      </span>
+      {/* Texto que aparece al expandir */}
+      {isExpanded && (
+        <span
+          className="text-sm font-medium transition-opacity duration-300 whitespace-nowrap overflow-hidden text-ellipsis"
+        >
+          {theme === "dark" ? "Modo Claro" : "Modo Oscuro"}
+        </span>
+      )}
     </button>
   );
 }
