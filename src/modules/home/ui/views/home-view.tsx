@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import MarketTable from "@/components/MarketTable";
 
 type User = {
   id: string;
@@ -62,7 +63,7 @@ export const HomeView = () => {
 
   return (
     <div className="flex items-center justify-center h-full">
-      <div
+      {/* <div
         className="rounded-2xl shadow-xl p-8 max-w-md w-full text-center"
         style={{
           backgroundColor: "var(--card)",
@@ -90,7 +91,6 @@ export const HomeView = () => {
           <p><strong>Rol:</strong> {user.role}</p>
           <p><strong>Estado:</strong> {user.status}</p>
 
-          {/* 🔹 Renderizado seguro solo en cliente */}
           <ClientOnly>
             <p><strong>Balance:</strong> ${user.balance.toLocaleString("es-CO")}</p>
             <p><strong>Creado:</strong> {new Date(user.createdAt).toLocaleDateString("es-CO")}</p>
@@ -98,7 +98,6 @@ export const HomeView = () => {
           </ClientOnly>
         </div>
 
-        {/* 🔹 Acciones visibles solo para admin */}
         {user.role === "admin" && (
           <div className="flex justify-center gap-2 mt-6">
             <Button variant="outline">Suspender</Button>
@@ -107,7 +106,6 @@ export const HomeView = () => {
           </div>
         )}
 
-        {/* 🔹 Botón de logout */}
         <Button
           className="mt-6 w-full font-semibold"
           style={{
@@ -121,7 +119,8 @@ export const HomeView = () => {
         >
           Cerrar sesión
         </Button>
-      </div>
+      </div> */}
+      <MarketTable />
     </div>
   );
 };
