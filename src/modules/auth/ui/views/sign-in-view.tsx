@@ -74,17 +74,18 @@ export const SignInView = () => {
       {
         onSuccess: () => {
           setLoading(false);
-          route.push("/");
-        },
-        onError: ({ error }) => {
-          setLoading(false);
-          setError(
-            translateErrorMessage(error.message) ||
-              "Ocurrió un error, intenta nuevamente."
-          );
-        },
-      }
-    );
+          // route.push("/");
+          // route.replace("/"); // 👈 evita que quede en el history el landing
+          },
+          onError: ({ error }) => {
+            setLoading(false);
+            setError(
+              translateErrorMessage(error.message) ||
+                "Ocurrió un error, intenta nuevamente."
+            );
+          },
+        }
+      );
   };
 
   const handleGoogleSignin = () => {
@@ -94,7 +95,8 @@ export const SignInView = () => {
       {
         onSuccess: () => {
           setLoading(false);
-          route.push("/");
+          // route.push("/");
+          // route.replace("/"); // 👈 evita que quede en el history el landing
         },
         onError: () => {
           setLoading(false);
