@@ -12,7 +12,6 @@ export default function HeaderPublic() {
         <a href="/landing" className="text-xl font-bold text-yellow-500">
           BitLance
         </a>
-
         <nav className="flex items-center gap-4">
           {/* ThemeSwitcher como botón compacto con tooltip */}
           <ThemeSwitcher />

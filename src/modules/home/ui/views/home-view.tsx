@@ -32,7 +32,6 @@ export const HomeView = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const route = useRouter();
-
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -107,14 +106,14 @@ export const HomeView = () => {
         )}
 
         <Button
-          className="mt-6 w-full font-semibold"
+          className="mt-6 w-full font-semibold cursor-pointer"
           style={{
             backgroundColor: "var(--amarillo-principal)",
             color: "var(--negro)",
           }}
           onClick={async () => {
             await authClient.signOut();
-            route.push("/sign-in");
+            route.push("/landing");
           }}
         >
           Cerrar sesión
