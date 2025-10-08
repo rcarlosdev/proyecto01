@@ -12,7 +12,7 @@ type HeaderProps = {
 
 export default function Header({ onToggleAside }: HeaderProps) {
   return (
-    <header className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--card)]">
+    <header className="flex items-center justify-between h-16 px-4 border-b border-[var(--border)] bg-[var(--card)]">
       {/* Logo + Nombre */}
       <div className="flex items-center gap-2">
         {/* Botón hamburguesa en móvil */}
@@ -29,8 +29,8 @@ export default function Header({ onToggleAside }: HeaderProps) {
             <Image
               src="/logo.png"
               alt="Logo"
-              layout="fill"
-              objectFit="contain"
+              fill
+              style={{ objectFit: "contain" }}
               className="rounded-full"
             />
           </div>
@@ -45,9 +45,8 @@ export default function Header({ onToggleAside }: HeaderProps) {
 
       {/* Menús a la derecha */}
       <div className="flex items-center gap-3">
-        {/* Aquí puedes añadir más items como notificaciones, perfil, etc. */}
         <ThemeSwitcher />
       </div>
     </header>
-  );
+    );
 }

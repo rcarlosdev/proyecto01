@@ -32,7 +32,6 @@ export const HomeView = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const route = useRouter();
-
   useEffect(() => {
     const fetchUser = async () => {
       try {
