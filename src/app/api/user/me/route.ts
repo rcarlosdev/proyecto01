@@ -23,3 +23,24 @@ export async function GET(req: Request) {
   // Devolvemos los datos actualizados de la DB
   return Response.json(dbUser);
 }
+
+// ✅ PATCH: actualizar usuario actual
+export async function PATCH(req: Request) {
+  const session = await auth.api.getSession({ headers: req.headers });
+  if (!session) return new Response("Unauthorized", { status: 401 });
+
+  const body = await req.json();
+
+  // Aquí podrías agregar validación server-side también si lo deseas
+  const updated = await db
+    .update(user)
+    .set({
+      name: body.name,
+      // email: body.email,
+      // status: body.status,
+    })
+    .where(eq(user.id, session.user.id))
+    .returning();
+
+  return Response.json(updated[0]);
+}
