@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import ThemeSwitcher from "../ui/ThemeSwitcher";
 import { useUserStore } from "@/stores/useUserStore";
+import { Label } from "@/components/ui/label";
 
 export function Navbar() {
   const user = useUserStore((state) => state.user);
@@ -40,7 +41,7 @@ export function Navbar() {
         <ThemeSwitcher />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
+            {/* <Button
               variant="ghost"
               className="flex items-center gap-2 text-sm font-medium hover:bg-transparent"
             >
@@ -59,7 +60,24 @@ export function Navbar() {
                   d="M19 9l-7 7-7-7"
                 />
               </svg>
-            </Button>
+            </Button> */}
+            <Label className="cursor-pointer">
+              {user?.name ?? "Usuario"}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4 ml-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </Label>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => { router.push("/cuentas") }}>Mi Cuenta</DropdownMenuItem>
