@@ -11,7 +11,7 @@ import {
 import type { CandlestickData } from "lightweight-charts";
 
 interface ApiCandle {
-  time: number; // timestamp UNIX (de tu API)
+  time: string; // timestamp UNIX (de tu API)
   open: number;
   high: number;
   low: number;
@@ -48,7 +48,7 @@ export default function AlphaCandleChart({
         //   close: c.close,
         // }));
 
-        setData(json as CandlestickData[]);
+        setData(json);
       } catch (err) {
         console.error("Error cargando datos:", err);
       } finally {
