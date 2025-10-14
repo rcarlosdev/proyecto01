@@ -1,29 +1,31 @@
 // src/app/(app)/layout.tsx
 "use client"; // 🔹 Esto permite usar hooks como useState
 
-import { ReactNode, useState } from "react";
-import Header from "@/components/layout/header";
-import Aside from "@/components/layout/aside";
-import Main from "@/components/layout/main";
+import { ReactNode } from "react";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import AppSidebar from "@/components/layout/AppSidebar";
+import { Navbar } from "@/components/layout/Navbar";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const [mobileAsideOpen, setMobileAsideOpen] = useState(false);
+  // const [mobileAsideOpen, setMobileAsideOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="fixed top-0 left-0 right-0 z-50 h-16">
-        
-        <Header onToggleAside={() => setMobileAsideOpen((s) => !s)} />
-      </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        {/* Sidebar lateral */}
+        <AppSidebar />
 
-      <div className="flex flex-1 pt-16 overflow-hidden">
-        <Aside
-          isMobileOpen={mobileAsideOpen}
-          onCloseMobile={() => setMobileAsideOpen(false)}
-          className="sticky top-16 self-start h-[calc(100vh-4rem)]"
-        />
-        <Main>{children}</Main>
+        {/* Contenido principal */}
+        <div className="flex flex-col flex-1 w-full">
+          {/* Navbar arriba */}
+          <Navbar />
+
+          {/* Contenido dinámico */}
+          <main className="flex-1 w-full p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

@@ -122,7 +122,7 @@ export const transactions = pgTable("transactions", {
   status: text("status")
     .$type<"pending" | "completed" | "failed">()
     .default("pending"),
-  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

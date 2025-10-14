@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import AuthSync from "@/components/AuthSync";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,16 +44,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>{metadata.title}</title>
-        <meta name="description" content={metadata.description} />
-        {/* 🩵 Ejecuta el script del tema antes de hidratar React, sin alterar el SSR */}
+        {/* <title>{metadata.title}</title>
+        <meta name="description" content={metadata.description} /> */}
         <Script id="set-initial-theme" strategy="beforeInteractive">
           {setInitialTheme}
         </Script>
       </head>
-      <body 
-        suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AuthSync>
           {children}
+        </AuthSync>
       </body>
     </html>
   );

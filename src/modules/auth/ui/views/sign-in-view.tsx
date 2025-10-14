@@ -24,7 +24,6 @@ import { useForm } from "react-hook-form";
 import { OctagonAlertIcon } from "lucide-react";
 import GoogleIcon from "@/../public/icons/google-icon";
 import { useRouter } from "next/navigation";
-import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 
 
 const formSchema = z.object({
