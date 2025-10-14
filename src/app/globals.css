@@ -1,3 +1,4 @@
+/* src/app/globals.css */
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -135,3 +136,105 @@
     color: var(--negro);
   }
 }
+
+/* ==========================================================================
+   🔹 EXTENSION LANDING PAGE - BAROS MARKETS
+   ========================================================================== */
+
+/* --- Hero Section --- */
+.hero-section {
+  position: relative;
+  height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hero-section video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-section::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* --- Animaciones suaves --- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* --- Botones Landing --- */
+.btn-primary {
+  background-color: var(--amarillo-principal);
+  color: var(--negro);
+  padding: 0.75rem 2rem;
+  border-radius: var(--radius-xl);
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* --- Tarjetas (beneficios y testimonios) --- */
+.card-landing {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-landing:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* --- Imágenes --- */
+.img-rounded-xl {
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Testimonios --- */
+.testimonial-quote {
+  font-style: italic;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+/* --- Responsividad --- */
+@media (max-width: 768px) {
+  .hero-section h1 {
+    font-size: 2rem !important;
+  }
+  .hero-section p {
+    font-size: 1rem !important;
+  }
+  .btn-primary {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.95rem;
+  }
+}
+

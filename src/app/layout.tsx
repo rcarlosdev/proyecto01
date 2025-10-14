@@ -36,6 +36,8 @@ const setInitialTheme = `(function() {
   } catch (e) {}
 })();`;
 
+import Script from "next/script";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" suppressHydrationWarning>
@@ -44,9 +46,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* <title>{metadata.title}</title>
         <meta name="description" content={metadata.description} /> */}
-        <script dangerouslySetInnerHTML={{ __html: setInitialTheme }} />
+        <Script id="set-initial-theme" strategy="beforeInteractive">
+          {setInitialTheme}
+        </Script>
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthSync>
           {children}
         </AuthSync>

@@ -1,7 +1,9 @@
-// app/api/markets/route.ts
+// src/app/api/markets/route.ts
 import { NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { MOCK_BASE } from '@/lib/mockData';
+import { MARKETS } from "@/config/markets";
+import { ur } from 'zod/v4/locales';
 
 type Quote = {
   symbol: string;
@@ -318,6 +320,18 @@ async function fetchSymbolsForMarketWithFallback(market: string): Promise<{ data
   return { data: results.filter(Boolean) as Quote[], usedMock: false };
 }
 
+// 🔹 Normaliza el nombre del sub-mercado
+  function normalizeSubMarketKey(marketKey: string, subKeyRaw?: string) {
+    if (!subKeyRaw) return undefined;
+    const subKey = decodeURIComponent(subKeyRaw).replace(/\+/g, " ").trim().toLowerCase();
+    const subMarkets = MARKETS[marketKey]?.subMarkets || {};
+
+    // Busca coincidencia exacta insensible a mayúsculas/minúsculas
+    return Object.keys(subMarkets).find(
+      k => k.trim().toLowerCase() === subKey
+    );
+  }
+
 /* ---------------------- Handler ---------------------- */
 export async function GET(request: Request) {
   if (!API_KEY) {
@@ -325,7 +339,66 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
-  const market = (url.searchParams.get('market') || 'indices').toLowerCase();
+  let market = (url.searchParams.get('market') || 'indices').toLowerCase();
+  const fromLanding = url.searchParams.get('from') === 'landing';
+
+  console.log('Market:', market, 'fromLanding:', fromLanding);
+
+  
+  if (fromLanding) {
+    const marketParam = url.searchParams.get('market') || 'Indices';
+    const subParam = url.searchParams.get("sub");
+    // encontrar clave correcta en MARKETS (respetando mayúsculas)
+    const marketKey = Object.keys(MARKETS).find(
+      k => k.toLowerCase() === marketParam.toLowerCase()
+    );
+    const marketData = marketKey ? MARKETS[marketKey] : undefined;
+
+    if (!marketData) {
+      console.warn(`❗ No se encontró el mercado: ${marketParam}`);
+      const symbols = SYMBOLS_MAP[marketParam.toLowerCase()]?.slice(0, 3) ?? [];
+      const data = getDynamicMock(marketParam.toLowerCase(), symbols);
+      return NextResponse.json(data, { status: 200 });
+    }
+
+    // 🔹 Normalizar subKey (ETFs -> etfs, Top Losers -> top_losers)
+    const normalizeSubKey = (sub?: string) =>
+      sub ? sub.replace(/\s+/g, "_").toLowerCase() : "";
+
+    const subKey = normalizeSubKey(subParam);
+    let urlApi: string | undefined;
+
+    // 🔸 Prioridad: submarket si existe → market general como fallback
+    if (subKey && marketData[subKey]?.getUrlMarkets) {
+      urlApi = marketData[subKey].getUrlMarkets();
+      console.log(`Using sub-market API [${subKey}]:`, urlApi);
+    } else {
+      urlApi = marketData.getUrlMarkets();
+      console.log(`Using general market API [${marketParam}]:`, urlApi);
+    }
+
+    try {
+      const res = await fetch(urlApi, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0',
+          'Accept': 'application/json',
+          'Referer': 'https://www.investing.com',
+          'Origin': 'https://www.investing.com',
+          'Host': 'www.investing.com',
+        },
+      });
+      const data = await res.json(); // <--- aquí parseas JSON
+      return NextResponse.json(data.data, { status: 200 });
+    } catch (err) {
+      console.error('Error fetching landing data:', err);
+      // fallback a mock
+      const symbols = SYMBOLS_MAP[marketParam.toLowerCase()]?.slice(0, 3) ?? [];
+      const data = getDynamicMock(marketParam.toLowerCase(), symbols);
+      return NextResponse.json(data, { status: 200 });
+    }
+  }
+
+
   const cacheKey = `market-${market}`;
 
   // 1) Try cache with meta
