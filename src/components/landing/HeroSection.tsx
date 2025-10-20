@@ -18,7 +18,7 @@ export default function HeroSection() {
       <div className="relative z-10 text-center text-white px-6">
         <h1 className="text-4xl md:text-6xl font-bold mb-6">
           Invierte Inteligentemente con{" "}
-          <span className="text-[var(--amarillo-principal)]">Baros Markets</span>
+          <span className="text-[var(--amarillo-principal)]">BitLance</span>
         </h1>
         <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8 text-gray-200">
           Opera los principales mercados financieros desde cualquier lugar del

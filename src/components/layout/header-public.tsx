@@ -1,8 +1,11 @@
+//src/components/layout/header-public.tsx
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import ActionButton from "@/components/ui/ActionButton";
+import { LogIn } from "lucide-react";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
@@ -34,14 +37,17 @@ export default function HeaderPublic() {
         <div className="flex items-center gap-2">
           <Link href="/landing" className="flex items-center gap-2 font-bold text-xl">
             <Image src="/logo.png" alt="Logo" width={60} height={60} />
+            
+            {/* Texto visible solo en pantallas grandes */}
             <h1
-              className="text-2xl font-bold text-center"
+              className="hidden xl:block text-2xl font-bold text-center"
               style={{ color: "var(--amarillo-principal)" }}
             >
               BitLance
             </h1>
           </Link>
         </div>
+
 
         {/* 🔹 Navegación en escritorio */}
         <nav className="hidden md:flex gap-8 items-center">
@@ -120,15 +126,15 @@ export default function HeaderPublic() {
 
         {/* 🔸 Tema + Login + Hamburguesa */}
         <div className="flex items-center gap-3">
-          <ThemeSwitcher />
-          <Link
+          <div className="fixed top-full mt-1.5 right-6 z-50 opacity-50 hover:opacity-100 transition">
+            <ThemeSwitcher expandedWidth="w-36" expandDirection="left" />
+          </div>
+          <ActionButton
             href="/sign-in"
-            className="hidden md:block bg-[var(--amarillo-principal)] text-black px-4 py-2 rounded-xl font-medium hover:opacity-90 transition"
-          >
-            Iniciar sesión
-          </Link>
-
-          {/* 🔹 Botón Hamburguesa (solo móvil) */}
+            label="Iniciar sesión" 
+            expandDirection="left"
+            icon={<LogIn size={20} />}
+          />
           <button
             onClick={() => setIsOpen(isOpen === "mobile" ? false : "mobile")}
             className="md:hidden p-2 rounded hover:bg-muted"
@@ -136,6 +142,7 @@ export default function HeaderPublic() {
             {isOpen === "mobile" ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
+
       </div>
 
       {/* 🔻 Menú móvil desplegable */}

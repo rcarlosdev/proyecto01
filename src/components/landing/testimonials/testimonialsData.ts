@@ -3,7 +3,7 @@ const testimonialsData = [
   {
     name: "Carlos Méndez",
     role: "Trader Independiente",
-    text: "La plataforma de Baros Markets me permite operar rápido y con total transparencia. El soporte es excepcional.",
+    text: "La plataforma de BitLance me permite operar rápido y con total transparencia. El soporte es excepcional.",
     image: "/images/users/carlos.jpg",
   },
   {
@@ -15,7 +15,7 @@ const testimonialsData = [
   {
     name: "Jorge Castillo",
     role: "Gestor de Portafolio",
-    text: "Baros Markets me da la seguridad y velocidad que necesito para manejar mis operaciones diarias.",
+    text: "BitLance me da la seguridad y velocidad que necesito para manejar mis operaciones diarias.",
     image: "/images/users/jorge.jpg",
   },
 ];

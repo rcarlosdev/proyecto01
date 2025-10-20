@@ -1,3 +1,4 @@
+// src/modules/usuarios/ui/views/usuarios-view.tsx
 "use client";
 
 import UsuariosTabs from "../components/usuarios-tabs";

@@ -51,10 +51,14 @@ export default function ContactFormView() {
     <main className="flex flex-col items-center justify-center min-h-screen px-6 lg:px-20 py-16 lg:py-28 text-foreground bg-background">
       <div className="max-w-screen-xl w-full space-y-12">
         {/* Encabezado */}
-        <div className="text-center space-y-4">
-          <h3 className="text-3xl lg:text-4xl font-bold text-foreground">
+        {/* <div className="text-center space-y-4 text-base w-full mt-10">
+        <h2 className="text-[var(--amarillo-principal)] text-3xl lg:text-4xl xl:text-5xl font-extrabold leading-6">
+          Introducción al trading para principiantes
+        </h2> */}
+        <div className="text-center space-y-4 text-base w-full mt-10">
+          <h2 className="text-[var(--amarillo-principal)] text-3xl lg:text-4xl xl:text-5xl font-extrabold leading-6">
             Enciende el éxito junto a nosotros.
-          </h3>
+          </h2>
           <p className="text-base lg:text-lg font-light opacity-90 max-w-2xl mx-auto">
             ¿Listo para unirte a nuestro éxito financiero? Ya seas un desarrollador de negocios, especialista en marketing, ingeniero de software o cualquier otra persona, si crees que puedes crecer junto a nosotros, te invitamos a dejar tus datos a continuación.
           </p>

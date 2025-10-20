@@ -46,7 +46,8 @@ export default function LandingPage() {
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
             Explora los Mercados
           </h2>
-          <p className="text-center text-muted-foreground max-w-2xl mx-auto">
+          {/* <p className="text-center text-muted-foreground max-w-2xl mx-auto">*/}
+           <p className="text-base lg:text-lg font-light opacity-90 max-w-2xl mx-auto">
             Visualiza en tiempo real los principales índices, criptomonedas,
             divisas y materias primas.
           </p>
@@ -67,7 +68,7 @@ export default function LandingPage() {
       <TestimonialsSection />
 
       <footer className="mt-auto py-6 border-t border-border bg-card text-center text-muted-foreground text-sm">
-        © {new Date().getFullYear()} Baros Markets — Todos los derechos reservados.
+        © {new Date().getFullYear()} BitLance — Todos los derechos reservados.
       </footer>
     </div>
   );
