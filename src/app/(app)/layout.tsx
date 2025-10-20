@@ -5,6 +5,7 @@ import { ReactNode } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
 import { Navbar } from "@/components/layout/Navbar";
+import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   // const [mobileAsideOpen, setMobileAsideOpen] = useState(false);
@@ -19,7 +20,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <div className="flex flex-col flex-1 w-full">
           {/* Navbar arriba */}
           <Navbar />
-
+          <div className="fixed mt-2 top-[80px] right-6 z-50 opacity-70 hover:opacity-100 transition-all">
+          <ThemeSwitcher expandedWidth="w-40" expandDirection="left" />
+        </div>
           {/* Contenido dinámico */}
           <main className="flex-1 w-full p-6">
             {children}
