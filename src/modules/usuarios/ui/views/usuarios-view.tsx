@@ -2,8 +2,29 @@
 "use client";
 
 import UsuariosTabs from "../components/usuarios-tabs";
+import GeneralTab from "../components/tabs/general-tab";
+import RolesTab from "../components/tabs/roles-tab";
+import PermisosTab from "../components/tabs/permisos-tab";
 
-export default function UsuariosView({ activeTab }: { activeTab: string }) {
+interface UsuariosViewProps {
+  activeTab: string;
+  usuarioId?: string;
+}
+
+export default function UsuariosView({ activeTab, usuarioId }: UsuariosViewProps) {
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "General":
+        return <GeneralTab usuarioId={usuarioId} />;
+      case "Roles":
+        return <RolesTab usuarioId={usuarioId} />;
+      case "Permisos":
+        return <PermisosTab usuarioId={usuarioId} />;
+      default:
+        return <GeneralTab usuarioId={usuarioId} />;
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Título + Tabs arriba */}
@@ -13,8 +34,8 @@ export default function UsuariosView({ activeTab }: { activeTab: string }) {
       </div>
 
       {/* Contenido del tab */}
-      <div className="flex-1 overflow-y-auto mt-4 rounded-2xl bg-muted p-4">
-        <p>Contenido del tab {activeTab}</p>
+      <div className="flex-1 overflow-y-auto mt-4 rounded-2xl bg-muted p-6">
+        {renderTabContent()}
       </div>
     </div>
   );
