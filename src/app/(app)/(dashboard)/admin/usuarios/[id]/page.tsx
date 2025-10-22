@@ -1,20 +1,14 @@
+// src/app/(app)/(dashboard)/admin/usuarios/[id]/page.tsx
 import UsuarioDetailView from "@/modules/usuarios/ui/views/usuario-detail-view";
 
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
+interface PageProps {
+  params: { id: string };
   searchParams?: { [key: string]: string | string[] | undefined };
-}) {
-  const resolvedParams = await params; // 👈 se resuelve la promesa
+}
+
+export default function Page({ params, searchParams }: PageProps) {
   const activeTab =
     typeof searchParams?.tab === "string" ? searchParams.tab : "General";
 
-  return (
-    <UsuarioDetailView
-      usuarioId={resolvedParams.id}
-      activeTab={activeTab}
-    />
-  );
+  return <UsuarioDetailView usuarioId={params.id} activeTab={activeTab} />;
 }
