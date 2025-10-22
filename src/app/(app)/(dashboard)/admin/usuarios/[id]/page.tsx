@@ -1,23 +1,20 @@
 import UsuarioDetailView from "@/modules/usuarios/ui/views/usuario-detail-view";
-import { int } from "zod";
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-  searchParams: {
-    tab?: string;
-  };
-}
-
-export default function Page({ 
+export default async function Page({
   params,
-  searchParams 
-}: { 
-  params: { id: string };
-  searchParams: { tab?: string };
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams?: { [key: string]: string | string[] | undefined };
 }) {
-  const activeTab = searchParams.tab ?? "General";
+  const resolvedParams = await params; // 👈 se resuelve la promesa
+  const activeTab =
+    typeof searchParams?.tab === "string" ? searchParams.tab : "General";
 
-  return <UsuarioDetailView usuarioId={params.id} activeTab={activeTab} />;
+  return (
+    <UsuarioDetailView
+      usuarioId={resolvedParams.id}
+      activeTab={activeTab}
+    />
+  );
 }
