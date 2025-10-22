@@ -1,0 +1,1 @@
+export const MARKETS = ['indices','acciones','commodities','crypto','fx','all'] as const;

@@ -69,7 +69,7 @@ export default function AlphaCandleChart({
   if (!data.length) return <p>No hay datos disponibles</p>;
 
   return (
-    <div className="w-full flex justify-center bg-neutral-900 rounded-xl p-3">
+    <div className="w-full flex justify-center bg-neutral-900 rounded-xl p-3 ">
       <Chart
         options={{
           width: 800,
