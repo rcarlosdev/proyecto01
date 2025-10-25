@@ -60,7 +60,7 @@ export async function PUT(
     } = body;
 
     // Construimos un objeto limpio (solo con los campos presentes)
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
     if (name) updateData.name = name;
     if (email) updateData.email = email;
     if (status) updateData.status = status;

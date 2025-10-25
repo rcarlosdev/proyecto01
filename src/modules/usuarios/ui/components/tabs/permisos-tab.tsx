@@ -18,8 +18,9 @@ type Permiso = {
   descripcion: string;
 };
 
-export default function PermisosTab({ usuarioId }: PermisosTabProps) {
-  const [permisos, setPermisos] = useState<Permiso[]>([
+// export default function PermisosTab({ usuarioId }: PermisosTabProps) {
+export function PermisosTab({ }: PermisosTabProps) {
+  const [permisos] = useState<Permiso[]>([
     // Trading
     { id: "operar", nombre: "Operar", categoria: "trading", descripcion: "Realizar operaciones" },
     { id: "limite_alto", nombre: "Límite Alto", categoria: "trading", descripcion: "Operar con límites elevados" },

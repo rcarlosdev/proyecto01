@@ -1,31 +1,74 @@
 // src/components/market/DataTableMarket.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { HEADERS, KEYS } from "@/config/markets";
 
-type RowShape = Record<string, any>;
+// 🔹 Define tipos específicos
+interface TableRow {
+  name: string;
+  last: string | number;
+  high: string | number;
+  low: string | number;
+  chg: string | number;
+  chgPct: string | number;
+  time: string;
+  url: string;
+  month?: string | number;
+  bid?: string | number;
+  ask?: string | number;
+  yield?: string | number;
+  prev?: string | number;
+  symbol?: string;
+  volume?: string | number;
+  [key: string]: string | number | undefined;
+}
 
-type DataTableMarketProps = {
-  rows: RowShape[];
+interface DataTableMarketProps {
+  rows: TableRow[];
   market: string;
   subMarket?: string;
   lastUpdated?: number;
   loading?: boolean;
   error?: string | null;
-};
+}
+
+// 🔹 Helper functions
+function formatVolume(n?: number | string, decimals = 2): string {
+  if (!n) return "-";
+  
+  const num = typeof n === 'string' ? Number(n.replace(/,/g, '')) : Number(n);
+  if (isNaN(num) || num <= 0) return "-";
+
+  if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(decimals) + "B";
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(decimals) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(decimals) + "K";
+  return num.toString();
+}
+
+function formatTime(time?: string | number, offsetSeconds = 0): string {
+  if (!time) return "-";
+
+  const ts = Number(time) * 1000;
+  const date = new Date(ts + offsetSeconds * 1000);
+  if (isNaN(date.getTime())) return "-";
+
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}`;
+}
 
 export default function DataTableMarket({
   rows,
   market,
-  subMarket,
-  lastUpdated,
+  // lastUpdated,
   loading,
   error,
 }: DataTableMarketProps) {
   const [search, setSearch] = useState("");
 
-  const filtered = useMemo(() => {
+  const filteredRows = useMemo(() => {
     if (!search) return rows;
     const term = search.toLowerCase();
     return rows.filter((row) =>
@@ -36,8 +79,63 @@ export default function DataTableMarket({
   }, [rows, search]);
   
   const headers = HEADERS[market] || [];
-  const keys = Object.keys(KEYS).find(k => k.toLowerCase() === market.toLowerCase()) ? KEYS[Object.keys(KEYS).find(k => k.toLowerCase() === market.toLowerCase())!] : [];
-  
+  const marketKey = Object.keys(KEYS).find(k => k.toLowerCase() === market.toLowerCase());
+  const keys = marketKey ? KEYS[marketKey as keyof typeof KEYS] : [];
+
+  const renderCellValue = (key: string, row: TableRow) => {
+    const value = row[key] ?? "-";
+    
+    if (key.toLowerCase() === "chg" || key.toLowerCase() === "chgpct") {
+      const numValue = typeof value === 'string' ? Number(value.replace(/,/g, "")) : Number(value);
+      
+      if (isNaN(numValue)) return value;
+      
+      if (numValue === 0) {
+        // Valor cero: solo negrilla sin color ni flecha
+        const displayValue = key.toLowerCase() === "chgpct" ? `${numValue.toFixed(2)}%` : numValue.toFixed(2);
+        return (
+          <span className="font-semibold">
+            {displayValue}
+          </span>
+        );
+      } else {
+        // Valor positivo o negativo: flecha y color
+        const positive = numValue > 0;
+        const arrow = positive ? "▲" : "▼";
+        const displayValue = key.toLowerCase() === "chgpct" ? `${Math.abs(numValue).toFixed(2)}%` : Math.abs(numValue).toFixed(2);
+        
+        return (
+          <span className={`inline-flex items-center gap-1 ${positive ? 'text-green-400' : 'text-red-400'}`}>
+            <span className="text-xs opacity-80">{arrow}</span>
+            {displayValue}
+          </span>
+        );
+      }
+    }
+
+    if (key.toLowerCase() === "volume") return formatVolume(value);
+    if (key.toLowerCase() === "time") return formatTime(value, 3740);
+
+    return value;
+  };
+
+  const getCellClassName = (key: string, index: number) => {
+    let className = "px-4 py-3 text-sm";
+    
+    if (index === 0) {
+      className += " font-semibold text-yellow-300 text-left";
+    } else {
+      className += " text-right";
+    }
+
+    // Para celdas de cambio, el color se maneja en el contenido
+    if (key.toLowerCase() === "chg" || key.toLowerCase() === "chgpct") {
+      className = className.replace(/text-(green|red)-400/g, '').trim();
+    }
+
+    return className;
+  };
+
   return (
     <div className="p-4 min-h-[200px]">
       {/* Buscador */}
@@ -78,58 +176,26 @@ export default function DataTableMarket({
                   ))}
                 </tr>
               ))
-            ) : rows.length === 0 ? (
+            ) : error ? (
+              <tr>
+                <td colSpan={headers.length} className="px-4 py-6 text-center text-red-400">
+                  Error: {error}
+                </td>
+              </tr>
+            ) : filteredRows.length === 0 ? (
               <tr>
                 <td colSpan={headers.length} className="px-4 py-6 text-center text-gray-400">
                   No hay resultados
                 </td>
               </tr>
             ) : (
-              rows.map((row, i) => (
+              filteredRows.map((row, i) => (
                 <tr key={i} className="border-t border-gray-800 hover:bg-gray-900/60 transition-colors">
-                  {keys.map((key, j) => {
-                    let value: any = row[key] ?? "-";
-                    let className = "px-4 py-3 text-sm";
-                    if (j === 0) className += " font-semibold text-yellow-300 text-left";
-                    else className += " text-right";
-
-                    if (key.toLowerCase() === "chg" || key.toLowerCase() === "chgpct") {
-                      const num = Number(row[key]?.toString().replace(/,/g, "") ?? 0);
-
-                      if (num === 0) {
-                        // Valor cero: solo negrilla sin color ni flecha
-                        className = "px-4 py-3 text-sm font-semibold text-right";
-                        value = key.toLowerCase() === "chgpct" ? `${num.toFixed(2)}%` : num.toFixed(2);
-                      } else {
-                        // Valor positivo o negativo: flecha y color
-                        const positive = num > 0;
-                        const arrow = positive ? "▲" : "▼";
-                        const colorClass = positive ? "text-green-400 font-medium" : "text-red-400 font-medium";
-                        className = `px-4 py-3 text-sm text-right ${colorClass}`;
-
-                        value = (
-                          <span className="inline-flex items-center gap-1">
-                            <span className="text-xs opacity-80">{arrow}</span>
-                            {num.toFixed(2)}
-                            {key.toLowerCase() === "chgpct" ? "%" : ""}
-                          </span>
-                        );
-                      }
-                    }
-
-
-
-
-                    if (key.toLowerCase() === "volume") value = formatVolume(row[key]);
-                    // if (key.toLowerCase() === "time") value = formatDate(row[key]);
-                    if (key.toLowerCase() === "time") value = formatTime(row[key], 3740);
-
-                    return (
-                      <td key={key} className={className}>
-                        {value}
-                      </td>
-                    );
-                  })}
+                  {keys.map((key, j) => (
+                    <td key={key} className={getCellClassName(key, j)}>
+                      {renderCellValue(key, row)}
+                    </td>
+                  ))}
                 </tr>
               ))
             )}
@@ -139,36 +205,3 @@ export default function DataTableMarket({
     </div>
   );
 }
-
-// 🔹 Helpers
-function formatVolume(n?: number | string, decimals = 2): string {
-  const num = Number(n);
-  if (isNaN(num) || num <= 0) return "-";
-
-  if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(decimals) + "B";
-  if (num >= 1_000_000) return (num / 1_000_000).toFixed(decimals) + "M";
-  if (num >= 1_000) return (num / 1_000).toFixed(decimals) + "K";
-  return num.toString();
-}
-
-function formatDate(time?: string) {
-  if (!time) return "-";
-  const ts = Number(time) * 1000;
-  const date = new Date(ts);
-  if (isNaN(date.getTime())) return time;
-  return date.toLocaleTimeString();
-}
-
-function formatTime(time?: string | number, offsetSeconds = 0): string {
-  if (!time) return "-";
-
-  const ts = Number(time) * 1000;
-  const date = new Date(ts + offsetSeconds * 1000);
-  if (isNaN(date.getTime())) return "-";
-
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  const seconds = String(date.getSeconds()).padStart(2, "0");
-  return `${hours}:${minutes}:${seconds}`;
-}
- 

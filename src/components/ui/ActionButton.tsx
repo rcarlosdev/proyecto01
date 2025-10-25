@@ -57,9 +57,8 @@ export default function ActionButton({
 
   // 👇 si hay href, usa Link. Si no, usa button.
   const Wrapper = href
-    ? (props: any) => <Link href={href} {...props} />
-    : (props: any) => <button type="button" {...props} />;
-
+    ? (props: Omit<React.ComponentPropsWithoutRef<typeof Link>, 'href'>) => <Link href={href} {...props} />
+    : (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button type="button" {...props} />;
   return (
     <div className="relative w-12 h-12 overflow-visible flex justify-end">
       <Wrapper

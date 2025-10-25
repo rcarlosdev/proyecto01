@@ -1,11 +1,13 @@
+// src/modules/usuarios/ui/views/usuario-detail-view.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+// import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import UsuariosTabs from "../components/usuarios-tabs";
 import GeneralTab from "../components/tabs/general-tab";
-import RolesTab from "../components/tabs/roles-tab";
-import PermisosTab from "../components/tabs/permisos-tab";
+import { RolesTab } from "../components/tabs/roles-tab";
+import { PermisosTab } from "../components/tabs/permisos-tab";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -16,7 +18,7 @@ interface UsuarioDetailViewProps {
 
 export default function UsuarioDetailView({ usuarioId, activeTab }: UsuarioDetailViewProps) {
   const router = useRouter();
-  const [usuario, setUsuario] = useState(null);
+  // const [usuario] = useState(null);
 
   // En una app real, aquí harías fetch del usuario por ID
   useEffect(() => {

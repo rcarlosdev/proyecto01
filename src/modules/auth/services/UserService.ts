@@ -1,7 +1,8 @@
 // src/modules/auth/services/UserService.ts
 import { db } from "@/db";
 import { user, transactions } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+// import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export class UserService {
   /**

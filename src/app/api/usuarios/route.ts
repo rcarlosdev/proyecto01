@@ -1,3 +1,4 @@
+// src/app/api/usuarios/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 
@@ -15,9 +16,9 @@ export async function GET() {
       email: u.email,
       rol: u.role || "user",
       estado: u.status === "active" ? "activo" : "inactivo",
-      fechaRegistro: u.created_at?.toISOString?.().split("T")[0] ?? "",
-      ultimoAcceso: u.updated_at?.toISOString?.().split("T")[0] ?? "",
-      kycVerificado: u.email_verified ?? false,
+      fechaRegistro: u.createdAt?.toISOString?.().split("T")[0] ?? "",
+      ultimoAcceso: u.updatedAt?.toISOString?.().split("T")[0] ?? "",
+      kycVerificado: u.emailVerified ?? false,
     }));
 
     return NextResponse.json(usuariosFormateados);

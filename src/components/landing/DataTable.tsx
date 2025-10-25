@@ -4,7 +4,7 @@
 import React from "react";
 
 type RowShape = {
-  [key: string]: any; // flexible para distintos markets
+  [key: string]: unknown // flexible para distintos markets
   name?: string;
   last?: number | string;
   high?: number | string;
@@ -117,7 +117,7 @@ export default function DataTable({
                     className="border-t border-gray-800 hover:bg-gray-900/60 transition-colors"
                   >
                     {headers.map((h, j) => {
-                      let value: React.ReactNode = r[h.toLowerCase()] ?? "—";
+                      let value: React.ReactNode = String(r[h.toLowerCase()] ?? "—");
 
                       if (h === "Chg." || h === "Chg. %") {
                         value =
@@ -157,7 +157,7 @@ export default function DataTable({
 }
 
 /* Helpers */
-function formatNumber(v: any) {
+function formatNumber(v: unknown) {
   if (v === null || v === undefined || v === "") return "—";
   if (typeof v === "number")
     return v.toLocaleString(undefined, {
@@ -167,14 +167,14 @@ function formatNumber(v: any) {
   return v.toString();
 }
 
-function formatPercent(v: any) {
+function formatPercent(v: unknown) {
   if (v === null || v === undefined || v === "") return "—";
   return typeof v === "number"
     ? `${v > 0 ? "+" : ""}${v.toFixed(2)}%`
     : v.toString();
 }
 
-function formatTime(ts: any) {
+function formatTime(ts: unknown) {
   if (!ts) return "—";
   const n = Number(ts);
   if (!isNaN(n) && n > 1000000000) {

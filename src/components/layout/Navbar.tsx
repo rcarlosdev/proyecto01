@@ -9,12 +9,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 import { useUserStore } from "@/stores/useUserStore";
 import { Label } from "@/components/ui/label";
 import ActionButton from "@/components/ui/ActionButton";
 import { PanelLeftIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+// import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
 // función para alternar sidebar (debes implementarla según tu lógica)
 
@@ -47,7 +46,7 @@ export function Navbar() {
           textColor="text-[var(--amarillo-principal)]"
           hoverBg="hover:bg-[var(--amarillo-principal)]"
           hoverText="hover:text-black"
-          className={cn("relative")}
+          // className={cn("relative")}
           onClick={(e) => {
             e.preventDefault();
             toggleSidebar();

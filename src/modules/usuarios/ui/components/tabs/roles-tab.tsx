@@ -19,7 +19,10 @@ type Rol = {
   usuarios: number;
 };
 
-export default function RolesTab({ usuarioId }: RolesTabProps) {
+
+// export default function RolesTab({ usuarioId }: RolesTabProps) {
+export function RolesTab({ }: RolesTabProps) {
+  // const [roles, setRoles] = useState<Rol[]>([
   const [roles, setRoles] = useState<Rol[]>([
     {
       id: "1",

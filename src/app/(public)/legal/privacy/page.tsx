@@ -22,7 +22,7 @@ export default function PrivacyPolicyPage() {
               Declaración de seguridad y protección de datos
             </h2>
             <p>
-              <span style={{ color: "var(--amarillo-principal)" }}>BitLance</span> (en adelante, la "Compañía") se compromete a proteger todos los datos personales que recibimos de usted. Nuestra Declaración de privacidad y seguridad explica cómo y por qué recopilamos información personal sobre usted y cómo se administra y utiliza esa información ("Declaración de privacidad y seguridad"). Esta declaración se aplica a todas las organizaciones dentro del Grupo de la Compañía.
+              <span style={{ color: "var(--amarillo-principal)" }}>BitLance</span> (en adelante, la &quot;Compañía&quot;) se compromete a proteger todos los datos personales que recibimos de usted. Nuestra Declaración de privacidad y seguridad explica cómo y por qué recopilamos información personal sobre usted y cómo se administra y utiliza esa información (&quot;Declaración de privacidad y seguridad&quot;). Esta declaración se aplica a todas las organizaciones dentro del Grupo de la Compañía.
             </p>
           </div>
 

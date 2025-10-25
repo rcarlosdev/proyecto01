@@ -127,7 +127,7 @@ export default function HeaderPublic() {
         {/* 🔸 Tema + Login + Hamburguesa */}
         <div className="flex items-center gap-3">
           <div className="fixed top-full mt-1.5 right-6 z-50 opacity-50 hover:opacity-100 transition">
-            <ThemeSwitcher expandedWidth="w-36" expandDirection="left" />
+            <ThemeSwitcher expandedWidth="w-36" />
           </div>
           <ActionButton
             href="/sign-in"
