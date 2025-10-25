@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { MOCK_BASE } from '@/lib/mockData';
 import { MARKETS } from "@/config/markets";
-import { ur } from 'zod/v4/locales';
+// import { ur } from 'zod/v4/locales';
 
 type Quote = {
   symbol: string;
@@ -321,16 +321,16 @@ async function fetchSymbolsForMarketWithFallback(market: string): Promise<{ data
 }
 
 // 🔹 Normaliza el nombre del sub-mercado
-  function normalizeSubMarketKey(marketKey: string, subKeyRaw?: string) {
-    if (!subKeyRaw) return undefined;
-    const subKey = decodeURIComponent(subKeyRaw).replace(/\+/g, " ").trim().toLowerCase();
-    const subMarkets = MARKETS[marketKey]?.subMarkets || {};
+  // function normalizeSubMarketKey(marketKey: string, subKeyRaw?: string) {
+  //   if (!subKeyRaw) return undefined;
+  //   const subKey = decodeURIComponent(subKeyRaw).replace(/\+/g, " ").trim().toLowerCase();
+  //   const subMarkets = MARKETS[marketKey]?.subMarkets || {};
 
-    // Busca coincidencia exacta insensible a mayúsculas/minúsculas
-    return Object.keys(subMarkets).find(
-      k => k.trim().toLowerCase() === subKey
-    );
-  }
+  //   // Busca coincidencia exacta insensible a mayúsculas/minúsculas
+  //   return Object.keys(subMarkets).find(
+  //     k => k.trim().toLowerCase() === subKey
+  //   );
+  // }
 
 /* ---------------------- Handler ---------------------- */
 export async function GET(request: Request) {
@@ -339,7 +339,7 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
-  let market = (url.searchParams.get('market') || 'indices').toLowerCase();
+  const market = (url.searchParams.get('market') || 'indices').toLowerCase();
   const fromLanding = url.searchParams.get('from') === 'landing';
 
   console.log('Market:', market, 'fromLanding:', fromLanding);
@@ -352,7 +352,7 @@ export async function GET(request: Request) {
     const marketKey = Object.keys(MARKETS).find(
       k => k.toLowerCase() === marketParam.toLowerCase()
     );
-    const marketData = marketKey ? MARKETS[marketKey] : undefined;
+    const marketData = marketKey ? MARKETS[marketKey as keyof typeof MARKETS] : undefined;
 
     if (!marketData) {
       console.warn(`❗ No se encontró el mercado: ${marketParam}`);
@@ -365,20 +365,26 @@ export async function GET(request: Request) {
     const normalizeSubKey = (sub?: string) =>
       sub ? sub.replace(/\s+/g, "_").toLowerCase() : "";
 
-    const subKey = normalizeSubKey(subParam);
+    const subKey = normalizeSubKey(subParam as string);
     let urlApi: string | undefined;
 
     // 🔸 Prioridad: submarket si existe → market general como fallback
-    if (subKey && marketData[subKey]?.getUrlMarkets) {
-      urlApi = marketData[subKey].getUrlMarkets();
-      console.log(`Using sub-market API [${subKey}]:`, urlApi);
+    if (subKey && marketData && typeof marketData === 'object' && subKey in marketData) {
+      const subMarket = (marketData as Record<string, { getUrlMarkets?: () => string }>)[subKey];
+      if (subMarket?.getUrlMarkets) {
+        urlApi = subMarket.getUrlMarkets();
+        console.log(`Using sub-market API [${subKey}]:`, urlApi);
+      } else {
+        urlApi = marketData.getUrlMarkets();
+        console.log(`Using general market API [${marketParam}]:`, urlApi);
+      }
     } else {
       urlApi = marketData.getUrlMarkets();
       console.log(`Using general market API [${marketParam}]:`, urlApi);
     }
 
     try {
-      const res = await fetch(urlApi, {
+      const res = await fetch(urlApi!, {
         headers: {
           'User-Agent': 'Mozilla/5.0',
           'Accept': 'application/json',

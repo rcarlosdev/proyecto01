@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Fragment } from "react";
+import { useState, useMemo } from "react";
 
 interface Lesson {
   id: string;
@@ -15,7 +15,7 @@ interface Section {
 }
 
 // 🔹 Función que combina el formato con ** y el resaltado de búsqueda
-function renderFormattedContent(content, searchTerm) {
+function renderFormattedContent(content: string, searchTerm: string) {
   if (!content) return null;
 
   // 1️⃣ Escapar caracteres peligrosos
@@ -94,7 +94,7 @@ function renderFormattedContent(content, searchTerm) {
 
 export default function TypesOfAccountsPage() {
   // 🔹 Definición de secciones dinámicas (puedes agregar más sin cambiar el resto del código)
-  const sections: Section[] = [
+  const sections: Section[] = useMemo(() => [
     {
       id: "section1",
       title: "Sección 1: Comprensión de los mercados e instrumentos financieros",
@@ -280,6 +280,7 @@ export default function TypesOfAccountsPage() {
       ],
     },
     {
+      id: "section4",
       title: "Sección 4: Análisis fundamental",
       lessons: [
         {
@@ -363,6 +364,7 @@ export default function TypesOfAccountsPage() {
       ],
     },
     {
+      id: "section",
       title: "Sección 5: Comercio de criptomonedas",
       lessons: [
         {
@@ -515,7 +517,7 @@ export default function TypesOfAccountsPage() {
       ],
     },
 
-  ];
+  ], []);
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -622,12 +624,12 @@ export default function TypesOfAccountsPage() {
         </section>
       ))}
 
-      <div class="mt-12 w-full px-6 py-6 border-2 rounded-lg bg-background text-foreground">
-          <div class="space-y-4 text-base leading-7 lg:pr-4">
-            <h2 class="text-primary-500 dark:text-primary-400 text-sm font-medium">
+      <div className="mt-12 w-full px-6 py-6 border-2 rounded-lg bg-background text-foreground">
+          <div className="space-y-4 text-base leading-7 lg:pr-4">
+            <h2 className="text-primary-500 dark:text-primary-400 text-sm font-medium">
               * Recuerde que el comercio, especialmente en criptomonedas, puede ser muy volátil y riesgoso. Es fundamental contar con un plan de gestión de riesgos bien pensado y utilizar cuentas de demostración para adquirir experiencia y perfeccionar sus habilidades.
             </h2>
-            <h2 class="text-primary-500 dark:text-primary-400 text-sm font-medium">
+            <h2 className="text-primary-500 dark:text-primary-400 text-sm font-medium">
               * Nunca se apresure a realizar operaciones reales sin la preparación y la práctica adecuadas.
             </h2>
           </div>

@@ -25,7 +25,7 @@ if (redisUrl && redisToken) {
   try {
     redis = new Redis({ url: redisUrl, token: redisToken });
   } catch (err) {
-    console.warn("⚠️ No se pudo inicializar Redis, usando cache en memoria");
+    console.warn("⚠️ No se pudo inicializar Redis, usando cache en memoria", err);
   }
 }
 
@@ -77,9 +77,12 @@ async function safeJson(res: Response) {
   }
 }
 
-function isRateLimitOrError(json: any): boolean {
+// function isRateLimitOrError(json: any): is json
+// function isRateLimitOrError(json: any): boolean {
+function isRateLimitOrError(json: unknown): boolean {
   if (!json || typeof json !== "object") return true;
-  if (json["Note"] || json["Error Message"]) return true;
+  if ("Note" in (json as object)) return true;
+  if ("Error Message" in (json as object)) return true;
   if (Object.keys(json).length === 0) return true;
   return false;
 }
@@ -118,21 +121,21 @@ async function fetchCandles(symbol: string, interval = "60min"): Promise<Candle[
   if (!series) throw new Error("No series found");
 
   const candles = Object.entries(series)
-  .map(([time, v]: [string, any]) => {
+  .map(([time, v]) => {
+    const data = v as Record<string, string>;
     const timestamp = Math.floor(new Date(time.replace(" ", "T") + "Z").getTime() / 1000);
     return {
-      time: timestamp,
-      open: parseFloat(v["1. open"]),
-      high: parseFloat(v["2. high"]),
-      low: parseFloat(v["3. low"]),
-      close: parseFloat(v["4. close"]),
-      volume: parseFloat(v["5. volume"]),
+      time: timestamp.toString(),
+      open: parseFloat(data["1. open"]),
+      high: parseFloat(data["2. high"]),
+      low: parseFloat(data["3. low"]),
+      close: parseFloat(data["4. close"]),
+      volume: parseFloat(data["5. volume"]),
     };
   })
   .reverse();
-
-
-  return candles;
+  // return candles as Candle[];
+  return candles as unknown as Candle[];
 }
 
 /* ---------------------- Simulación ligera (mantiene vivo el gráfico) ---------------------- */

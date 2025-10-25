@@ -1,4 +1,6 @@
 // src/components/landing/AnywhereSection.tsx
+import Image from "next/image";
+
 export default function AnywhereSection() {
   return (
     <section
@@ -14,10 +16,12 @@ export default function AnywhereSection() {
           desde tu computadora, tablet o smartphone, con total seguridad y
           velocidad.
         </p>
-        <img
+        <Image
           src="/images/platform-devices.png"
           alt="Dispositivos BitLance"
           className="mx-auto max-w-3xl rounded-2xl shadow-lg"
+          width={500}
+          height={300}
         />
       </div>
     </section>

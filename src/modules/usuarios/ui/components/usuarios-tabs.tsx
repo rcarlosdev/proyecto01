@@ -10,6 +10,7 @@ export default function UsuariosTabs({ activeTab }: { activeTab: string }) {
   const router = useRouter();
   const pathname = usePathname(); // ✅ obtiene la ruta actual
 
+  // const handleClick = (tab: string) => {
   const handleClick = (tab: string) => {
     router.push(`${pathname}?tab=${tab}`);
   };

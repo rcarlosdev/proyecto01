@@ -39,7 +39,7 @@ export default function TermsPage() {
       2.1 Este Acuerdo se celebra entre <span style={{ color: "var(--amarillo-principal)" }}>BitLance</span>, por un lado, y el Cliente (que puede ser una persona legal o una persona física) que ha completado el procedimiento de apertura de cuenta y ha sido aceptado por <span style={{ color: "var(--amarillo-principal)" }}>BitLance</span>.
     </p>
     <p>
-      La actividad principal de la Compañía es la prestación de servicios de inversión a través de una plataforma de negociación en línea para la negociación de Contratos por Diferencia (la "Plataforma de Negociación"). Cuando nos referimos a "usted" y "su", nos referimos a un usuario registrado de la Plataforma de Negociación o un visitante del Sitio Web. El Cliente confirma que ha leído, entendido, reconocido y aceptado los Términos y Condiciones.
+      La actividad principal de la Compañía es la prestación de servicios de inversión a través de una plataforma de negociación en línea para la negociación de Contratos por Diferencia (la &quot;Plataforma de Negociación&quot;). Cuando nos referimos a &quot;usted&quot; y &quot;su&quot;, nos referimos a un usuario registrado de la Plataforma de Negociación o un visitante del Sitio Web. El Cliente confirma que ha leído, entendido, reconocido y aceptado los Términos y Condiciones.
     </p>
     <p>
       Los presentes Términos y Condiciones se modifican según sea necesario de vez en cuando y es responsabilidad del Cliente mantenerse actualizado de la nueva versión de los mismos revisando el sitio web de la Compañía regularmente.
@@ -48,7 +48,7 @@ export default function TermsPage() {
     <p>2.3 Los Servicios solo están disponibles para, y solo pueden ser utilizados por, individuos o empresas que pueden celebrar contratos legalmente vinculantes bajo la ley aplicable a su país de residencia y contratos legalmente vinculantes bajo la ley aplicable a su lugar exacto de residencia.</p>
     <p>Sin perjuicio de lo anterior, nuestros Servicios y/o el uso de los sistemas electrónicos y/o la Plataforma de Negociación de la Compañía no están disponibles para ninguna persona que:</p>
     <ul className="list-disc pl-5 space-y-1">
-      <li>a) sean menores de 18 años de edad o menores ("Menores") en su jurisdicción;</li>
+      <li>a) sean menores de 18 años de edad o menores (&quot;Menores&quot;) en su jurisdicción;</li>
       <li>b) no sean legalmente competentes o no estén en su sano juicio;</li>
       <li>c) sean ciudadanos o residentes de países de los cuales la Compañía no acepta clientes o tiene prohibido aceptar clientes de dichos países; o</li>
       <li>d) sean empleados, directores, asociados, agentes, socios, parientes o de otra manera relacionados con la Compañía o cualquiera de sus subsidiarias.</li>
@@ -77,12 +77,12 @@ export default function TermsPage() {
       4. DEFINICIONES E INTERPRETACIONES
     </h2>
     <p>4.1 A menos que se indique lo contrario, los Términos que se indican a continuación tendrán los siguientes significados y podrán utilizarse en singular o plural, según corresponda.</p>
-    <p>"Regulaciones aplicables" significará las reglas y regulaciones necesarias según corresponda bajo las leyes de la República de las Islas Marshall.</p>
-    <p>"Precio de venta" significa el precio al que la Compañía está dispuesta a vender un CFD.</p>
-    <p>"Saldo" significa los fondos disponibles en una cuenta de operaciones que pueden utilizarse para negociar instrumentos financieros.</p>
-    <p>"Mejor Ejecución" significa que la Compañía toma todas las medidas razonables para obtener los mejores resultados posibles para sus Clientes.</p>
-    <p>"Precio de oferta" significa el precio al que la Compañía está dispuesta a comprar un CFD.</p>
-    <p>... (continúa con todas las definiciones hasta "Personas reportables en los Estados Unidos")</p>
+    <p>&quot;Regulaciones aplicables&quot; significará las reglas y regulaciones necesarias según corresponda bajo las leyes de la República de las Islas Marshall.</p>
+    <p>&quot;Precio de venta&quot; significa el precio al que la Compañía está dispuesta a vender un CFD.</p>
+    <p>&quot;Saldo&quot; significa los fondos disponibles en una cuenta de operaciones que pueden utilizarse para negociar instrumentos financieros.</p>
+    <p>&quot;Mejor Ejecución&quot; significa que la Compañía toma todas las medidas razonables para obtener los mejores resultados posibles para sus Clientes.</p>
+    <p>&quot;Precio de oferta&quot; significa el precio al que la Compañía está dispuesta a comprar un CFD.</p>
+    <p>... (continúa con todas las definiciones hasta &quot;Personas reportables en los Estados Unidos&quot;)</p>
   </div>
 
   {/* Artículo 5 */}
@@ -181,7 +181,7 @@ export default function TermsPage() {
   <div className="space-y-4">
     <h2 className="text-lg font-semibold text-primary mb-2">10. COMERCIO PROHIBIDO</h2>
     <p>
-      10.1 El Cliente acepta y reconoce que el Servicio prestado por la Empresa al Cliente no es adecuado para ciertas técnicas de negociación comúnmente conocidas como "negociación de arbitraje", "picking/sniping" (Sniping: Situación en la que el Cliente compra o vende prematuramente cerca de los precios fijados). En caso de que el Cliente incurra en dichas técnicas, el Cliente acepta y reconoce que la Empresa podrá, a su elección, tomar una o varias o parte de las siguientes medidas:
+      10.1 El Cliente acepta y reconoce que el Servicio prestado por la Empresa al Cliente no es adecuado para ciertas técnicas de negociación comúnmente conocidas como &quot;negociación de arbitraje&quot;, &quot;picking/sniping&quot; (Sniping: Situación en la que el Cliente compra o vende prematuramente cerca de los precios fijados). En caso de que el Cliente incurra en dichas técnicas, el Cliente acepta y reconoce que la Empresa podrá, a su elección, tomar una o varias o parte de las siguientes medidas:
     </p>
     <ul className="list-disc pl-5 space-y-1">
       <li>a) Cierre de la Cuenta del Cliente;</li>
@@ -214,7 +214,7 @@ export default function TermsPage() {
     12.1 La Empresa se reserva el derecho de aumentar o disminuir el nivel del límite de volumen de negociación para uno o más Instrumentos en cualquier momento y sin previo aviso.
   </p>
   <p className="text-base leading-relaxed">
-    12.2 En caso de que el Cliente intente superar el límite de volumen para cualquiera de los instrumentos descritos anteriormente, la solicitud será automáticamente rechazada y se indicará el mensaje "Fuera de cotización".
+    12.2 En caso de que el Cliente intente superar el límite de volumen para cualquiera de los instrumentos descritos anteriormente, la solicitud será automáticamente rechazada y se indicará el mensaje &quot;Fuera de cotización&quot;.
   </p>
 
   <h2 className="text-lg font-semibold text-primary mb-2">13. SUPUESTOS DE INCUMPLIMIENTO</h2>

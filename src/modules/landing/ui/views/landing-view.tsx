@@ -38,37 +38,38 @@ const MARKETS = {
 
   Commodities: {
     buttons: ["Real Time Futures", "Metals", "Grains", "Softs", "Energy", "Meats"],
-    getUrl: (sub: string) =>
+    // getUrl: (sub: string) =>
+    getUrl: () =>
       `https://api.investing.com/api/financialdata/assets/list/8830,8836,8849,8831,8833,8862,8988,8916,8917,954867?fields-list=name,month,last,high,low,changeOneDay,changeOneDayPercent,time&limit=10`,
   },
 
   Currencies: {
     buttons: ["Majors", "Local"],
-    getUrl: (sub: string) =>
+    getUrl: () =>
       `https://api.investing.com/api/financialdata/homepage/major-currencies?limit=10`,
   },
 
   ETFs: {
     buttons: ["Major ETFs", "Most Active", "Top Gainers", "Equities", "Bonds", "Commodities", "Currencies"],
-    getUrl: (sub: string) =>
+    getUrl: () =>
       `https://api.investing.com/api/financialdata/assets/fundsByDomain/majorEtfs?fields-list=name,last,high,low,changeOneDay,changeOneDayPercent,volumeOneDay,time&limit=10`,
   },
 
   Bonds: {
     buttons: ["Majors"],
-    getUrl: (sub: string) =>
+    getUrl: () =>
       `https://api.investing.com/api/financialdata/assets/pairsByScreen/6?fields-list=name,yield,prev,high,low,changeOneDay,changeOneDayPercent,time&limit=10`,
   },
 
   Funds: {
     buttons: ["Majors", "Equities", "Commodities", "Bonds"],
-    getUrl: (sub: string) =>
+    getUrl: () =>
       `https://api.investing.com/api/financialdata/assets/fundsByDomain/major?fields-list=name,symbol,last,changeOneDay,changeOneDayPercent,time&limit=10`,
   },
 
   Cryptocurrency: {
     buttons: ["Majors", "Top Gainers", "Top Losers", "Stocks", "ETFs"],
-    getUrl: (sub: string) =>
+    getUrl: () =>
       `https://api.investing.com/api/financialdata/homepage/major-cryptocurrencies?limit=10`,
   },
 };
@@ -87,14 +88,14 @@ export default function LandingView() {
     if (marketFromParams && marketFromParams !== mainMarket) {
       setMainMarket(marketFromParams);
     }
-  }, [searchParams]);
+  }, [searchParams, mainMarket]);
 
   // 🔹 Función para formatear valores
-  const formatNum = (val: any) =>
-    val !== undefined && val !== null && !isNaN(val) ? Number(val).toFixed(2) : "-";
+  const formatNum = (val: unknown) =>
+    val !== undefined && val !== null && !isNaN(Number(val)) ? Number(val).toFixed(2) : "-";
 
-  const formatPct = (val: any) =>
-    val !== undefined && val !== null && !isNaN(val) ? `${Number(val).toFixed(2)}%` : "-";
+  const formatPct = (val: unknown) =>
+    val !== undefined && val !== null && !isNaN(Number(val)) ? `${Number(val).toFixed(2)}%` : "-";
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -126,17 +127,18 @@ export default function LandingView() {
           <MarketSection
             title={mainMarket}
             buttons={marketConfig.buttons}
-            getUrl={marketConfig.getUrl}
+            getUrl={() => marketConfig.getUrl("")}
             renderRow={(item) => ({
-              name: item.Name ?? item.PairName ?? item.Symbol ?? "—",
-              last: formatNum(item.Last ?? item.LastAsk ?? item.LastBid),
+              name: item.Name ?? item.Symbol ?? "—",
+              last: formatNum(item.Last),
               high: formatNum(item.High),
               low: formatNum(item.Low),
-              chg: formatNum(item.Chg ?? item.Change),
-              chgPct: formatPct(item.ChgPct ?? item.ChangePct),
+              chg: formatNum(item.Chg),
+              chgPct: formatPct(item.ChgPct),
               time: item.Time ?? "",
               url: item.Url ?? "",
             })}
+            onMarketChange={() => {}} // 👈 agrega esta línea
           />
         </div>
 

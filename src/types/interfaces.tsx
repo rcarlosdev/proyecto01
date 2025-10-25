@@ -1,3 +1,4 @@
+// src/types/interfaces.tsx
 export interface User {
   id: string;
   name: string;
@@ -10,3 +11,4 @@ export interface User {
   createdAt: string;
   updatedAt: string;
 };
+

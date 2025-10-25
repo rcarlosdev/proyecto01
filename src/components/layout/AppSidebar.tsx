@@ -19,7 +19,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+// import { useState } from "react";
 
 import {
   Sidebar,
@@ -52,7 +52,7 @@ const adminItems = [
 
 const AppSidebar = () => {
   const pathname = usePathname();
-  const [openAdmin, setOpenAdmin] = useState(false);
+  // const [openAdmin, setOpenAdmin] = useState(false);
 
   return (
     <Sidebar>
