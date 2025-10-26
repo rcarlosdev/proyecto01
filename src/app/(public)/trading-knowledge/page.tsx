@@ -63,13 +63,6 @@ function renderFormattedContent(content: string, searchTerm: string) {
     // const paddingLeft = `${indentLevel * 1.25}rem`;
     const paddingLeft = `${Math.max(indentLevel - 8, 0) * 1.25}rem`;
 
-    // Detectar si es título o subtítulo
-    // const isSubtitle =
-    //   /^(\d+️⃣|\*{0,2}-|\*{0,2}\d+\.)/.test(trimmed) ||
-    //   trimmed.startsWith("<strong>") ||
-    //   trimmed.match(/^(\d+️⃣)/);
-    // const isSubtitle = (/^(\d+️⃣|\*{2}-|\*{0,2}\d+\.)/.test(trimmed) || trimmed.startsWith("<strong>"));
-    // Solo considerar subtítulo si está en negrita (strong) o con **- ...
     const isSubtitle = trimmed.startsWith("<strong>");
 
 
