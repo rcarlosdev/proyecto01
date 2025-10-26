@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 
-// Tipos
+// 🔹 Tipos
 type Candle = {
-  time: string;
+  time: number; // siempre UNIX timestamp (segundos)
   open: number;
   high: number;
   low: number;
@@ -11,12 +11,12 @@ type Candle = {
   volume?: number;
 };
 
-// Configuración general
+// 🔹 Configuración general
 const API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 const CACHE_TTL_SEC = 300; // 5 min
 const CACHE_TTL_MS = CACHE_TTL_SEC * 1000;
 
-// Redis + fallback en memoria
+// 🔹 Redis + fallback en memoria
 let redis: Redis | null = null;
 const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
 const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -37,10 +37,8 @@ async function getCache(key: string): Promise<Candle[] | null> {
     try {
       const cached = await redis.get(key);
       if (cached) {
-        // Si ya es objeto, úsalo directamente
         const parsed =
           typeof cached === "string" ? JSON.parse(cached) : cached;
-
         if (Date.now() - parsed.ts < CACHE_TTL_MS) return parsed.data;
       }
     } catch (err) {
@@ -55,7 +53,6 @@ async function getCache(key: string): Promise<Candle[] | null> {
 
 async function setCache(key: string, data: Candle[]): Promise<void> {
   const wrapper = { ts: Date.now(), data };
-
   if (redis) {
     try {
       await redis.set(key, wrapper, { ex: CACHE_TTL_SEC });
@@ -64,7 +61,6 @@ async function setCache(key: string, data: Candle[]): Promise<void> {
       console.warn("Redis set error:", err);
     }
   }
-
   memoryCache.set(key, wrapper);
 }
 
@@ -88,6 +84,8 @@ function isRateLimitOrError(json: any): boolean {
 function generateMockCandles(count = 100, base = 100): Candle[] {
   const candles: Candle[] = [];
   let price = base;
+  const now = Date.now();
+
   for (let i = 0; i < count; i++) {
     const open = price;
     const change = (Math.random() - 0.5) * 2; // ±1%
@@ -95,8 +93,12 @@ function generateMockCandles(count = 100, base = 100): Candle[] {
     const close = price;
     const high = Math.max(open, close) * (1 + Math.random() * 0.002);
     const low = Math.min(open, close) * (1 - Math.random() * 0.002);
+
+    // 🕒 Convertir siempre a UNIX (segundos)
+    const time = Math.floor((now - (count - i) * 60000) / 1000);
+
     candles.push({
-      time: new Date(Date.now() - (count - i) * 60000).toISOString(),
+      time,
       open,
       high,
       low,
@@ -104,6 +106,7 @@ function generateMockCandles(count = 100, base = 100): Candle[] {
       volume: Math.floor(1000 + Math.random() * 500),
     });
   }
+
   return candles;
 }
 
@@ -118,24 +121,23 @@ async function fetchCandles(symbol: string, interval = "60min"): Promise<Candle[
   if (!series) throw new Error("No series found");
 
   const candles = Object.entries(series)
-  .map(([time, v]: [string, any]) => {
-    const timestamp = Math.floor(new Date(time.replace(" ", "T") + "Z").getTime() / 1000);
-    return {
-      time: timestamp,
-      open: parseFloat(v["1. open"]),
-      high: parseFloat(v["2. high"]),
-      low: parseFloat(v["3. low"]),
-      close: parseFloat(v["4. close"]),
-      volume: parseFloat(v["5. volume"]),
-    };
-  })
-  .reverse();
-
+    .map(([time, v]: [string, any]) => {
+      const timestamp = Math.floor(new Date(time.replace(" ", "T") + "Z").getTime() / 1000);
+      return {
+        time: timestamp,
+        open: parseFloat(v["1. open"]),
+        high: parseFloat(v["2. high"]),
+        low: parseFloat(v["3. low"]),
+        close: parseFloat(v["4. close"]),
+        volume: parseFloat(v["5. volume"]),
+      };
+    })
+    .reverse();
 
   return candles;
 }
 
-/* ---------------------- Simulación ligera (mantiene vivo el gráfico) ---------------------- */
+/* ---------------------- Simulación ligera ---------------------- */
 function simulateCandles(candles: Candle[]): Candle[] {
   return candles.map((c) => {
     const delta = (Math.random() - 0.5) * 0.001; // ±0.1%
@@ -145,6 +147,7 @@ function simulateCandles(candles: Candle[]): Candle[] {
       close: Number(newClose.toFixed(4)),
       high: Math.max(c.high, newClose),
       low: Math.min(c.low, newClose),
+      // time se mantiene igual (UNIX)
     };
   });
 }

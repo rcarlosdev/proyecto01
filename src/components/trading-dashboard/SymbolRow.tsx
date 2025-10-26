@@ -1,6 +1,7 @@
 // src/components/SymbolRow.tsx
 "use client";
 
+import { useMarketStore } from "@/stores/useMarketStore";
 // import { Button } from "@/components/ui/button";
 import { MarketQuote } from "@/types/interfaces";
 // import { useMarketStore } from "@/stores/useMarketStore";
@@ -14,8 +15,14 @@ export default function SymbolRow({
 }: MarketQuote) {
   // const { toggleFavorite } = useMarketStore();
 
+  const { setSelectedSymbol } = useMarketStore();
+
+
   return (
-    <div className="flex items-center justify-between p-4 border-b hover:bg-muted/30 transition-colors">
+    <div
+      className="flex items-center justify-between p-4 border-b hover:bg-muted/30 transition-colors"
+      onClick={() => setSelectedSymbol(symbol)}
+    >
       <div className="flex items-center space-x-3 flex-1">
         {/* <Button
           variant="ghost"
@@ -29,7 +36,7 @@ export default function SymbolRow({
         /> */}
 
         <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 bg-gray-200 rounded-full" />
+          <div className="w-6 h-6 bg-gray-300 rounded-full" />
         </div>
 
         <div>

@@ -38,7 +38,7 @@ export function FilterSelect() {
         onValueChange={handleChange}
       >
         <SelectTrigger
-          className="w-full bg-background border border-yellow-400/40 text-yellow-300 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 rounded-lg"
+          className="w-full"
         >
           <SelectValue placeholder="Seleccionar mercado" />
         </SelectTrigger>
