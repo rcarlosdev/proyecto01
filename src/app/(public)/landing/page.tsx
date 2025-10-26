@@ -8,6 +8,7 @@ import LeverageSection from "@/components/landing/LeverageSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import MarketSection from "@/components/landing/MarketSection";
 import { MARKETS } from "@/config/markets";
+import NewsSection from "@/components/landing/NewsSection";
 
 // 🔹 Define la interfaz para los items del mercado
 interface MarketItem {
@@ -83,7 +84,9 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
+
       <HeroSection />
+      <NewsSection />
       <AnywhereSection />
       <LeverageSection />
 
