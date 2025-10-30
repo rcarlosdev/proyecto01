@@ -1,3 +1,4 @@
+// src/app/(app)/(dashboard)/admin/dashboard/page.tsx
 export default function Retiros() {
   return (
     <div>
