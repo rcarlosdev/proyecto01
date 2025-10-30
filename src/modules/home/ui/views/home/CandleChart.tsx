@@ -22,7 +22,7 @@ export function CandleChart() {
       timeScale: { borderColor: "#1e293b" },
     });
 
-    const candleSeries = chart.addCandlestickSeries({
+    const candleSeries = (chart as any).addCandlestickSeries({
       upColor: "#22c55e",
       downColor: "#ef4444",
       borderVisible: false,

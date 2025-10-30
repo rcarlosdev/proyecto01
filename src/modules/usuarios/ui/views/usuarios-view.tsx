@@ -3,8 +3,8 @@
 
 import UsuariosTabs from "../components/usuarios-tabs";
 import GeneralTab from "../components/tabs/general-tab";
-import RolesTab from "../components/tabs/roles-tab";
-import PermisosTab from "../components/tabs/permisos-tab";
+import { RolesTab } from "../components/tabs/roles-tab";
+import { PermisosTab } from "../components/tabs/permisos-tab";
 
 interface UsuariosViewProps {
   activeTab: string;
