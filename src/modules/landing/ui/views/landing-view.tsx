@@ -38,7 +38,6 @@ const MARKETS = {
 
   Commodities: {
     buttons: ["Real Time Futures", "Metals", "Grains", "Softs", "Energy", "Meats"],
-    // getUrl: (sub: string) =>
     getUrl: () =>
       `https://api.investing.com/api/financialdata/assets/list/8830,8836,8849,8831,8833,8862,8988,8916,8917,954867?fields-list=name,month,last,high,low,changeOneDay,changeOneDayPercent,time&limit=10`,
   },
@@ -90,7 +89,6 @@ export default function LandingView() {
     }
   }, [searchParams, mainMarket]);
 
-  // 🔹 Función para formatear valores
   const formatNum = (val: unknown) =>
     val !== undefined && val !== null && !isNaN(Number(val)) ? Number(val).toFixed(2) : "-";
 
@@ -104,7 +102,6 @@ export default function LandingView() {
           <header className="flex flex-col gap-2 justify-between mb-4">
             <h2 className="text-2xl font-semibold">Markets</h2>
 
-            {/* Selector mercado principal */}
             <div className="flex gap-2 flex-wrap">
               {Object.keys(MARKETS).map((m) => (
                 <button
@@ -123,7 +120,6 @@ export default function LandingView() {
             </div>
           </header>
 
-          {/* MarketSection maneja botones internos y datos */}
           <MarketSection
             title={mainMarket}
             buttons={marketConfig.buttons}
@@ -138,7 +134,7 @@ export default function LandingView() {
               time: item.Time ?? "",
               url: item.Url ?? "",
             })}
-            onMarketChange={() => {}} // 👈 agrega esta línea
+            onMarketChange={() => {}}
           />
         </div>
 
@@ -151,7 +147,6 @@ export default function LandingView() {
               <button className="text-muted-foreground hover:text-[var(--amarillo-principal)]">Losers</button>
             </div>
 
-            {/* Tabla lateral estática */}
             <ul className="space-y-1 text-sm">
               <li className="flex justify-between border-b py-1">
                 <span>NVDA</span>

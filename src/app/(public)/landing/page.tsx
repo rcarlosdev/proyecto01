@@ -6,6 +6,7 @@ import HeroSection from "@/components/landing/HeroSection";
 import AnywhereSection from "@/components/landing/AnywhereSection";
 import LeverageSection from "@/components/landing/LeverageSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
+import { Suspense } from "react";
 import MarketSection from "@/components/landing/MarketSection";
 import { MARKETS } from "@/config/markets";
 import NewsSection from "@/components/landing/NewsSection";
@@ -105,15 +106,17 @@ export default function LandingPage() {
           </p>
 
           {/* 🔹 MarketSection aislado en cliente */}
-          {marketConfig && (
-            <MarketSection
-              title={mainMarket}
-              buttons={marketConfig.buttons}
-              getUrl={marketConfig.getUrlMarkets}
-              renderRow={renderRow}
-              onMarketChange={setMainMarket}
-            />
-          )}
+          <Suspense fallback={<div>Cargando mercados...</div>}>
+            {marketConfig && (
+              <MarketSection
+                title={mainMarket}
+                buttons={marketConfig.buttons}
+                getUrl={marketConfig.getUrlMarkets}
+                renderRow={renderRow}
+                onMarketChange={setMainMarket}
+              />
+            )}
+          </Suspense>
         </div>
       </section>
 
