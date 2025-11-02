@@ -1,22 +1,17 @@
 // src/components/SymbolRow.tsx
 "use client";
 
-import { useMarketStore } from "@/stores/useMarketStore";
-// import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { MarketQuote } from "@/types/interfaces";
-// import { useMarketStore } from "@/stores/useMarketStore";
-// import { Star } from "lucide-react";
-
+import { useMarketStore } from "@/stores/useMarketStore";
 
 export default function SymbolRow({
   symbol,
   price,
   change
 }: MarketQuote) {
-  // const { toggleFavorite } = useMarketStore();
 
   const { setSelectedSymbol } = useMarketStore();
-
 
   return (
     <div
@@ -24,25 +19,17 @@ export default function SymbolRow({
       onClick={() => setSelectedSymbol(symbol)}
     >
       <div className="flex items-center space-x-3 flex-1">
-        {/* <Button
-          variant="ghost"
-          size="icon"
-          // onClick={() => toggleFavorite(symbol)}
-          className="text-yellow-500"
-        >
-        </Button> */}
-        {/* <Star
-          className={`h-5 w-5 ${isFavorite ? "fill-yellow-500" : "fill-none"}`}
-        /> */}
-
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 bg-gray-300 rounded-full" />
+        <div className="w-8 h-8 rounded-full overflow-hidden">
+          <Image
+            src={`/symbols/${symbol}.png`}
+            alt={symbol}
+            width={32}
+            height={32}
+            priority={false} // ✅ no fuerza recarga
+            loading="lazy"  // ✅ solo carga cuando es visible
+          />
         </div>
-
-        <div>
-          <p className="font-medium text-sm">{symbol}</p>
-          {/* <p className="text-xs text-muted-foreground">{name}</p> */}
-        </div>
+        <p className="font-medium text-sm">{symbol}</p>
       </div>
 
       <div className="flex items-center space-x-4 flex-1 justify-end">

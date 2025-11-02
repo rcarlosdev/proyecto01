@@ -39,7 +39,7 @@ const SearchBar = () => {
           />
         </svg>
         <Input
-          type="text"
+          type="search"
           placeholder="Búsqueda"
           className="w-full pl-12 pr-4 py-2"
           onChange={(e) => handleSearch(e)}
