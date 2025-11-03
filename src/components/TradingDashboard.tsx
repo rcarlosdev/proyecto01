@@ -2,7 +2,6 @@
 
 import { MARKETS } from '@/lib/markets';
 import { MarketQuote } from '@/types/interfaces';
-import AlphaCandleChart from './AlphaCandleChart';
 import React, { useCallback, useEffect } from 'react';
 import SearchBar from './trading-dashboard/SearchBar';
 import SymbolList from './trading-dashboard/SymbolList';
@@ -10,6 +9,7 @@ import { useMarketStore } from '@/stores/useMarketStore';
 import AccountInfo from './trading-dashboard/AccountInfo';
 import MarketHeader from './trading-dashboard/MarketHeader';
 import { FilterSelect } from './trading-dashboard/FilterSelect';
+import AlphaCandleChart from './trading-dashboard/AlphaCandleChart';
 
 type Market = typeof MARKETS[number];
 

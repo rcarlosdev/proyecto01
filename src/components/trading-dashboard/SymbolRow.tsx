@@ -17,7 +17,7 @@ export default function SymbolRow({
 
   return (
     <div
-      className="flex items-center justify-between p-4 border-b hover:bg-muted/30 transition-colors cursor-pointer"
+      className="flex items-center justify-between p-4 border-b border-gray-100/35 hover:opacity-80 transition-colors cursor-pointer"
       onClick={() => setSelectedSymbol(symbol)}
     >
       <div className="flex items-center space-x-3 flex-1">

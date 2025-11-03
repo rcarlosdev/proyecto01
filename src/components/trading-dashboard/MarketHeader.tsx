@@ -7,8 +7,6 @@ import { ArrowDown } from "lucide-react";
 export default function MarketHeader() {
   const { dataMarket } = useMarketStore();
 
-  console.log({dataMarket});
-
   return (
     <div className="flex justify-between items-center p-4 border-b rounded-t-md">
       {/* Izquierda: título y acciones */}
