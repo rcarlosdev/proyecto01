@@ -12,6 +12,7 @@ import { useUserStore } from "@/stores/useUserStore";
 import { Label } from "@/components/ui/label";
 import ActionButton from "@/components/ui/ActionButton";
 import { PanelLeftIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
 
 export function Navbar() {

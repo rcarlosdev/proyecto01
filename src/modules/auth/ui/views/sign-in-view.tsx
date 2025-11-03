@@ -23,7 +23,7 @@ import { authClient } from "@/lib/auth-client";
 import { useForm } from "react-hook-form";
 import { OctagonAlertIcon } from "lucide-react";
 import GoogleIcon from "@/../public/icons/google-icon";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 
 
 const formSchema = z.object({
@@ -41,7 +41,7 @@ const formSchema = z.object({
 });
 
 export const SignInView = () => {
-  const route = useRouter();
+  // const route = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);

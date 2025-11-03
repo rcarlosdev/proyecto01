@@ -1,8 +1,6 @@
 // src/app/(app)/(dashboard)/admin/usuarios/page.tsx
-import UsuariosView from "@/modules/usuarios/ui/views/usuarios-view";
+import UsuariosListView from "@/modules/usuarios/ui/views/usuarios-list-view";
 
-export default function Page({ searchParams }: { searchParams: { tab?: string } }) {
-  const activeTab = searchParams.tab ?? "General";
-
-  return <UsuariosView activeTab={activeTab} />;
+export default function Page() {
+  return <UsuariosListView />;
 }
