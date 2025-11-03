@@ -22,7 +22,7 @@ type ChartType = "candlestick" | "line" | "area";
 
 export default function AlphaCandleChart({
   symbol = "EURUSD",
-  interval = "60min",
+  interval = "5min",
 }: {
   symbol?: string | null;
   interval?: string;

@@ -43,7 +43,7 @@ export function FilterSelect() {
           <SelectValue placeholder="Seleccionar mercado" />
         </SelectTrigger>
 
-        <SelectContent className="bg-background text-yellow-300 border border-yellow-500/20">
+        <SelectContent className="text-yellow-300 border border-yellow-500/20">
           {/* <SelectItem value="all">Todos</SelectItem> */}
           {markets.map((market) => (
             <SelectItem key={market} value={market}>

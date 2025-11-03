@@ -18,7 +18,7 @@ const SymbolList = () => {
   });
 
   return (
-    <div className="h-[580px] rounded-lg border border-yellow-400/30 bg-background shadow-sm">
+    <div className="shadow-sm">
       {/* Estado de carga */}
       {isLoading ? (
         <div className="p-4 space-y-3">
@@ -33,7 +33,7 @@ const SymbolList = () => {
           ))}
         </div>
       ) : (
-        <ScrollArea className="h-full">
+        <ScrollArea className="h-80">
           {filteredMarkets.length > 0 ? (
             filteredMarkets.map((market, index) => (
               <SymbolRow key={index} {...market} />
