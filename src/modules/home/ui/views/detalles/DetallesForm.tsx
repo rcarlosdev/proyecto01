@@ -35,7 +35,6 @@ export default function ProfileForm() {
     defaultValues: {
       name: "",
       email: "",
-      // role: "",
       status: "",
       balance: "",
     },
@@ -43,7 +42,15 @@ export default function ProfileForm() {
 
   // Pre-cargar datos del store
   useEffect(() => {
-    if (user) form.reset(user);
+    if (user) {
+      // Mapear User a UserFormData y convertir balance a string para que coincidan los tipos
+      form.reset({
+        name: user.name ?? "",
+        email: user.email ?? "",
+        status: user.status ?? "",
+        balance: user.balance != null ? String(user.balance) : "",
+      });
+    }
   }, [user, form]);
 
   const onSubmit = async (values: UserFormData) => {
@@ -103,21 +110,6 @@ export default function ProfileForm() {
               </FormItem>
             )}
           />
-
-          {/* Rol */}
-          {/* <FormField
-            control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Rol</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          /> */}
 
           {/* Estado */}
           <FormField
