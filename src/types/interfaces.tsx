@@ -11,3 +11,14 @@ export interface User {
   createdAt: string;
   updatedAt: string;
 };
+
+export interface MarketQuote {
+  symbol: string;
+  price: number;
+  high?: number;
+  low?: number;
+  previousClose?: number;
+  change?: number;
+  changePercent?: number;
+  latestTradingDay?: string;
+}
