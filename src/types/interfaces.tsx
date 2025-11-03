@@ -8,8 +8,8 @@ export interface User {
   role: string;
   status: string;
   balance: number;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export interface MarketQuote {
