@@ -29,21 +29,21 @@ export function FilterSelect() {
 
   return (
     <div className="w-full">
-      <label className="block mb-2 text-sm font-medium text-yellow-400">
+      {/* <label className="block mb-2 text-sm font-medium">
         Seleccionar mercado
-      </label>
+      </label> */}
 
       <Select
         value={selectedMarket || "all"}
         onValueChange={handleChange}
       >
         <SelectTrigger
-          className="w-full"
+          className="w-full bg-background border border-gray-50/80 text-yellow-300"
         >
           <SelectValue placeholder="Seleccionar mercado" />
         </SelectTrigger>
 
-        <SelectContent className="text-yellow-300 border border-yellow-500/20">
+        <SelectContent className="text-yellow-300 border border-gray-50/80 bg-background">
           {/* <SelectItem value="all">Todos</SelectItem> */}
           {markets.map((market) => (
             <SelectItem key={market} value={market}>

@@ -41,7 +41,7 @@ const SearchBar = () => {
         <Input
           type="search"
           placeholder="Búsqueda"
-          className="w-full pl-12 pr-4 py-2"
+          className="w-full pl-12 pr-4 py-2 border border-gray-50/80 bg-background"
           onChange={(e) => handleSearch(e)}
         />
       </div>
