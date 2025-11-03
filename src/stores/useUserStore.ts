@@ -1,6 +1,7 @@
 // stores/useUserStore.ts
 import { create } from "zustand";
-import type { Session, User } from "better-auth"; // Asegúrate de tener los tipos exportados
+import type { Session } from "better-auth"; // Asegúrate de tener los tipos exportados
+import type { User } from "@/types/interfaces";
 
 interface UserState {
   user: User | null;

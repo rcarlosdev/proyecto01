@@ -1,19 +1,9 @@
 // src/components/MarketTable.tsx
 'use client';
+import { MARKETS } from '@/lib/markets';
+import { MarketQuote } from '@/types/interfaces';
 import { useEffect, useState } from 'react';
 
-type Quote = {
-  symbol: string;
-  price: number;
-  high?: number;
-  low?: number;
-  previousClose?: number;
-  change?: number;
-  changePercent?: number;
-  latestTradingDay?: string;
-};
-
-const MARKETS = ['indices','acciones','commodities','crypto','fx','all'] as const;
 type Market = typeof MARKETS[number];
 
 function fmt(n?: number, digits = 2) {
@@ -23,7 +13,7 @@ function fmt(n?: number, digits = 2) {
 
 export default function MarketTable() {
   const [market, setMarket] = useState<Market>('indices');
-  const [data, setData] = useState<Quote[] | null>(null);
+  const [data, setData] = useState<MarketQuote[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
@@ -35,7 +25,7 @@ export default function MarketTable() {
       setError(null);
       const res = await fetch(`/api/markets?market=${encodeURIComponent(m)}`);
       if (!res.ok) throw new Error(`Status ${res.status}`);
-      const json: Quote[] = await res.json();
+      const json: MarketQuote[] = await res.json();
       setData(json);
       setLastUpdated(Date.now());
     } catch (err: unknown) {
