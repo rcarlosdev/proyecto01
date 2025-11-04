@@ -342,7 +342,6 @@ export async function GET(request: Request) {
   const market = (url.searchParams.get('market') || 'indices').toLowerCase();
   const fromLanding = url.searchParams.get('from') === 'landing';
 
-  console.log('Market:', market, 'fromLanding:', fromLanding);
 
   
   if (fromLanding) {
@@ -373,14 +372,11 @@ export async function GET(request: Request) {
       const subMarket = (marketData as Record<string, { getUrlMarkets?: () => string }>)[subKey];
       if (subMarket?.getUrlMarkets) {
         urlApi = subMarket.getUrlMarkets();
-        console.log(`Using sub-market API [${subKey}]:`, urlApi);
       } else {
         urlApi = marketData.getUrlMarkets();
-        console.log(`Using general market API [${marketParam}]:`, urlApi);
       }
     } else {
       urlApi = marketData.getUrlMarkets();
-      console.log(`Using general market API [${marketParam}]:`, urlApi);
     }
 
     try {

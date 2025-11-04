@@ -23,7 +23,6 @@ export default function UsuarioDetailView({ usuarioId, activeTab }: UsuarioDetai
   // En una app real, aquí harías fetch del usuario por ID
   useEffect(() => {
     // Simular carga de datos del usuario
-    console.log("Cargando datos del usuario:", usuarioId);
   }, [usuarioId]);
 
   const renderTabContent = () => {

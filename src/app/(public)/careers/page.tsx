@@ -43,7 +43,6 @@ export default function ContactFormView() {
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setLoading(true);
-    console.log("Datos enviados:", data);
     setTimeout(() => setLoading(false), 1000);
   };
 

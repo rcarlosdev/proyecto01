@@ -91,7 +91,6 @@ export default function AlphaCandleChart({
       chartRef.current = chart;
       setIsChartReady(true);
       
-      console.log('Chart inicializado correctamente');
     } catch (error) {
       console.error('Error al inicializar chart:', error);
       setIsChartReady(false);
@@ -346,7 +345,6 @@ export default function AlphaCandleChart({
         // Configurar eventos del crosshair después de crear la serie
         setupCrosshairEvents();
         
-        console.log(`Serie ${chartType} renderizada correctamente`);
       }
     } catch (error) {
       console.error('Error al renderizar serie:', error);
