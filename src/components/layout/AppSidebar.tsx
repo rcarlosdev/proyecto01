@@ -19,8 +19,6 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-// import { useState } from "react";
-
 import {
   Sidebar,
   SidebarContent,
@@ -31,7 +29,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-// 🧭 Menú lateral principal
 const items = [
   { title: "Plataforma Trading", url: "/", icon: LineChart },
   { title: "Mis Cuentas", url: "/cuentas", icon: User },
@@ -43,7 +40,6 @@ const items = [
   { title: "Transacciones financieras", url: "/transacciones", icon: TrendingUp },
 ];
 
-// 🔹 Sección Administrar (colapsable)
 const adminItems = [
   { title: "Usuarios", url: "/admin/usuarios", icon: Users },
   { title: "Movimientos", url: "/admin/movimientos", icon: Activity },
@@ -52,7 +48,7 @@ const adminItems = [
 
 const AppSidebar = () => {
   const pathname = usePathname();
-  // const [openAdmin, setOpenAdmin] = useState(false);
+  console.log("Current pathname:", pathname);
 
   return (
     <Sidebar>
@@ -84,15 +80,8 @@ const AppSidebar = () => {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link
-                      href={item.url}
-                      className={`flex items-center gap-3 px-4 py-2 text-sm rounded-md transition-colors ${
-                        pathname === item.url
-                          ? "bg-border text-yellow-400"
-                          : "hover:bg-border hover:text-yellow-400"
-                      }`}
-                    >
+                  <SidebarMenuButton asChild isActive={pathname === item.url}>
+                    <Link href={item.url}>
                       <item.icon className="w-5 h-5" />
                       <span>{item.title}</span>
                     </Link>
@@ -102,55 +91,47 @@ const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
         {/* ⚙️ Grupo Administrar (colapsable) */}
-        <SidebarGroup className="">
+        <SidebarGroup>
           <SidebarGroupContent>
-            <details className="group">
+            <details className="group" open={pathname.startsWith("/admin")}>
               <summary
-                className={`
-                  flex justify-between items-center cursor-pointer px-4 py-2 text-sm font-semibold rounded-md transition
+                className={`flex justify-between items-center cursor-pointer px-4 py-2 text-sm font-semibold rounded-md transition
                   hover:bg-border
-                  text-white group-open:text-[var(--amarillo-principal)]
-                `}
+                  text-sidebar-foreground group-open:text-[var(--amarillo-principal)]`}
               >
-                <div
-                  className={`
-                    flex items-center gap-2 transition-colors
-                    text-white group-open:text-[var(--amarillo-principal)]
-                  `}
-                >
+                <div className="flex items-center gap-2">
                   <Activity className="w-5 h-5 transition-colors" />
                   <span>Administrar</span>
                 </div>
                 <ChevronDown
-                  className={`
-                    w-4 h-4 transition-transform duration-300
-                    text-white group-open:text-[var(--amarillo-principal)] group-open:rotate-180
-                  `}
+                  className={`w-4 h-4 transition-transform duration-300 group-open:rotate-180 text-sidebar-foreground group-open:text-[var(--amarillo-principal)]`}
                 />
               </summary>
 
-              <ul className="mt-2 space-y-1 pl-8">
-                {adminItems.map((item) => (
-                  <li key={item.title}>
-                    <Link
-                      href={item.url}
-                      className={`flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
-                        pathname === item.url
-                          ? "bg-border text-yellow-400"
-                          : "hover:bg-border hover:text-yellow-400 text-white"
-                      }`}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              {/* ⚙️ Grupo Administrar (colapsable) */}
+              <div className="mt-2 pl-5">
+                <SidebarMenu>
+                  {adminItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname === item.url || pathname.startsWith(`${item.url}/`)}
+                        className="text-sm"
+                      >
+                        <Link href={item.url}>
+                          <item.icon className="w-5 h-5" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </div>
             </details>
           </SidebarGroupContent>
         </SidebarGroup>
-
       </SidebarContent>
     </Sidebar>
   );

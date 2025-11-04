@@ -18,53 +18,51 @@ type Permiso = {
   descripcion: string;
 };
 
-// export default function PermisosTab({ usuarioId }: PermisosTabProps) {
-export function PermisosTab({ }: PermisosTabProps) {
+export function PermisosTab({ usuarioId }: PermisosTabProps) {
   const [permisos] = useState<Permiso[]>([
     // Trading
     { id: "operar", nombre: "Operar", categoria: "trading", descripcion: "Realizar operaciones" },
     { id: "limite_alto", nombre: "Límite Alto", categoria: "trading", descripcion: "Operar con límites elevados" },
     { id: "mercado_forex", nombre: "Mercado Forex", categoria: "trading", descripcion: "Acceso a mercado Forex" },
     { id: "mercado_cripto", nombre: "Mercado Cripto", categoria: "trading", descripcion: "Acceso a mercado Cripto" },
-    
+
     // Análisis
     { id: "graficos_avanzados", nombre: "Gráficos Avanzados", categoria: "analisis", descripcion: "Herramientas de análisis técnico" },
     { id: "datos_historicos", nombre: "Datos Históricos", categoria: "analisis", descripcion: "Acceso a datos históricos completos" },
     { id: "reportes_detallados", nombre: "Reportes Detallados", categoria: "analisis", descripcion: "Generar reportes avanzados" },
-    
+
     // Administración
     { id: "gestion_usuarios", nombre: "Gestión de Usuarios", categoria: "admin", descripcion: "Administrar usuarios del sistema" },
     { id: "config_sistema", nombre: "Configuración Sistema", categoria: "admin", descripcion: "Modificar configuración global" },
     { id: "ver_logs", nombre: "Ver Logs", categoria: "admin", descripcion: "Acceso a logs del sistema" },
-    
+
     // Soporte
     { id: "soporte_usuario", nombre: "Soporte a Usuarios", categoria: "soporte", descripcion: "Brindar soporte técnico" },
-    { id: "ver_tickets", nombre: "Ver Tickets", categoria: "soporte", descripcion: "Acceso a tickets de soporte" }
+    { id: "ver_tickets", nombre: "Ver Tickets", categoria: "soporte", descripcion: "Acceso a tickets de soporte" },
   ]);
 
   const [permisosUsuario, setPermisosUsuario] = useState<string[]>([
-    "operar", "graficos_avanzados", "datos_historicos"
+    "operar", "graficos_avanzados", "datos_historicos",
   ]);
 
   const [busqueda, setBusqueda] = useState("");
 
   const togglePermiso = (permisoId: string) => {
-    setPermisosUsuario(prev => 
-      prev.includes(permisoId) 
-        ? prev.filter(id => id !== permisoId)
+    setPermisosUsuario((prev) =>
+      prev.includes(permisoId)
+        ? prev.filter((id) => id !== permisoId)
         : [...prev, permisoId]
     );
   };
 
-  const permisosFiltrados = permisos.filter(permiso =>
-    permiso.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    permiso.descripcion.toLowerCase().includes(busqueda.toLowerCase())
+  const permisosFiltrados = permisos.filter(
+    (permiso) =>
+      permiso.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+      permiso.descripcion.toLowerCase().includes(busqueda.toLowerCase())
   );
 
   const permisosPorCategoria = permisosFiltrados.reduce((acc, permiso) => {
-    if (!acc[permiso.categoria]) {
-      acc[permiso.categoria] = [];
-    }
+    if (!acc[permiso.categoria]) acc[permiso.categoria] = [];
     acc[permiso.categoria].push(permiso);
     return acc;
   }, {} as Record<string, Permiso[]>);
@@ -73,46 +71,58 @@ export function PermisosTab({ }: PermisosTabProps) {
     trading: "Trading",
     analisis: "Análisis",
     admin: "Administración",
-    soporte: "Soporte"
+    soporte: "Soporte",
   };
 
   return (
     <div className="space-y-6">
-      {/* Resumen de Permisos */}
-      <Card>
+      {/* === RESUMEN === */}
+      <Card className="border-l-4 border-yellow-400">
         <CardHeader>
           <CardTitle className="text-yellow-400">Resumen de Permisos</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-yellow-400">{permisosUsuario.length}</div>
-              <div className="text-sm text-muted-foreground">Permisos Activos</div>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-green-400">
-                {Object.keys(permisosPorCategoria).length}
+            {[
+              {
+                label: "Permisos Activos",
+                value: permisosUsuario.length,
+                color: "text-yellow-400",
+              },
+              {
+                label: "Categorías",
+                value: Object.keys(permisosPorCategoria).length,
+                color: "text-green-400",
+              },
+              {
+                label: "Permisos Disponibles",
+                value: permisos.filter((p) => !permisosUsuario.includes(p.id)).length,
+                color: "text-blue-400",
+              },
+              {
+                label: "Total Permisos",
+                value: permisos.length,
+                color: "text-orange-400",
+              },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="p-4 text-center border rounded-lg bg-[var(--color-surface-alt)]"
+              >
+                <div className={`text-2xl font-bold ${item.color}`}>
+                  {item.value}
+                </div>
+                <div className="text-sm text-[var(--color-text-muted)]">
+                  {item.label}
+                </div>
               </div>
-              <div className="text-sm text-muted-foreground">Categorías</div>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-blue-400">
-                {permisos.filter(p => !permisosUsuario.includes(p.id)).length}
-              </div>
-              <div className="text-sm text-muted-foreground">Permisos Disponibles</div>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-orange-400">
-                {permisos.length}
-              </div>
-              <div className="text-sm text-muted-foreground">Total Permisos</div>
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Búsqueda y Filtros */}
-      <Card>
+      {/* === GESTIÓN === */}
+      <Card className="border-l-4 border-yellow-400">
         <CardHeader>
           <CardTitle className="text-yellow-400">Gestión de Permisos</CardTitle>
         </CardHeader>
@@ -123,18 +133,20 @@ export function PermisosTab({ }: PermisosTabProps) {
             onChange={(e) => setBusqueda(e.target.value)}
           />
 
-          {/* Permisos por Categoría */}
           <div className="space-y-6">
             {Object.entries(permisosPorCategoria).map(([categoria, permisosCategoria]) => (
-              <div key={categoria} className="border rounded-lg">
-                <div className="bg-muted p-3 border-b">
-                  <h3 className="font-semibold">
+              <div key={categoria} className="border rounded-lg overflow-hidden bg-[var(--color-surface-alt)]">
+                <div className="p-3 border-b bg-[var(--color-surface)]">
+                  <h3 className="font-semibold text-[var(--color-primary)]">
                     {categorias[categoria as keyof typeof categorias] || categoria}
                   </h3>
                 </div>
                 <div className="p-4 space-y-3">
-                  {permisosCategoria.map(permiso => (
-                    <div key={permiso.id} className="flex items-center justify-between p-2 border rounded">
+                  {permisosCategoria.map((permiso) => (
+                    <div
+                      key={permiso.id}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-[var(--color-surface)] transition-colors"
+                    >
                       <div className="flex items-center space-x-3">
                         <Checkbox
                           checked={permisosUsuario.includes(permiso.id)}
@@ -142,7 +154,9 @@ export function PermisosTab({ }: PermisosTabProps) {
                         />
                         <div>
                           <div className="font-medium">{permiso.nombre}</div>
-                          <div className="text-sm text-muted-foreground">{permiso.descripcion}</div>
+                          <div className="text-sm text-[var(--color-text-muted)]">
+                            {permiso.descripcion}
+                          </div>
                         </div>
                       </div>
                       <Badge variant="outline" className="capitalize">
@@ -157,8 +171,8 @@ export function PermisosTab({ }: PermisosTabProps) {
         </CardContent>
       </Card>
 
-      {/* Acciones */}
-      <div className="flex gap-4 justify-end">
+      {/* === ACCIONES === */}
+      <div className="flex justify-end gap-4">
         <Button variant="outline">Restablecer</Button>
         <Button className="bg-yellow-400 text-black hover:bg-yellow-500">
           Guardar Permisos
