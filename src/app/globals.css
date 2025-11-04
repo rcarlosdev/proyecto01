@@ -2,152 +2,188 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* @custom-variant dark (&:is(.dark *)); */
+/* ========================================================================
+   🎨 PALETA BINANCE PRO (unificada)
+   ======================================================================== */
 
-/* @theme inline { */
 :root {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
-
-/* 🎨 Paleta Binance Style */
-:root {
-  --amarillo-principal: #F0B90B; /* Binance Gold */
+  /* Colores base */
+  --amarillo-principal: #F0B90B;
   --amarillo-claro: #FFD666;
   --amarillo-oscuro: #C79400;
   --negro: #181A20;
   --gris-oscuro: #2B3139;
   --blanco: #FFFFFF;
 
-  /* Base */
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(42.582% 0.00262 16.246);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* Base Binance Pro */
+  --color-primary: #F0B90B;
+  --color-primary-light: #FFD666;
+  --color-primary-dark: #C79400;
 
-  /* Tema por defecto → oscuro */
-  --bg-color: var(--negro);
-  --text-color: var(--blanco);
+  --color-bg: #FFFFFF;
+  --color-surface: #F5F5F7;
+  --color-surface-alt: #E8E8EA;
+  --color-text: #181A20;
+  --color-text-muted: #555;
+  --color-border: #D8D8D8;
+
+  /* Estados */
+  --color-success: #00C58E;
+  --color-danger: #E74C3C;
+  --color-warning: #F39C12;
+
+  /* Extras */
+  --radius: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+
+  /* Botones y transiciones */
   --button-bg: var(--amarillo-principal);
   --button-text: var(--negro);
   --emoji-button: #838180;
 }
 
-/* Tema claro */
-[data-theme="light"] {
-  --bg-color: var(--blanco);
-  --text-color: var(--negro);
-  --button-bg: var(--amarillo-oscuro);
-  --button-text: var(--blanco);
-}
-
 /* Tema oscuro */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: var(--gris-oscuro);
-  --card-foreground: var(--blanco);
-  --popover: var(--gris-oscuro);
-  --popover-foreground: var(--blanco);
-  --primary: var(--amarillo-principal);
-  --primary-foreground: var(--negro);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: var(--blanco);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: var(--amarillo-claro);
-  --accent-foreground: var(--negro);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --color-bg: #181A20;
+  --color-surface: #2B3139;
+  --color-surface-alt: #32383F;
+  --color-text: #FFFFFF;
+  --color-text-muted: #A9A9A9;
+  --color-border: rgba(255, 255, 255, 0.08);
+
+  --color-primary: #F0B90B;
+  --color-primary-light: #FFD666;
+  --color-primary-dark: #C79400;
 }
 
-/* Base */
+/* Tema claro */
+[data-theme="light"] {
+  --color-bg: #FFFFFF;
+  --color-text: #181A20;
+}
+
+/* ========================================================================
+   🔹 BASE
+   ======================================================================== */
+
 @layer base {
   * {
-    border-color: var(--border-border); outline-color: var(--outline-ring) / 50%;
+    border-color: var(--color-border);
+    outline-color: var(--color-primary) / 50%;
   }
+
   body {
-    /* @apply bg-background text-foreground; */
-    
-    background-color: var(--bg-color);
-    color: var(--text-color);
+    background-color: var(--color-bg);
+    color: var(--color-text);
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
-/* Componentes */
+/* ========================================================================
+   🔹 COMPONENTES REUTILIZABLES
+   ======================================================================== */
+
 @layer components {
+  /* Botones */
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: var(--negro);
+    padding: 0.75rem 2rem;
+    border-radius: var(--radius-xl);
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-primary-light);
+    color: var(--color-bg);
+    transform: translateY(-2px);
+  }
+
+  .btn-outline {
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    transition: all 0.3s ease;
+  }
+
+  .btn-outline:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  /* Botón emoji */
   .btn-emoji {
-    /* @apply rounded-xl px-4 py-2 text-lg transition-colors duration-300; */
     border-radius: var(--radius-xl);
     padding: 0.5rem 1rem;
     font-size: 1rem;
-    transition: background-color 0.3s ease, color 0.3s ease;  
     background-color: var(--emoji-button);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
+
   .btn-emoji:hover {
     background-color: var(--amarillo-principal);
     color: var(--negro);
   }
+
+  /* Textos */
+  .text-muted {
+    color: var(--color-text-muted);
+  }
+
+  /* Cards */
+  .card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    transition: all 0.25s ease;
+  }
+
+  .dark .card {
+    background-color: var(--color-surface);
+  }
 }
 
-/* ==========================================================================
-   🔹 EXTENSION LANDING PAGE - BitLance
-   ========================================================================== */
+/* ========================================================================
+   🔹 SIDEBAR Y ESTADOS
+   ======================================================================== */
 
-/* --- Hero Section --- */
+.sidebar {
+  background-color: var(--color-surface);
+}
+
+.sidebar-menu-button {
+  color: var(--color-text-muted);
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.sidebar-menu-button:hover {
+  color: var(--color-primary);
+  background-color: rgba(240, 185, 11, 0.08);
+}
+
+.sidebar-menu-button[data-active="true"] {
+  color: var(--color-primary);
+  background-color: rgba(240, 185, 11, 0.12);
+}
+
+/* Estados */
+[data-status="success"] {
+  color: var(--color-success);
+}
+[data-status="danger"] {
+  color: var(--color-danger);
+}
+[data-status="warning"] {
+  color: var(--color-warning);
+}
+
+
+/* ========================================================================
+   🔹 EXTENSIÓN LANDING PAGE
+   ======================================================================== */
+
+/* Hero Section */
 .hero-section {
   position: relative;
   height: 90vh;
@@ -172,7 +208,7 @@
   background: rgba(0, 0, 0, 0.6);
 }
 
-/* --- Animaciones suaves --- */
+/* Animaciones suaves */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -188,25 +224,10 @@
   animation: fadeInUp 0.8s ease-out forwards;
 }
 
-/* --- Botones Landing --- */
-.btn-primary {
-  background-color: var(--amarillo-principal);
-  color: var(--negro);
-  padding: 0.75rem 2rem;
-  border-radius: var(--radius-xl);
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
-}
-
-/* --- Tarjetas (beneficios y testimonios) --- */
+/* Tarjetas de Landing */
 .card-landing {
   background-color: var(--card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -217,30 +238,31 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
-/* --- Imágenes --- */
+/* Imágenes redondeadas */
 .img-rounded-xl {
   border-radius: var(--radius-xl);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* --- Testimonios --- */
+/* Testimonios */
 .testimonial-quote {
   font-style: italic;
-  color: var(--muted-foreground);
+  color: var(--color-text-muted);
   line-height: 1.6;
 }
 
-/* --- Responsividad --- */
+/* Responsividad */
 @media (max-width: 768px) {
   .hero-section h1 {
     font-size: 2rem !important;
   }
+
   .hero-section p {
     font-size: 1rem !important;
   }
+
   .btn-primary {
     padding: 0.6rem 1.5rem;
     font-size: 0.95rem;
   }
 }
-

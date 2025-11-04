@@ -1,4 +1,3 @@
-
 // src/modules/usuarios/ui/views/usuarios-list-view.tsx
 "use client";
 
@@ -26,6 +25,7 @@ export default function UsuariosListView() {
   const router = useRouter();
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState<string>("todos");
+  const [filtroRol, setFiltroRol] = useState<string>("todos");
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [cargando, setCargando] = useState(true);
 
@@ -47,13 +47,20 @@ export default function UsuariosListView() {
   }, []);
 
   const usuariosFiltrados = usuarios.filter(usuario => {
-    const coincideBusqueda = 
+    const coincideBusqueda =
       usuario.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       usuario.apellido.toLowerCase().includes(busqueda.toLowerCase()) ||
       usuario.email.toLowerCase().includes(busqueda.toLowerCase());
-    
+
     const coincideEstado = filtroEstado === "todos" || usuario.estado === filtroEstado;
-    return coincideBusqueda && coincideEstado;
+
+    const coincideRol =
+      filtroRol === "todos" ||
+      (filtroRol === "admin" && usuario.rol.toLowerCase().includes("admin")) ||
+      (filtroRol === "colaborador" && usuario.rol.toLowerCase().includes("colaborador")) ||
+      (filtroRol === "usuario" && !usuario.rol.toLowerCase().includes("admin") && !usuario.rol.toLowerCase().includes("colaborador"));
+
+    return coincideBusqueda && coincideEstado && coincideRol;
   });
 
   const navegarAUsuario = (usuarioId: string) => {
@@ -62,44 +69,50 @@ export default function UsuariosListView() {
 
   const getBadgeVariant = (estado: string) => {
     switch (estado) {
-      case "activo": return "default";
-      case "inactivo": return "secondary";
-      case "suspendido": return "destructive";
-      default: return "outline";
+      case "activo":
+        return "default";
+      case "inactivo":
+        return "secondary";
+      case "suspendido":
+        return "destructive";
+      default:
+        return "outline";
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 bg-[var(--color-bg)] text-[var(--color-text)] transition-colors">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-yellow-400">Gestión de Usuarios</h1>
+          <h1 className="text-2xl font-bold text-[var(--color-primary)]">
+            Gestión de Usuarios
+          </h1>
           <p className="text-muted-foreground">
             Administra todos los usuarios del sistema de trading
           </p>
         </div>
-        <Button className="bg-yellow-400 text-black hover:bg-yellow-500">
-          <UserPlus className="w-4 h-4 mr-2" />
+        <Button className="btn-primary flex items-center gap-2">
+          <UserPlus className="w-4 h-4" />
           Nuevo Usuario
         </Button>
       </div>
 
       {/* Filtros y Búsqueda */}
-      <Card>
+      <Card className="card">
         <CardContent className="p-4">
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar usuarios..."
-                className="pl-9"
+                className="pl-9 bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)]"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
               />
             </div>
-            <select 
-              className="px-3 py-2 border rounded-md bg-background"
+            <select
+              className="px-3 py-2 border rounded-md bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)]"
               value={filtroEstado}
               onChange={(e) => setFiltroEstado(e.target.value)}
             >
@@ -114,43 +127,116 @@ export default function UsuariosListView() {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card><CardContent className="p-4"><div className="text-2xl font-bold text-yellow-400">{usuarios.length}</div><div className="text-sm text-muted-foreground">Total Usuarios</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-2xl font-bold text-green-400">{usuarios.filter(u => u.estado === "activo").length}</div><div className="text-sm text-muted-foreground">Activos</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-2xl font-bold text-blue-400">{usuarios.filter(u => u.kycVerificado).length}</div><div className="text-sm text-muted-foreground">KYC Verificado</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-2xl font-bold text-orange-400">{usuarios.filter(u => u.rol === "Trader").length}</div><div className="text-sm text-muted-foreground">Traders</div></CardContent></Card>
+        {[
+          {
+            label: "Total Usuarios",
+            value: usuarios.length,
+            color: "text-[var(--color-primary)]",
+            border: "border-l-[3px] border-[var(--color-primary)]",
+          },
+          {
+            label: "Activos",
+            value: usuarios.filter((u) => u.estado === "activo").length,
+            color: "text-green-500",
+            border: "border-l-[3px] border-green-500",
+          },
+          {
+            label: "KYC Verificados",
+            value: usuarios.filter((u) => u.kycVerificado).length,
+            color: "text-blue-400",
+            border: "border-l-[3px] border-blue-400",
+          },
+          {
+            label: "Suspendidos",
+            value: usuarios.filter((u) => u.estado === "suspendido").length,
+            color: "text-red-400",
+            border: "border-l-[3px] border-red-400",
+          },
+        ].map((item, idx) => (
+          <Card key={idx} className={`card ${item.border}`}>
+            <CardContent className="p-4">
+              <div className={`text-2xl font-bold ${item.color}`}>{item.value}</div>
+              <div className="text-sm text-muted-foreground">{item.label}</div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
+
       {/* Lista */}
-      <Card>
-        <CardHeader><CardTitle>Lista de Usuarios</CardTitle></CardHeader>
-        <CardContent>
-          {cargando ? (
-            <div className="text-center py-8 text-muted-foreground">Cargando usuarios...</div>
-          ) : usuariosFiltrados.length > 0 ? (
-            <div className="space-y-4">
-              {usuariosFiltrados.map(usuario => (
-                <div 
-                  key={usuario.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                  onClick={() => navegarAUsuario(usuario.id)}
+      <Card className="card">
+        <CardHeader className="border-b border-[var(--color-border)] pb-2">
+          <div className="flex justify-between items-center flex-wrap gap-3">
+            <CardTitle className="text-[var(--color-primary)] font-semibold border-l-4 border-[var(--color-primary)] pl-2">
+              Lista de Usuarios
+            </CardTitle>
+            <div className="flex flex-wrap gap-2">
+              {["usuario", "admin", "colaborador", "todos"].map((rol) => (
+                <Button
+                  key={rol}
+                  size="sm"
+                  variant={filtroRol === rol ? "default" : "outline"}
+                  onClick={() => setFiltroRol(rol)}
+                  className={
+                    filtroRol === rol
+                      ? "btn-primary"
+                      : "border border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                  }
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
+                  {rol.charAt(0).toUpperCase() + rol.slice(1)}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="bg-[var(--color-surface)]">
+          {cargando ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Cargando usuarios...
+            </div>
+          ) : usuariosFiltrados.length > 0 ? (
+            <div className="space-y-2">
+              {usuariosFiltrados.map((usuario) => (
+                <div
+                  key={usuario.id}
+                  onClick={() => navegarAUsuario(usuario.id)}
+                  className="flex items-center justify-between p-4 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-alt)] hover:bg-[var(--color-surface)] cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-[var(--color-primary)] rounded-full flex items-center justify-center">
                       <span className="font-bold text-black">
-                        {usuario.nombre[0]}{usuario.apellido[0]}
+                        {usuario.nombre[0]}
+                        {usuario.apellido[0]}
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-medium">{usuario.nombre} {usuario.apellido}</h3>
-                      <p className="text-sm text-muted-foreground">{usuario.email}</p>
+                      <h3 className="font-medium text-[var(--color-text)]">
+                        {usuario.nombre} {usuario.apellido}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {usuario.email}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center gap-3">
                     <Badge variant="outline">{usuario.rol}</Badge>
-                    <Badge variant={getBadgeVariant(usuario.estado)}>{usuario.estado}</Badge>
-                    {usuario.kycVerificado && <Badge variant="default" className="bg-green-500">KYC</Badge>}
-                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); navegarAUsuario(usuario.id); }}>
+                    <Badge variant={getBadgeVariant(usuario.estado)}>
+                      {usuario.estado}
+                    </Badge>
+                    {usuario.kycVerificado && (
+                      <Badge className="bg-green-500 text-white">KYC</Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navegarAUsuario(usuario.id);
+                      }}
+                      className="text-muted-foreground hover:text-[var(--color-primary)]"
+                    >
                       <Settings className="w-4 h-4" />
                     </Button>
                   </div>
@@ -158,7 +244,9 @@ export default function UsuariosListView() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">No se encontraron usuarios</div>
+            <div className="text-center py-8 text-muted-foreground">
+              No se encontraron usuarios
+            </div>
           )}
         </CardContent>
       </Card>
