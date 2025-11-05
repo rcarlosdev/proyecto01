@@ -61,7 +61,7 @@ const TradingDashboard = () => {
 
         {/* Contenido principal */}
         <div className="flex-1 flex flex-col">
-          <AlphaCandleChart symbol={selectedSymbol} interval="1min" />
+          {!!selectedSymbol ? <AlphaCandleChart symbol={selectedSymbol} interval="1min" /> : <div className="p-4">Selecciona un símbolo para ver el gráfico</div>}
         </div>
       </div>
       <footer className="border-t border-gray-200">
