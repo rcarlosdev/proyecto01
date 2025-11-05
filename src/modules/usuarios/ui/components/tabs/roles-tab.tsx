@@ -1,3 +1,4 @@
+// src/modules/usuarios/ui/components/tabs/permisos-tab.tsx
 "use client";
 
 import { useState } from "react";
