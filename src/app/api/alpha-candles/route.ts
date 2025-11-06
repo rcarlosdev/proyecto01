@@ -59,7 +59,7 @@ async function getCachedData(
     const cached = await redis.get(cacheKey);
 
     if (cached) {
-      console.log("✅ Sirviendo datos desde caché Redis ->", cacheKey);
+      // console.log("✅ Sirviendo datos desde caché Redis ->", cacheKey);
       if (typeof cached === "string") {
         try { return JSON.parse(cached) as Candle[]; } catch (e) {
           // si no es JSON válido, devolver como objeto si ya es array
@@ -89,7 +89,7 @@ async function setCachedData(
     const cacheKey = `alpha:${symbol}:${interval}:${historical}:${direction}:${referenceTime}`;
     // Guardamos string para evitar ambigüedad
     await redis.set(cacheKey, JSON.stringify(data), { ex: CACHE_TTL });
-    console.log("💾 Datos guardados en caché Redis ->", cacheKey);
+    // console.log("💾 Datos guardados en caché Redis ->", cacheKey);
   } catch (error) {
     console.error("Error guardando en Redis:", error);
   }
@@ -119,45 +119,6 @@ async function fetchFromAlpha(symbol: string, interval: string, outputsize: "com
   return removeDuplicatesAndSort(candles);
 }
 
-/* ---------------------- fetchHistoricalData (acepta ref como seconds o ISO) ---------------------- */
-// async function fetchHistoricalData(
-//   symbol: string,
-//   interval: string,
-//   direction: "forward" | "backward",
-//   referenceTimeRaw: string
-// ): Promise<Candle[]> {
-//   try {
-//     // referenceTimeRaw puede ser "1700000000" (secs) o ISO
-//     let referenceSeconds: number;
-//     if (/^\d+$/.test(referenceTimeRaw)) {
-//       referenceSeconds = Math.floor(Number(referenceTimeRaw));
-//     } else {
-//       referenceSeconds = dateToUTCTimestampInput(referenceTimeRaw);
-//     }
-
-//     console.log(`📅 fetchHistoricalData -> symbol=${symbol} interval=${interval} direction=${direction} refsecs=${referenceSeconds}`);
-
-//     // obtenemos full (puede ser grande pero es necesario para histórico intraday)
-//     const all = await fetchFromAlpha(symbol, interval, "full");
-
-//     // filtramos
-//     if (direction === "backward") {
-//       const before = all.filter(c => c.time < referenceSeconds);
-//       // devolvemos las últimas HIST_WINDOW velas previas (más cercanas al referenceTime)
-//       const chunk = before.slice(-HIST_WINDOW);
-//       console.log(`   -> before.total=${before.length} returning=${chunk.length}`);
-//       return chunk;
-//     } else {
-//       const after = all.filter(c => c.time > referenceSeconds);
-//       const chunk = after.slice(0, HIST_WINDOW);
-//       console.log(`   -> after.total=${after.length} returning=${chunk.length}`);
-//       return chunk;
-//     }
-//   } catch (err) {
-//     console.error("Error en fetchHistoricalData:", err);
-//     return [];
-//   }
-// }
 async function fetchHistoricalData(
   symbol: string,
   interval: string,
@@ -165,7 +126,7 @@ async function fetchHistoricalData(
   referenceTime: string
 ): Promise<Candle[]> {
   try {
-    console.log(`📅 Cargando datos ${direction} para ${symbol} desde ${referenceTime}`);
+    // console.log(`📅 Cargando datos ${direction} para ${symbol} desde ${referenceTime}`);
 
     const endpoint = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=${interval}&outputsize=full&apikey=${API_KEY!}`;
 
@@ -242,13 +203,13 @@ export async function GET(req: Request) {
   const referenceTime = searchParams.get("referenceTime") || null;
   const historical = searchParams.get("historical") || null;
 
-  console.log("📡 /api/alpha-candles request:", { symbol, interval, direction, referenceTime, historical });
+  // console.log("📡 /api/alpha-candles request:", { symbol, interval, direction, referenceTime, historical });
 
   try {
     // 1 - intentar cache con key completa
     const cached = await getCachedData(symbol, interval, historical, direction, referenceTime);
     if (cached) {
-      console.log("   -> returned from cache count=", cached.length);
+      // console.log("   -> returned from cache count=", cached.length);
       return NextResponse.json(cached, { status: 200 });
     }
 
@@ -256,10 +217,10 @@ export async function GET(req: Request) {
 
     if (historical === "true" && direction && referenceTime) {
       data = await fetchHistoricalData(symbol, interval, direction as any, referenceTime);
-      console.log("   -> fetched historical count=", data.length);
+      // console.log("   -> fetched historical count=", data.length);
     } else {
       data = await fetchFromAlpha(symbol, interval, "compact");
-      console.log("   -> fetched base count=", data.length);
+      // console.log("   -> fetched base count=", data.length);
     }
 
     if (!data || data.length === 0) {
@@ -269,7 +230,7 @@ export async function GET(req: Request) {
     const final = removeDuplicatesAndSort(data);
     await setCachedData(symbol, interval, historical, direction, referenceTime, final);
 
-    console.log("   -> returning final count=", final.length);
+    // console.log("   -> returning final count=", final.length);
     return NextResponse.json(final, { status: 200 });
   } catch (err: any) {
     console.error("❌ Error al obtener datos desde Alpha Vantage:", err?.message ?? err);
