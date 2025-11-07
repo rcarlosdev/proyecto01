@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MarketQuote } from "@/types/interfaces";
 import { useMarketStore } from "@/stores/useMarketStore";
 import Image from "next/image";
@@ -23,65 +23,81 @@ export default function SymbolRow({
   const [buyPrice, setBuyPrice] = useState(previousClose ?? price);
   const [changeValue, setChangeValue] = useState(change ?? 0);
 
-  // Colores de variación
+  // Colores y dirección
   const [sellColor, setSellColor] = useState("#2B3245");
   const [buyColor, setBuyColor] = useState("#2B3245");
+  const [changeColor, setChangeColor] = useState("#16a34a");
+  const [isNegative, setIsNegative] = useState(false);
 
-  const short = (v?: number) => (v !== undefined ? v.toFixed(2) : "-");
-  const isNegative = changeValue < 0;
+  // Guardar valores previos
+  const prevSellRef = useRef(sellPrice);
+  const prevBuyRef = useRef(buyPrice);
+  const prevChangeRef = useRef(changeValue);
 
   const [imageExists, setImageExists] = useState(true);
+  const short = (v?: number) => (v !== undefined ? v.toFixed(2) : "-");
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // Simula variaciones pequeñas
       const sellVariation = (Math.random() - 0.5) * 0.6;
       const buyVariation = (Math.random() - 0.5) * 0.6;
 
       const newSell = +(sellPrice + sellVariation).toFixed(2);
       const newBuy = +(buyPrice + buyVariation).toFixed(2);
+      const newChange = +(newSell - newBuy).toFixed(2);
 
-      // Actualiza color según cambio
-      setSellColor(
-        sellVariation > 0
-          ? "#16a34a" // verde
-          : sellVariation < 0
-            ? "#dc2626" // rojo
-            : "#2B3245"
-      );
-      setBuyColor(
-        buyVariation > 0
-          ? "#16a34a"
-          : buyVariation < 0
-            ? "#dc2626"
-            : "#2B3245"
-      );
+      // --- Cambio general ---
+      const prevChange = prevChangeRef.current;
+      const wentUp = newChange > prevChange;
+      const wentDown = newChange < prevChange;
 
-      // Actualiza valores y cambio general
+      if (wentUp) {
+        setChangeColor("#16a34a");
+        setIsNegative(false);
+      } else if (wentDown) {
+        setChangeColor("#db3535");
+        setIsNegative(true);
+      }
+
+      // --- Detectar cambios en SELL ---
+      const prevSell = prevSellRef.current;
+      if (newSell > prevSell) {
+        setSellColor("#16a34a"); // verde
+      } else if (newSell < prevSell) {
+        setSellColor("#db3535"); // rojo
+      }
+
+      // --- Detectar cambios en BUY ---
+      const prevBuy = prevBuyRef.current;
+      if (newBuy > prevBuy) {
+        setBuyColor("#16a34a");
+      } else if (newBuy < prevBuy) {
+        setBuyColor("#db3535");
+      }
+
+      // Actualizar valores
       setSellPrice(newSell);
       setBuyPrice(newBuy);
-      setChangeValue(newSell - newBuy);
+      setChangeValue(newChange);
 
-      // Restaurar color base después de 300 ms
-      // setTimeout(() => {
-      //   setSellColor("#2B3245");
-      //   setBuyColor("#2B3245");
-      // }, 300);
+      // Guardar referencias previas
+      prevSellRef.current = newSell;
+      prevBuyRef.current = newBuy;
+      prevChangeRef.current = newChange;
     }, 2000);
 
     return () => clearInterval(interval);
   }, [sellPrice, buyPrice]);
 
+
   return (
-    <div
-      className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 p-3 rounded-md hover:opacity-90 transition cursor-pointer"
-    >
+    <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 p-3 rounded-md hover:opacity-90 transition cursor-pointer">
       {/* Symbol */}
       <div
         onClick={() => setSelectedSymbol(symbol)}
         className="flex items-center gap-2 leading-tight"
       >
-        {imageExists ? (
+        {/* {imageExists ? (
           <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
             <Image
               src={`/symbols/${symbol}.png`}
@@ -90,49 +106,56 @@ export default function SymbolRow({
               height={32}
               className="object-contain"
               loading="lazy"
-              priority={false}
-              onError={() => setImageExists(false)} // 🔹 Si no se encuentra, oculta la imagen
+              onError={() => setImageExists(false)}
             />
           </div>
         ) : (
-          // 🔸 Fallback: mostrar solo el texto si la imagen no existe
           <div className="w-8 h-8 flex items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
             {symbol.charAt(0)}
           </div>
-        )}
-
+        )} */}
         <span className="text-sm font-semibold">{symbol}</span>
-        {/* <span className="text-[11px] text-gray-400">
-          {symbol.split(".")[0]}
-        </span> */}
       </div>
 
       {/* Botón de vender */}
-      {/* <div
-        className="min-w-[70px] text-center px-2 py-1 rounded-md text-[13px] font-medium transition-colors duration-300 text-white"
-        style={{ backgroundColor: sellColor }}
+      <div
+        className="rounded-md transition-colors duration-300"
+        style={{
+          backgroundColor:
+            sellColor === "#2B3245" ? "transparent" : sellColor + "20",
+        }}
       >
-        {short(sellPrice)}
-      </div> */}
-      <TradingDialog text={short(sellPrice)} symbol={symbol} tipoOperacion="buy" colorText={sellColor} />
+        <TradingDialog
+          text={short(sellPrice)}
+          symbol={symbol}
+          tipoOperacion="buy"
+          colorText={sellColor}
+        />
+      </div>
 
       {/* Cambio */}
       <div
-        className={`min-w-[35px] text-center text-[13px] font-semibold ${isNegative ? "text-red-500" : "text-green-500"
-          }`}
+        className={`min-w-[35px] text-center text-[13px] font-semibold transition-colors duration-300`}
+        style={{ color: changeColor }}
       >
         {isNegative ? "▼" : "▲"} {Math.abs(changeValue).toFixed(2)}
       </div>
 
       {/* Botón de comprar */}
-      {/* <div
-        className="min-w-[70px] text-center px-2 py-1 rounded-md text-[13px] font-medium transition-colors duration-300 text-white"
-        style={{ backgroundColor: buyColor }}
+      <div
+        className="rounded-md transition-colors duration-300"
+        style={{
+          backgroundColor:
+            buyColor === "#2B3245" ? "transparent" : buyColor + "20",
+        }}
       >
-        {short(buyPrice)}
-      </div> */}
-      {/* <TradingDialog text="Abrir Operación" symbol={selectedSymbol} /> */}
-      <TradingDialog text={short(buyPrice)} symbol={symbol} tipoOperacion="sell" colorText={buyColor} />
+        <TradingDialog
+          text={short(buyPrice)}
+          symbol={symbol}
+          tipoOperacion="sell"
+          colorText={buyColor}
+        />
+      </div>
     </div>
   );
 }

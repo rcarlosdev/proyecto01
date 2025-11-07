@@ -22,7 +22,8 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ZoomIn, ZoomOut, RotateCcw, RefreshCw, AlertCircle } from "lucide-react";
+import { ZoomIn, ZoomOut, RotateCcw, RefreshCw, AlertCircle, Menu } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 interface CandleData {
   time: UTCTimestamp;
@@ -786,22 +787,134 @@ export default function AlphaCandleChart({
     return () => clearTimeout(timeout);
   }, [symbol, interval, isChartReady, cleanupChart, initializeChart, validateInterval, renderSeries]);
 
-
   return (
     <Card className="bg-[#0b1d37] border border-[#1e3a5f] w-full h-[550px]">
       <CardHeader className="flex flex-row justify-between items-center pb-2 px-4">
+        {/* Información del símbolo - Siempre visible */}
         <div className="flex flex-col">
           <div className="text-white text-base relative">
             <strong>{symbol}</strong>
             {currentTime && currentPrice && (
-              <div className="absolute top-8 left-[-15] ml-4 flex items-center z-10 no-wrap w-2xl">
-                <span className="text-sm">{`${currentTime}: $${currentPrice}`}</span>
+              <div className="absolute top-8 left-0 lg:left-[-15px] ml-0 lg:ml-4 flex items-center z-10 no-wrap max-w-[200px] lg:max-w-2xl">
+                <span className="text-sm truncate">{`${currentTime}: $${currentPrice}`}</span>
               </div>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Menú hamburguesa para pantallas menores a lg (1024px) */}
+        <div className="xl:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-[#10294a] text-white border-[#2e5b8c] hover:bg-[#153b6e]"
+              >
+                <Menu className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-[#0b1d37] text-white border-[#2e5b8c] w-64">
+              {/* Selector de Intervalo */}
+              <DropdownMenuLabel className="text-white">Intervalo</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-[#2e5b8c]" />
+              {VALID_INTERVALS.map((item) => (
+                <DropdownMenuItem
+                  key={item.value}
+                  className={`cursor-pointer hover:bg-[#153b6e] ${currentIntervalRef.current === item.value ? 'bg-[#153b6e]' : ''
+                    }`}
+                  onClick={() => {
+                    currentIntervalRef.current = item.value;
+                    isInitialLoadRef.current = true;
+                    renderSeries(true);
+                  }}
+                >
+                  {item.label}
+                </DropdownMenuItem>
+              ))}
+
+              <DropdownMenuSeparator className="bg-[#2e5b8c]" />
+
+              {/* Selector de Tipo de Gráfico */}
+              <DropdownMenuLabel className="text-white">Tipo de Gráfico</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-[#2e5b8c]" />
+              <DropdownMenuItem
+                className={`cursor-pointer hover:bg-[#153b6e] ${chartType === 'candlestick' ? 'bg-[#153b6e]' : ''
+                  }`}
+                onClick={() => handleChartTypeChange('candlestick')}
+              >
+                Candlestick
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className={`cursor-pointer hover:bg-[#153b6e] ${chartType === 'line' ? 'bg-[#153b6e]' : ''
+                  }`}
+                onClick={() => handleChartTypeChange('line')}
+              >
+                Línea
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className={`cursor-pointer hover:bg-[#153b6e] ${chartType === 'area' ? 'bg-[#153b6e]' : ''
+                  }`}
+                onClick={() => handleChartTypeChange('area')}
+              >
+                Área
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator className="bg-[#2e5b8c]" />
+
+              {/* Controles de Zoom y Acciones */}
+              <DropdownMenuLabel className="text-white">Controles</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-[#2e5b8c]" />
+              <div className="flex flex-col gap-2 p-2">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 bg-[#10294a] text-white border-[#2e5b8c] hover:bg-[#153b6e] text-xs"
+                    onClick={() => handleZoom("in")}
+                    disabled={isLoading}
+                  >
+                    <ZoomIn className="w-3 h-3 mr-1" /> +
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 bg-[#10294a] text-white border-[#2e5b8c] hover:bg-[#153b6e] text-xs"
+                    onClick={() => handleZoom("out")}
+                    disabled={isLoading}
+                  >
+                    <ZoomOut className="w-3 h-3 mr-1" /> −
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1 bg-[#153b6e] text-white hover:bg-[#1d4d8a] text-xs"
+                    onClick={() => handleZoom("reset")}
+                    disabled={isLoading}
+                  >
+                    <RotateCcw className="w-3 h-3 mr-1" />
+                    Reset
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 bg-[#10294a] text-white border-[#2e5b8c] hover:bg-[#153b6e] text-xs"
+                    onClick={handleRefresh}
+                    disabled={isLoading}
+                  >
+                    <RefreshCw className={`w-3 h-3 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+                    Actualizar
+                  </Button>
+                </div>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Controles para desktop - Ocultos en pantallas menores a lg (1024px) */}
+        <div className="hidden xl:flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Label htmlFor="interval" className="text-white text-sm">
               Intervalo:
@@ -874,10 +987,8 @@ export default function AlphaCandleChart({
               className="bg-[#153b6e] text-white hover:bg-[#1d4d8a]"
               onClick={() => handleZoom("reset")}
               disabled={isLoading}
-              
             >
               <RotateCcw className="w-4 h-4 mr-1" />
-              {/* Reset */}
             </Button>
             <Button
               variant="outline"
@@ -887,7 +998,6 @@ export default function AlphaCandleChart({
               disabled={isLoading}
             >
               <RefreshCw className={`w-4 h-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-              {/* Actualizar */}
             </Button>
           </div>
         </div>
@@ -961,4 +1071,5 @@ export default function AlphaCandleChart({
       </CardContent>
     </Card>
   );
+
 }
