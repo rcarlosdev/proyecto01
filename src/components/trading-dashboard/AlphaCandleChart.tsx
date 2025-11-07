@@ -760,60 +760,6 @@ export default function AlphaCandleChart({
   const handleChartTypeChange = (value: string) =>
     setChartType(value as ChartType);
 
-  /* ------------------ Efecto: Recargar completamente al cambiar símbolo o intervalo ------------------ */
-  // useEffect(() => {
-  //   if (!mountedRef.current || !chartRef.current) return;
-
-  //   // 🧹 Limpieza total antes de recargar
-  //   cleanupChart();
-
-  //   // Reiniciar refs
-  //   currentIntervalRef.current = validateInterval(interval);
-  //   currentDataRef.current = [];
-  //   isInitialLoadRef.current = true;
-
-  //   // 🔄 Reinicializar el gráfico
-  //   initializeChart();
-
-  //   // 🚀 Cargar nuevos datos del símbolo actual
-  //   (async () => {
-  //     setIsLoading(true);
-  //     try {
-  //       const data = await loadData(true);
-  //       if (!chartRef.current) return;
-
-  //       // Crear nueva serie según tipo actual
-  //       let newSeries: ISeriesApi<any>;
-  //       if (chartType === "line") {
-  //         newSeries = chartRef.current.addLineSeries({ color: "#00bcd4" });
-  //       } else if (chartType === "area") {
-  //         newSeries = chartRef.current.addAreaSeries({
-  //           lineColor: "#00bcd4",
-  //           topColor: "rgba(0,188,212,0.3)",
-  //           bottomColor: "rgba(0,188,212,0.05)",
-  //         });
-  //       } else {
-  //         newSeries = chartRef.current.addCandlestickSeries({
-  //           upColor: "#4caf50",
-  //           downColor: "#f44336",
-  //           borderVisible: false,
-  //           wickUpColor: "#4caf50",
-  //           wickDownColor: "#f44336",
-  //         });
-  //       }
-
-  //       seriesRef.current = newSeries;
-  //       updateSeriesWithData(data);
-  //       setLastUpdate(new Date());
-  //     } catch (err) {
-  //       console.error("❌ Error al recargar datos del símbolo:", err);
-  //       setError("Error al cargar datos del nuevo símbolo");
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   })();
-  // }, [symbol, interval, chartType]); // 👈 Dependencias correctas
-
   useEffect(() => {
     if (!mountedRef.current || !symbol || !isChartReady) return;
 
@@ -845,22 +791,14 @@ export default function AlphaCandleChart({
     <Card className="bg-[#0b1d37] border border-[#1e3a5f] w-full h-[550px]">
       <CardHeader className="flex flex-row justify-between items-center pb-2 px-4">
         <div className="flex flex-col">
-          <div className="text-white text-base">
+          <div className="text-white text-base relative">
             <strong>{symbol}</strong>
             {currentTime && currentPrice && (
-              <span>{` - ${currentTime}: $${currentPrice}`}</span>
+              <div className="absolute top-8 left-[-15] ml-4 flex items-center z-10 no-wrap w-2xl">
+                <span className="text-sm">{`${currentTime}: $${currentPrice}`}</span>
+              </div>
             )}
           </div>
-          {lastUpdate && (
-            <div className="text-xs text-gray-400">
-              Actualizado: {lastUpdate.toLocaleTimeString('es-ES')}
-              {isLoadingMore && (
-                <span className="ml-2 text-yellow-400">
-                  • Cargando {isLoadingMore === "backward" ? "histórico..." : "datos recientes..."}
-                </span>
-              )}
-            </div>
-          )}
         </div>
 
         <div className="flex items-center gap-3">

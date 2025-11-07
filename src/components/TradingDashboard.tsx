@@ -43,7 +43,7 @@ const TradingDashboard = () => {
     <section className='flex-1 flex-col h-full'>
       <div className="flex h-[70%] w-full">
         {/* Panel lateral izquierdo */}
-        <div className={`flex flex-col border-r border-gray-200 transition-all duration-300 w-100`}>
+        <div className="flex flex-col border-r border-gray-200 transition-all duration-300 w-fit">
 
           <div className="border-b bg-accent-foreground border-gray-200 pb-4 px-2">
             <div className="space-y-3">
