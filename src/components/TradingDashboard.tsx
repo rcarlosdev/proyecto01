@@ -1,14 +1,19 @@
 'use client';
 
+import {
+  useCallback,
+  useEffect
+} from 'react';
 import { MARKETS } from '@/lib/markets';
 import { MarketQuote } from '@/types/interfaces';
-import React, { useCallback, useEffect } from 'react';
+import { Separator } from '@/components/ui/separator';
 import SearchBar from './trading-dashboard/SearchBar';
 import SymbolList from './trading-dashboard/SymbolList';
 import { useMarketStore } from '@/stores/useMarketStore';
 import AccountInfo from './trading-dashboard/AccountInfo';
 import MarketHeader from './trading-dashboard/MarketHeader';
 import { FilterSelect } from './trading-dashboard/FilterSelect';
+import { TradingDialog } from './trading-dashboard/TradingDialog';
 import AlphaCandleChart from './trading-dashboard/AlphaCandleChart';
 
 type Market = typeof MARKETS[number];
@@ -35,7 +40,7 @@ const TradingDashboard = () => {
 
     loadData(marketToLoad);
 
-    const id = setInterval(() => loadData(marketToLoad), 60_000);
+    const id = setInterval(() => loadData(marketToLoad), 20_000);
     return () => clearInterval(id);
   }, [selectedMarket, loadData]);
 
@@ -45,15 +50,19 @@ const TradingDashboard = () => {
         {/* Panel lateral izquierdo */}
         <div className="flex flex-col border-r border-gray-200 transition-all duration-300 w-fit">
 
-          <div className="border-b bg-accent-foreground border-gray-200 pb-4 px-2">
+          <div className="bg-accent-foreground border-gray-200 pb-4 px-2">
             <div className="space-y-3">
-              <SearchBar />
+              <div className="flex gap-2">
+                <SearchBar />
+                <TradingDialog text="Abrir Operación" symbol={selectedSymbol} tipoOperacion="buy" />
+              </div>
+
               <FilterSelect />
             </div>
+            <MarketHeader />
           </div>
 
-          <MarketHeader />
-
+          <Separator className="bg-gray-500/50" />
           <div className="flex-1 overflow-hidden">
             <SymbolList />
           </div>

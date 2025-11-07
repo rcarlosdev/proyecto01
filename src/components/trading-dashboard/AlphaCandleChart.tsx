@@ -874,8 +874,10 @@ export default function AlphaCandleChart({
               className="bg-[#153b6e] text-white hover:bg-[#1d4d8a]"
               onClick={() => handleZoom("reset")}
               disabled={isLoading}
+              
             >
-              <RotateCcw className="w-4 h-4 mr-1" /> Reset
+              <RotateCcw className="w-4 h-4 mr-1" />
+              {/* Reset */}
             </Button>
             <Button
               variant="outline"
@@ -885,7 +887,7 @@ export default function AlphaCandleChart({
               disabled={isLoading}
             >
               <RefreshCw className={`w-4 h-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-              Actualizar
+              {/* Actualizar */}
             </Button>
           </div>
         </div>
