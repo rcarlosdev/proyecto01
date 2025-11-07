@@ -19,6 +19,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +28,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const items = [
@@ -48,12 +50,25 @@ const adminItems = [
 
 const AppSidebar = () => {
   const pathname = usePathname();
+  const { isMobile, setOpen } = useSidebar();
+
+  // 🔹 Cierra el sidebar automáticamente al cambiar de ruta
+  useEffect(() => {
+    if (isMobile) {
+      setOpen(false);
+    }
+  }, [pathname, isMobile, setOpen]);
+
+  // 🔹 Función auxiliar: cierra el sidebar al hacer clic en cualquier link
+  const handleLinkClick = () => {
+    if (isMobile) setTimeout(() => setOpen(false), 50); // pequeña demora para evitar conflicto con la navegación
+  };
 
   return (
     <Sidebar>
       {/* LOGO */}
       <div className="flex items-center h-20 border-b">
-        <Link href="/" className="flex items-center gap-2 px-4 py-3">
+        <Link href="/" className="flex items-center gap-2 px-4 py-3" onClick={handleLinkClick}>
           <div className="relative w-15 h-15">
             <Image
               src="/logo.png"
@@ -80,8 +95,9 @@ const AppSidebar = () => {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link 
+                    <Link
                       href={item.url}
+                      onClick={handleLinkClick}
                       className={`flex items-center gap-3 px-4 py-2 text-sm rounded-md transition-colors ${
                         pathname === item.url
                           ? "bg-border text-yellow-400"
@@ -116,17 +132,19 @@ const AppSidebar = () => {
                 />
               </summary>
 
-              {/* ⚙️ Grupo Administrar (colapsable) */}
               <div className="mt-2 pl-5">
                 <SidebarMenu>
                   {adminItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
                         asChild
-                        isActive={pathname === item.url || pathname.startsWith(`${item.url}/`)}
+                        isActive={
+                          pathname === item.url ||
+                          pathname.startsWith(`${item.url}/`)
+                        }
                         className="text-sm"
                       >
-                        <Link href={item.url}>
+                        <Link href={item.url} onClick={handleLinkClick}>
                           <item.icon className="w-5 h-5" />
                           <span>{item.title}</span>
                         </Link>
