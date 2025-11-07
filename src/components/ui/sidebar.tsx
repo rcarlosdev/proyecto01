@@ -5,7 +5,7 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, VariantProps } from "class-variance-authority"
 import { PanelLeftIcon } from "lucide-react"
-
+import { usePathname } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -69,6 +69,20 @@ function SidebarProvider({
 }) {
   const isMobile = useIsMobile()
   const [openMobile, setOpenMobile] = React.useState(false)
+  const pathname = usePathname();
+  // Asegura que en mobile siempre empiece cerrado al cargar
+  React.useEffect(() => {
+    if (isMobile === true) {
+      setOpenMobile(false);
+    }
+  }, [isMobile]);
+
+  // Cada vez que cambia la ruta, cerramos el sidebar móvil
+  React.useEffect(() => {
+    if (isMobile === true) {
+      setOpenMobile(false);
+    }
+  }, [pathname, isMobile]);
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
