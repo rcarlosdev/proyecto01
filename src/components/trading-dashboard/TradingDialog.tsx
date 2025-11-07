@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -8,14 +13,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { MARKETS } from "@/lib/markets"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import { useUserStore } from "@/stores/useUserStore"
+import { Separator } from "@/components/ui/separator"
 import { useMarketStore } from "@/stores/useMarketStore"
-import { MARKETS } from "@/lib/markets"
+import Image from "next/image"
 
 interface TradingDialogProps {
   text: string;
@@ -27,32 +33,74 @@ interface TradingDialogProps {
 export function TradingDialog({ text, symbol, tipoOperacion, colorText }: TradingDialogProps) {
   const [units, setUnits] = useState(10000)
   const [orderType, setOrderType] = useState("market")
-  const [operationType, setOperationType] = useState(tipoOperacion || "buy") // "buy" o "sell"
+  const [marketInfo, setMarketInfo] = useState<any | null>(null); // Cambiar a null
+  const [operationType, setOperationType] = useState(tipoOperacion || "buy")
+  const [isOpen, setIsOpen] = useState(false)
+  const [imageExists, setImageExists] = useState(true);
 
+  const { dataMarket } = useMarketStore();
+  const { user } = useUserStore();
+
+  // SOLUCIÓN: Mover la lógica de marketInfo a un useEffect
+  useEffect(() => {
+    if (symbol) {
+      const market = (MARKETS as any).find((market: any) => market.symbol === symbol);
+      setMarketInfo(market || null);
+    }
+  }, [symbol]);
 
   useEffect(() => {
     setOperationType(tipoOperacion);
   }, [tipoOperacion]);
 
-
-  // const { dataSelectedSymbol, setDataSelectedSymbol } = useState();
-
-  // const marketStore = useMarketStore();
-  // const { selectedSymbol, setSelectedSymbol } = useMarketStore();
+  console.log("marketInfo en TradingDialog:", marketInfo);
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className={colorText != undefined ? `text-[${colorText}]` : ''}>{text}</Button>
-        {/* <Button variant="outline" className="text-[#16a34a]">{text}</Button> */}
+        <Button
+          variant="outline"
+          style={colorText ? { color: colorText } : undefined}
+        >
+          {text}
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+
+      <DialogContent className="sm:max-w-[425px] bg-[#181a20e7] border border-gray-50/80">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Compar
+            {imageExists ? (
+              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                <Image
+                  src={`/symbols/${symbol}.png`}
+                  alt={symbol || "Símbolo"}
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                  loading="lazy"
+                  onError={() => setImageExists(false)}
+                />
+              </div>
+            ) : (
+              <div className="w-8 h-8 flex items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground border border-gray-500">
+                {symbol?.charAt(0)}
+              </div>
+            )}
             <Badge variant="secondary" className="ml-2">
               {symbol || "Símbolo"}
             </Badge>
+            {/* SOLUCIÓN: Verificar que marketInfo existe antes de acceder a balance */}
+            {marketInfo && marketInfo.balance && (
+              <span className="text-sm font-medium text-muted-foreground">
+                {marketInfo.balance}
+              </span>
+            )}
+            {/* Opcional: Mostrar un mensaje si no hay balance */}
+            {marketInfo && !marketInfo.balance && (
+              <span className="text-sm font-medium text-muted-foreground">
+                Sin balance disponible
+              </span>
+            )}
           </DialogTitle>
           <DialogDescription>
             Configura los detalles de tu operación antes de proceder.
@@ -60,33 +108,29 @@ export function TradingDialog({ text, symbol, tipoOperacion, colorText }: Tradin
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          {/* Selector Compra/Venta */}
-          <Tabs
-            value={operationType}
-            onValueChange={(value: string) => setOperationType(value as "buy" | "sell")}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger
-                value="buy"
-                className={`${operationType === "buy"
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-100"
-                  }`}
-              >
-                Comprar
-              </TabsTrigger>
-              <TabsTrigger
-                value="sell"
-                className={`${operationType === "sell"
-                  ? "bg-red-500 text-white"
-                  : "bg-gray-100"
-                  }`}
-              >
-                Vender
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {/* Selector Compra/Venta con Botones */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant={operationType === "buy" ? "default" : "outline"}
+              className={`${operationType === "buy"
+                ? "bg-green-600 hover:bg-green-700 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                } transition-colors duration-200 cursor-pointer`}
+              onClick={() => setOperationType("buy")}
+            >
+              Comprar
+            </Button>
+            <Button
+              variant={operationType === "sell" ? "default" : "outline"}
+              className={`${operationType === "sell"
+                ? "bg-red-600 hover:bg-red-700 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                } transition-colors duration-200 cursor-pointer`}
+              onClick={() => setOperationType("sell")}
+            >
+              Vender
+            </Button>
+          </div>
 
           {/* Sección Unidades */}
           <Card>
@@ -99,7 +143,7 @@ export function TradingDialog({ text, symbol, tipoOperacion, colorText }: Tradin
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setUnits(units - 1000)}
+                    onClick={() => setUnits(prev => Math.max(1000, prev - 1000))}
                     disabled={units <= 1000}
                   >
                     -
@@ -110,7 +154,7 @@ export function TradingDialog({ text, symbol, tipoOperacion, colorText }: Tradin
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setUnits(units + 1000)}
+                    onClick={() => setUnits(prev => prev + 1000)}
                   >
                     +
                   </Button>
@@ -167,14 +211,18 @@ export function TradingDialog({ text, symbol, tipoOperacion, colorText }: Tradin
 
           {/* Botón de acción */}
           <div className="flex gap-2 pt-2">
-            <Button variant="outline" className="flex-1">
+            <Button variant="outline" className="flex-1 cursor-pointer" onClick={() => setIsOpen(false)}>
               Cancelar
             </Button>
             <Button
               className={`flex-1 ${operationType === "buy"
                 ? "bg-green-600 hover:bg-green-700"
                 : "bg-red-600 hover:bg-red-700"
-                }`}
+                } cursor-pointer`}
+              onClick={() => {
+                console.log(`Operación: ${operationType} ${symbol} - Unidades: ${units}`);
+                setIsOpen(false);
+              }}
             >
               {operationType === "buy" ? "Comprar" : "Vender"} {symbol}
             </Button>
