@@ -27,6 +27,7 @@ import { formatCurrency } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import SYMBOLS_MAP from "@/lib/symbolsMap"
+import { toast } from "sonner"
 
 interface TradingDialogProps {
   text: string;
@@ -63,7 +64,7 @@ export function TradingDialog({ text, symbol, tipoOperacion, colorText, sellPric
   const [imageExists, setImageExists] = useState(true);
 
   const { dataMarket } = useMarketStore();
-  const { user } = useUserStore();
+  const { user, updateUserBalance } = useUserStore();
 
   const category = useMemo(() => getCategoryBySymbol(symbol), [symbol]);
   const marginRate = MARGIN_CONFIG[category as keyof typeof MARGIN_CONFIG] || 0.05;
@@ -153,6 +154,50 @@ export function TradingDialog({ text, symbol, tipoOperacion, colorText, sellPric
   }, [tipoOperacion]);
 
   const dialogTitle = operationType === "buy" ? "Comprar" : "Vender";
+
+  async function handleConfirmTrade() {
+    if (!user?.id) {
+      console.error("No authenticated user - cannot open trade");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/trade/open", { // ✅ ruta corregida
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id, // ✅ debe coincidir con userId del backend
+          symbol: symbol,
+          side: operationType, // 'buy' o 'sell'
+          entryPrice: currentPrice, // ✅ corregido (antes era price)
+          quantity: calculations.cantidad, // ✅ ok
+          leverage: 1, // puedes hacer dinámico este valor si lo agregas en el UI
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Error al abrir operación");
+
+      // console.log("✅ Trade abierto:", data.trade);
+
+      // 🔹 Opcional: puedes actualizar balance o UI localmente aquí
+      // refreshBalance()
+      // addTradeToList(data.trade)
+
+      // toast.success('Operación abierta exitosamente');
+      alert('Operación abierta exitosamente');
+      updateUserBalance(Number(data.trade.balanceAfter));
+      // setIsOpen(false);
+
+
+    } catch (err) {
+      console.error("❌ Error al abrir operación:", err);
+      // toast.error('Error al abrir la operación: ' + String(err));
+      alert('Error al abrir la operación: ' + String(err));
+    }
+  }
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -292,12 +337,7 @@ export function TradingDialog({ text, symbol, tipoOperacion, colorText, sellPric
             </Button>
             <Button
               className="flex-1 bg-green-600 hover:bg-green-700 text-white cursor-pointer"
-              onClick={() => {
-                console.log(`Operación: ${operationType} ${symbol} - Cantidad: ${calculations.cantidad}`);
-                console.log('Precio de operación:', currentPrice);
-                console.log('Cálculos:', calculations);
-                setIsOpen(false);
-              }}
+              onClick={handleConfirmTrade}
               disabled={!hasSufficientBalance || calculations.cantidad <= 0}
             >
               Abrir Operación | {symbol}

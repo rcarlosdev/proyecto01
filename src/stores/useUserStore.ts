@@ -12,6 +12,7 @@ interface UserState {
   setSession: (session: Session | null) => void;
   /** Limpia completamente el estado del usuario */
   clearUser: () => void;
+  updateUserBalance: (newBalance: number) => void;
 }
 
 export const useUserStore = create<UserState>((set) => ({
@@ -21,4 +22,8 @@ export const useUserStore = create<UserState>((set) => ({
   setUser: (user) => set({ user }),
   setSession: (session) => set({ session }),
   clearUser: () => set({ user: null, session: null }),
+  updateUserBalance: (newBalance) =>
+    set((state) => ({
+      user: state.user ? { ...state.user, balance: Number(newBalance.toFixed(2)) } : null,
+    })),
 }));
