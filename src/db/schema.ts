@@ -126,3 +126,35 @@ export const transactions = pgTable("transactions", {
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+
+/** * Tabla de trades
+ * - Registra cada operación de trading realizada por los usuarios
+ */
+export const trades = pgTable("trades", {
+  id: serial("id").primaryKey(),
+
+  // Relación con el usuario
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  // Información del trade
+  symbol: text("symbol").notNull(),
+  side: text("side").$type<"buy" | "sell">().notNull(), // ✅ lado de la operación
+  entryPrice: numeric("entry_price", { precision: 12, scale: 4 }).notNull(), // ✅ precio de entrada
+  closePrice: numeric("close_price", { precision: 12, scale: 4 }), // ✅ precio de cierre
+  quantity: numeric("quantity", { precision: 12, scale: 4 }).notNull(), // ✅ cantidad
+  leverage: numeric("leverage", { precision: 12, scale: 2 }).default("1"), // ✅ apalancamiento
+
+  // Resultados
+  profit: numeric("profit", { precision: 12, scale: 2 }).default("0.00"), // ✅ PnL
+  status: text("status").$type<"open" | "closed">().default("open").notNull(),
+
+  // Metadatos flexibles (puedes guardar fees, timestamps, condiciones, etc.)
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+
+  // Tiempos
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  closedAt: timestamp("closed_at"),
+});
