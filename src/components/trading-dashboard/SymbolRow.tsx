@@ -91,11 +91,11 @@ export default function SymbolRow({
 
 
   return (
-    <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 p-3 rounded-md hover:opacity-90 transition cursor-pointer">
+    <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 p-3 rounded-md hover:opacity-90 transition">
       {/* Symbol */}
       <div
         onClick={() => setSelectedSymbol(symbol)}
-        className="flex items-center gap-2 leading-tight"
+        className="flex items-center gap-2 leading-tight cursor-pointer"
       >
         {/* {imageExists ? (
           <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
@@ -130,6 +130,8 @@ export default function SymbolRow({
           symbol={symbol}
           tipoOperacion="buy"
           colorText={sellColor}
+          sellPrice={sellPrice}
+          buyPrice={buyPrice}
         />
       </div>
 
@@ -154,6 +156,8 @@ export default function SymbolRow({
           symbol={symbol}
           tipoOperacion="sell"
           colorText={buyColor}
+          sellPrice={sellPrice}
+          buyPrice={buyPrice}
         />
       </div>
     </div>

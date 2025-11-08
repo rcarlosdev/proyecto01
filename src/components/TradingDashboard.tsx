@@ -54,7 +54,7 @@ const TradingDashboard = () => {
             <div className="space-y-3">
               <div className="flex gap-2">
                 <SearchBar />
-                <TradingDialog text="Abrir Operación" symbol={selectedSymbol} tipoOperacion="buy" />
+                {/* <TradingDialog text="Abrir Operación" symbol={selectedSymbol} tipoOperacion="buy" /> */}
               </div>
 
               <FilterSelect />
