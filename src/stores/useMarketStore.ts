@@ -16,6 +16,7 @@ interface MarketState {
   selectedSymbol: string | null;
   filters: MarketFilters;
   isLoading: boolean;
+  dataSymbolOperation: MarketQuote;
 
   // Actions
   setDataMarket: (markets: MarketQuote[]) => void;
@@ -24,6 +25,7 @@ interface MarketState {
   setFilters: (filters: Partial<MarketFilters>) => void;
   setIsLoading: (value: boolean) => void;
   setSearchTerm: (term: string) => void;
+  setDataSymbolOperation: (data: MarketQuote) => void;
 }
 
 export const useMarketStore = create<MarketState>((set) => ({
@@ -33,6 +35,7 @@ export const useMarketStore = create<MarketState>((set) => ({
   selectedSymbol: null,
   filters: { search: "", sortBy: null },
   isLoading: false,
+  dataSymbolOperation: {} as MarketQuote,
 
   // Actions
   setDataMarket: (dataMarket) => set({ dataMarket }),
@@ -41,4 +44,5 @@ export const useMarketStore = create<MarketState>((set) => ({
   setFilters: (filters) => set((state) => ({ filters: { ...state.filters, ...filters } })),
   setIsLoading: (value) => set({ isLoading: value }),
   setSearchTerm: (term) => set((state) => ({ filters: { ...state.filters, search: term } })),
+  setDataSymbolOperation: (data) => set({ dataSymbolOperation: data }),
 }));

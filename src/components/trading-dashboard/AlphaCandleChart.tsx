@@ -874,7 +874,7 @@ export default function AlphaCandleChart({
                     onClick={() => handleZoom("in")}
                     disabled={isLoading}
                   >
-                    <ZoomIn className="w-3 h-3 mr-1" /> +
+                    <ZoomIn className="w-3 h-3 mr-1" />
                   </Button>
                   <Button
                     variant="outline"
@@ -883,7 +883,7 @@ export default function AlphaCandleChart({
                     onClick={() => handleZoom("out")}
                     disabled={isLoading}
                   >
-                    <ZoomOut className="w-3 h-3 mr-1" /> −
+                    <ZoomOut className="w-3 h-3 mr-1" />
                   </Button>
                 </div>
                 <div className="flex gap-2">
