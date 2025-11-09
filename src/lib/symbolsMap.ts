@@ -1,3 +1,5 @@
+// lib/symbolsMap.ts
+
 const SYMBOLS_MAP: Record<string, string[]> = {
   indices: ['SPY', 'QQQ', 'DIA', 'IWM', 'IVV', 'SPLG', 'VOO', 'EFA', 'EEM', 'VXX'],
   acciones: ['AAPL', 'MSFT', 'TSLA', 'GOOGL', 'AMZN', 'FB', 'NFLX', 'NVDA', 'BABA', 'JPM', 'V', 'DIS'],

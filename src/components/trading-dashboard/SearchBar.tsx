@@ -1,31 +1,39 @@
-import { Input } from "../ui/input";
+// src/components/trading-dashboard/SearchBar.tsx
+"use client";
+
+import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import useDebounce from "@/hooks/useDebounce";
 import { useMarketStore } from "@/stores/useMarketStore";
 
-// Componente de búsqueda
 const SearchBar = () => {
-  const [input, setInput] = useState('');
-  const debouncedInput = useDebounce(input, 500);
+  const [input, setInput] = useState("");
+  const debouncedInput = useDebounce(input, 400);
 
-  const { setSearchTerm } = useMarketStore();
+  const { filters, setFilters } = useMarketStore();
 
-  // usar hook de debounce si es necesario
+  // Sincroniza el término de búsqueda con debounce (store global)
   useEffect(() => {
-    setSearchTerm(debouncedInput);
-  }, [debouncedInput, setSearchTerm]);
+    setFilters({ search: debouncedInput });
+  }, [debouncedInput, setFilters]);
+
+  // Si el valor del store cambia (por limpiar filtros globalmente, etc.), sincronizar input local
+  useEffect(() => {
+    if (filters.search === "" && input !== "") {
+      setInput("");
+    }
+  }, [filters.search]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value;
-    setInput(term);
+    setInput(e.target.value);
   };
 
   return (
     <div className="relative w-full">
       <div className="relative">
         <svg
-          width="30"
-          height="30"
+          width="20"
+          height="20"
           viewBox="0 0 19 22"
           fill="none"
           className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -38,11 +46,13 @@ const SearchBar = () => {
             strokeLinejoin="round"
           />
         </svg>
+
         <Input
           type="search"
-          placeholder="Búsqueda"
-          className="w-full pl-12 pr-4 py-2 border border-gray-50/80 bg-background"
-          onChange={(e) => handleSearch(e)}
+          placeholder="Buscar símbolo o mercado..."
+          value={input}
+          onChange={handleSearch}
+          className="w-full pl-10 pr-4 py-2 border border-gray-50/80 bg-background text-yellow-300 placeholder:text-gray-500 focus-visible:ring-yellow-400"
         />
       </div>
     </div>

@@ -38,10 +38,12 @@ export async function POST(req: Request) {
     const [newTrade] = await db
       .insert(trades)
       .values({
+        id: crypto.randomUUID(), // ✅ genera ID único
         userId,
         symbol,
         side,
         entryPrice,
+        closePrice: null, // ✅ evita error de columna sin default
         quantity,
         leverage,
         status: "open",
@@ -59,8 +61,9 @@ export async function POST(req: Request) {
 
     // 5️⃣ Registrar transacción del trade
     await db.insert(transactions).values({
+      id: crypto.randomUUID(), // ✅ también agregamos ID único aquí
       userId: userId as any,
-      type: "trade_open",
+      type: "trade",
       amount: (-marginUsed).toFixed(2),
       status: "completed",
       metadata: {

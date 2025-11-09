@@ -1,10 +1,20 @@
+// src/components/trading-dashboard/SymbolRow.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MarketQuote } from "@/types/interfaces";
 import { useMarketStore } from "@/stores/useMarketStore";
-import Image from "next/image";
 import { TradingDialog } from "./TradingDialog";
+import SYMBOLS_MAP from "@/lib/symbolsMap";
+
+/** Mapea símbolo -> market para definir el spread visual */
+function marketOfSymbol(sym: string): keyof typeof SYMBOLS_MAP | "acciones" {
+  const S = sym.toUpperCase();
+  for (const [m, arr] of Object.entries(SYMBOLS_MAP)) {
+    if (arr.map((x) => x.toUpperCase()).includes(S)) return m as keyof typeof SYMBOLS_MAP;
+  }
+  return "acciones";
+}
 
 export default function SymbolRow({
   symbol,
@@ -16,114 +26,96 @@ export default function SymbolRow({
   changePercent,
   latestTradingDay,
 }: MarketQuote) {
-  const { setSelectedSymbol } = useMarketStore();
+  const { setSelectedSymbol, getLivePrice } = useMarketStore();
 
-  // Valores simulados
-  const [sellPrice, setSellPrice] = useState(price);
-  const [buyPrice, setBuyPrice] = useState(previousClose ?? price);
-  const [changeValue, setChangeValue] = useState(change ?? 0);
+  // Precio en vivo desde el store (SSE centralizado) con fallback a prop.price
+  const live = useMarketStore((s) => s.getLivePrice(symbol)) ?? price ?? 0;
 
-  // Colores y dirección
+  // Spread visual “como antes”, pero basado en live
+  const market = useMemo(() => marketOfSymbol(symbol), [symbol]);
+  const spreadPctByMarket: Record<string, number> = useMemo(
+    () => ({
+      fx: 0.0003,
+      crypto: 0.003,
+      acciones: 0.001,
+      indices: 0.001,
+      commodities: 0.001,
+    }),
+    []
+  );
+  const spread = spreadPctByMarket[market] ?? 0.002;
+
+  // Targets derivados del precio en vivo
+  const targetSell = useMemo(() => Number((live * (1 + spread)).toFixed(2)), [live, spread]);
+  const targetBuy = useMemo(() => Number((live * (1 - spread)).toFixed(2)), [live, spread]);
+  const targetChange = useMemo(() => Number((targetSell - targetBuy).toFixed(2)), [targetSell, targetBuy]);
+
+  // Estado visual (parpadeos y valores mostrados)
+  const [sellPrice, setSellPrice] = useState(targetSell);
+  const [buyPrice, setBuyPrice] = useState(targetBuy);
+  const [changeValue, setChangeValue] = useState(targetChange);
+
   const [sellColor, setSellColor] = useState("#2B3245");
   const [buyColor, setBuyColor] = useState("#2B3245");
   const [changeColor, setChangeColor] = useState("#16a34a");
   const [isNegative, setIsNegative] = useState(false);
 
-  // Guardar valores previos
   const prevSellRef = useRef(sellPrice);
   const prevBuyRef = useRef(buyPrice);
   const prevChangeRef = useRef(changeValue);
 
-  const [imageExists, setImageExists] = useState(true);
   const short = (v?: number) => (v !== undefined ? v.toFixed(2) : "-");
 
+  // Actualiza valores y colores cuando cambian los targets (cada tick del SSE)
   useEffect(() => {
-    const interval = setInterval(() => {
-      const sellVariation = (Math.random() - 0.5) * 0.6;
-      const buyVariation = (Math.random() - 0.5) * 0.6;
+    const newSell = targetSell;
+    const newBuy = targetBuy;
+    const newChange = targetChange;
 
-      const newSell = +(sellPrice + sellVariation).toFixed(2);
-      const newBuy = +(buyPrice + buyVariation).toFixed(2);
-      const newChange = +(newSell - newBuy).toFixed(2);
+    const prevSell = prevSellRef.current;
+    const prevBuy = prevBuyRef.current;
+    const prevChange = prevChangeRef.current;
 
-      // --- Cambio general ---
-      const prevChange = prevChangeRef.current;
-      const wentUp = newChange > prevChange;
-      const wentDown = newChange < prevChange;
+    // variación del "cambio"
+    if (newChange > prevChange) {
+      setChangeColor("#16a34a");
+      setIsNegative(false);
+    } else if (newChange < prevChange) {
+      setChangeColor("#db3535");
+      setIsNegative(true);
+    }
 
-      if (wentUp) {
-        setChangeColor("#16a34a");
-        setIsNegative(false);
-      } else if (wentDown) {
-        setChangeColor("#db3535");
-        setIsNegative(true);
-      }
+    // variaciones SELL / BUY para parpadeo
+    if (newSell > prevSell) setSellColor("#16a34a");
+    else if (newSell < prevSell) setSellColor("#db3535");
+    else setSellColor("#2B3245");
 
-      // --- Detectar cambios en SELL ---
-      const prevSell = prevSellRef.current;
-      if (newSell > prevSell) {
-        setSellColor("#16a34a"); // verde
-      } else if (newSell < prevSell) {
-        setSellColor("#db3535"); // rojo
-      }
+    if (newBuy > prevBuy) setBuyColor("#16a34a");
+    else if (newBuy < prevBuy) setBuyColor("#db3535");
+    else setBuyColor("#2B3245");
 
-      // --- Detectar cambios en BUY ---
-      const prevBuy = prevBuyRef.current;
-      if (newBuy > prevBuy) {
-        setBuyColor("#16a34a");
-      } else if (newBuy < prevBuy) {
-        setBuyColor("#db3535");
-      }
+    // aplicar valores
+    setSellPrice(newSell);
+    setBuyPrice(newBuy);
+    setChangeValue(newChange);
 
-      // Actualizar valores
-      setSellPrice(newSell);
-      setBuyPrice(newBuy);
-      setChangeValue(newChange);
-
-      // Guardar referencias previas
-      prevSellRef.current = newSell;
-      prevBuyRef.current = newBuy;
-      prevChangeRef.current = newChange;
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [sellPrice, buyPrice]);
-
+    // guardar referencias
+    prevSellRef.current = newSell;
+    prevBuyRef.current = newBuy;
+    prevChangeRef.current = newChange;
+  }, [targetSell, targetBuy, targetChange]);
 
   return (
     <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 p-3 rounded-md hover:opacity-90 transition">
       {/* Symbol */}
-      <div
-        onClick={() => setSelectedSymbol(symbol)}
-        className="flex items-center gap-2 leading-tight cursor-pointer"
-      >
-        {/* {imageExists ? (
-          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-            <Image
-              src={`/symbols/${symbol}.png`}
-              alt={symbol}
-              width={32}
-              height={32}
-              className="object-contain"
-              loading="lazy"
-              onError={() => setImageExists(false)}
-            />
-          </div>
-        ) : (
-          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-            {symbol.charAt(0)}
-          </div>
-        )} */}
+      <div onClick={() => setSelectedSymbol(symbol)} className="flex items-center gap-2 leading-tight cursor-pointer">
         <span className="text-sm font-semibold">{symbol}</span>
       </div>
 
-      {/* Botón de vender */}
+      {/* Botón de vender (usa sellPrice) */}
       <div
         className="rounded-md transition-colors duration-300"
-        style={{
-          backgroundColor:
-            sellColor === "#2B3245" ? "transparent" : sellColor + "20",
-        }}
+        style={{ backgroundColor: sellColor === "#2B3245" ? "transparent" : sellColor + "20" }}
       >
         <TradingDialog
           text={short(sellPrice)}
@@ -136,20 +128,14 @@ export default function SymbolRow({
       </div>
 
       {/* Cambio */}
-      <div
-        className={`min-w-[35px] text-center text-[13px] font-semibold transition-colors duration-300`}
-        style={{ color: changeColor }}
-      >
+      <div className="min-w-[35px] text-center text-[13px] font-semibold transition-colors duration-300" style={{ color: changeColor }}>
         {isNegative ? "▼" : "▲"} {Math.abs(changeValue).toFixed(2)}
       </div>
 
-      {/* Botón de comprar */}
+      {/* Botón de comprar (usa buyPrice) */}
       <div
         className="rounded-md transition-colors duration-300"
-        style={{
-          backgroundColor:
-            buyColor === "#2B3245" ? "transparent" : buyColor + "20",
-        }}
+        style={{ backgroundColor: buyColor === "#2B3245" ? "transparent" : buyColor + "20" }}
       >
         <TradingDialog
           text={short(buyPrice)}

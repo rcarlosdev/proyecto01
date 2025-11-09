@@ -1,11 +1,7 @@
 'use client';
 
-import {
-  useCallback,
-  useEffect
-} from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { MARKETS } from '@/lib/markets';
-import { MarketQuote } from '@/types/interfaces';
 import { Separator } from '@/components/ui/separator';
 import SearchBar from './trading-dashboard/SearchBar';
 import SymbolList from './trading-dashboard/SymbolList';
@@ -13,50 +9,64 @@ import { useMarketStore } from '@/stores/useMarketStore';
 import AccountInfo from './trading-dashboard/AccountInfo';
 import MarketHeader from './trading-dashboard/MarketHeader';
 import { FilterSelect } from './trading-dashboard/FilterSelect';
-import { TradingDialog } from './trading-dashboard/TradingDialog';
 import AlphaCandleChart from './trading-dashboard/AlphaCandleChart';
 
 type Market = typeof MARKETS[number];
 
-// Componente principal
 const TradingDashboard = () => {
-  const { selectedSymbol, setSelectedSymbol, selectedMarket, setDataMarket } = useMarketStore();
+  const {
+    selectedSymbol,
+    setSelectedSymbol,
+    selectedMarket,
+    selectMarket,
+    stopMarketStream,
+    dataMarket,
+  } = useMarketStore();
 
-
-  const loadData = useCallback(
-    async (market: Market) => {
-      const res = await fetch(`/api/markets?market=${encodeURIComponent(market)}`);
-      if (!res.ok) throw new Error(`Status ${res.status}`);
-
-      const data: MarketQuote[] = await res.json();
-      setDataMarket(data);
-      setSelectedSymbol(data[0]?.symbol || null);
-    },
-    [setDataMarket, setSelectedSymbol]
-  );
+  const didInit = useRef(false);
 
   useEffect(() => {
-    const marketToLoad = selectedMarket || "indices";
+    // ⚡ Arranca solo una vez
+    if (didInit.current) return;
+    didInit.current = true;
 
-    loadData(marketToLoad);
+    const defaultMarket: Market = (selectedMarket as Market) || 'indices';
 
-    const id = setInterval(() => loadData(marketToLoad), 20_000);
-    return () => clearInterval(id);
-  }, [selectedMarket, loadData]);
+    // Inicia carga + stream SSE
+    selectMarket(defaultMarket);
+
+    return () => {
+      // Cierra stream al desmontar
+      stopMarketStream();
+    };
+  }, [selectedMarket, selectMarket, stopMarketStream]);
+
+  // Mantener símbolo seleccionado si sigue existiendo en el nuevo dataset
+  useEffect(() => {
+    if (!dataMarket.length) return;
+    const exists = dataMarket.some((q) => q.symbol === selectedSymbol);
+    if (!exists) {
+      setSelectedSymbol(dataMarket[0].symbol);
+    }
+  }, [dataMarket, selectedSymbol, setSelectedSymbol]);
+
+  // Memoriza el componente AlphaCandleChart para evitar re-renderizados
+  const memoizedChart = useMemo(() => {
+    if (!selectedSymbol) return null;
+
+    return <AlphaCandleChart symbol={selectedSymbol} interval="1min" />;
+  }, [selectedSymbol]);
 
   return (
-    <section className='flex-1 flex-col h-full'>
+    <section className="flex-1 flex-col h-full">
       <div className="flex h-[70%] w-full">
         {/* Panel lateral izquierdo */}
         <div className="flex flex-col border-r border-gray-200 transition-all duration-300 w-fit">
-
           <div className="bg-accent-foreground border-gray-200 pb-4 px-2">
             <div className="space-y-3">
               <div className="flex gap-2">
                 <SearchBar />
-                {/* <TradingDialog text="Abrir Operación" symbol={selectedSymbol} tipoOperacion="buy" /> */}
               </div>
-
               <FilterSelect />
             </div>
             <MarketHeader />
@@ -70,9 +80,14 @@ const TradingDashboard = () => {
 
         {/* Contenido principal */}
         <div className="flex-1 flex flex-col">
-          {!!selectedSymbol ? <AlphaCandleChart symbol={selectedSymbol} interval="1min" /> : <div className="p-4">Selecciona un símbolo para ver el gráfico</div>}
+          {memoizedChart || (
+            <div className="p-4 text-sm text-muted-foreground">
+              Selecciona un símbolo para ver el gráfico
+            </div>
+          )}
         </div>
       </div>
+
       <footer className="border-t border-gray-200">
         <div className="p-4">
           <AccountInfo />
