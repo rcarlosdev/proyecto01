@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useMarketStore } from "@/stores/useMarketStore";
 import SearchBar from "@/components/trading-dashboard/SearchBar";
+const SearchBarAny = SearchBar as any;
 import SymbolList from "@/components/trading-dashboard/SymbolList";
 const SymbolListAny = SymbolList as any;
 import AccountInfo from "@/components/trading-dashboard/AccountInfo";
@@ -39,7 +40,7 @@ export default function TradingDashboardMobile() {
   return (
     <div className="flex flex-col w-full min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
       <div className="flex flex-col gap-4 p-4">
-        <AccountInfo compact />
+        <AccountInfo {...({ compact: true } as any)} />
 
         <div className="flex flex-wrap gap-2 justify-center">
           {MARKETS.map((market) => {
@@ -60,8 +61,7 @@ export default function TradingDashboardMobile() {
             );
           })}
         </div>
-
-        <SearchBar onSearchChange={handleSearchChange} />
+        <SearchBarAny onSearchChange={handleSearchChange} />
 
         <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
           <button

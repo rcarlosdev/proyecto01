@@ -39,7 +39,7 @@ export default function SymbolList() {
       ) : (
         <ScrollArea  className="h-64 md:h-80 lg:h-96">
           {filteredMarkets.length > 0 ? (
-            <div className="divide-y divide-white/5">
+            <div className="divide-white/5">
               {filteredMarkets.map((market) => (
                 <SymbolRow key={market.symbol} {...market} />
               ))}

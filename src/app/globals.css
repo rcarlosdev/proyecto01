@@ -58,6 +58,11 @@
   --sidebar-accent-foreground: var(--color-primary);
   --sidebar-border: var(--color-border);
   --sidebar-ring: var(--color-primary);
+
+  /* variables específicas para tabla */
+  --color-table-row-muted: #b9b9b9;
+  --table-row-bg: var(--color-surface);
+  --table-row-hover: var(--color-surface-alt);
 }
 
 /* Tema oscuro - BINANCE STYLE */
@@ -87,6 +92,9 @@
   --sidebar-accent: rgba(240, 185, 11, 0.2);
   --sidebar-accent-foreground: #F0B90B;
   --sidebar-border: rgba(255, 255, 255, 0.08);
+
+  --table-row-bg: var(--color-surface);
+  --table-row-hover: var(--color-surface-alt);
 }
 
 /* Tema claro */
@@ -97,6 +105,9 @@
   --popover-foreground: #181A20;
   --sidebar-bg: #F5F5F7;
   --sidebar-foreground: #181A20;
+
+  --table-row-bg: var(--color-table-row-muted);
+  --table-row-hover: var(--color-surface);
 }
 
 /* ========================================================================
