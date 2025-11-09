@@ -117,6 +117,7 @@ export default function SymbolRow({
         className="rounded-md transition-colors duration-300"
         style={{ backgroundColor: sellColor === "#2B3245" ? "transparent" : sellColor + "20" }}
       >
+        {/* NO modificar estilos ni colores del botón interno */}
         <TradingDialog
           text={short(sellPrice)}
           symbol={symbol}
@@ -127,16 +128,24 @@ export default function SymbolRow({
         />
       </div>
 
-      {/* Cambio */}
-      <div className="min-w-[35px] text-center text-[13px] font-semibold transition-colors duration-300" style={{ color: changeColor }}>
+      {/* Cambio (NO tocar estilos ni color) */}
+      <div
+        className="min-w-[35px] text-center text-[13px] font-semibold transition-colors duration-300"
+        style={{ color: changeColor }}
+      >
         {isNegative ? "▼" : "▲"} {Math.abs(changeValue).toFixed(2)}
       </div>
 
-      {/* Botón de comprar (usa buyPrice) */}
+      {/* Botón de comprar (mantiene su estilo interno y fondo dinámico externo) */}
       <div
         className="rounded-md transition-colors duration-300"
-        style={{ backgroundColor: buyColor === "#2B3245" ? "transparent" : buyColor + "20" }}
+        style={{
+          // conservar el fondo que tenían los valores numéricos
+          backgroundColor:
+            buyColor === "#2B3245" ? "transparent" : buyColor + "20",
+        }}
       >
+        {/* NO modificar estilos ni colores del botón interno */}
         <TradingDialog
           text={short(buyPrice)}
           symbol={symbol}

@@ -609,6 +609,7 @@ export default function AccountInfo() {
                 <p className={`text-sm md:text-base font-medium ${Number(item.value) < 0 ? "text-red-500" : "text-white"}`}>
                   {formatCurrency(Number(item.value), "en-US", CURRENCY)}
                 </p>
+
               </div>
             ))
           )}

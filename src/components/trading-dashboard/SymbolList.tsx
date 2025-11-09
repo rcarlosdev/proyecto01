@@ -1,3 +1,4 @@
+// src/components/trading-dashboard/SymbolList.tsx
 "use client";
 
 import React, { useMemo } from "react";
@@ -36,8 +37,7 @@ export default function SymbolList() {
           ))}
         </div>
       ) : (
-        // <ScrollArea className="h-[calc(100vh-250px)]">
-        <ScrollArea className="h-80">
+        <ScrollArea  className="h-64 md:h-80 lg:h-96">
           {filteredMarkets.length > 0 ? (
             <div className="divide-y divide-white/5">
               {filteredMarkets.map((market) => (

@@ -1,3 +1,4 @@
+// src/modules/home/ui/views/home/home-view.tsx
 'use client';
 
 import TradingDashboard from "@/components/TradingDashboard";

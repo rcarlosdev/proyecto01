@@ -3,6 +3,7 @@
 
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
 import useDebounce from "@/hooks/useDebounce";
 import { useMarketStore } from "@/stores/useMarketStore";
 
@@ -40,10 +41,7 @@ const SearchBar = () => {
         >
           <path
             d="M18 17.5L13.0001 12.5M14.6667 8.33333C14.6667 11.555 12.055 14.1667 8.83333 14.1667C5.61167 14.1667 3 11.555 3 8.33333C3 5.11167 5.61167 2.5 8.83333 2.5C12.055 2.5 14.6667 5.11167 14.6667 8.33333Z"
-            stroke="currentColor"
-            strokeWidth="1.66667"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            stroke="currentColor" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"
           />
         </svg>
 
