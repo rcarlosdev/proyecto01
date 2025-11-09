@@ -1,85 +1,80 @@
-'use client';
+// src/components/TradingDashboard.tsx
 
-import {
-  useCallback,
-  useEffect
-} from 'react';
-import { MARKETS } from '@/lib/markets';
-import { MarketQuote } from '@/types/interfaces';
-import { Separator } from '@/components/ui/separator';
-import SearchBar from './trading-dashboard/SearchBar';
-import SymbolList from './trading-dashboard/SymbolList';
-import { useMarketStore } from '@/stores/useMarketStore';
-import AccountInfo from './trading-dashboard/AccountInfo';
-import MarketHeader from './trading-dashboard/MarketHeader';
-import { FilterSelect } from './trading-dashboard/FilterSelect';
-import { TradingDialog } from './trading-dashboard/TradingDialog';
-import AlphaCandleChart from './trading-dashboard/AlphaCandleChart';
+"use client";
+
+import dynamic from "next/dynamic";
+import { useEffect, useState, useCallback } from "react";
+import { useMarketStore } from "@/stores/useMarketStore";
+import { MARKETS } from '@/lib/markets'; // Asegúrate de que esta ruta sea correcta
+
+// 🔹 Importaciones dinámicas (evita cargar ambas versiones al mismo tiempo)
+const TradingDashboardDesktop = dynamic(
+  () => import("./trading-dashboard/TradingDashboardDesktop"),
+  { ssr: false }
+);
+
+const TradingDashboardMobile = dynamic(
+  () => import("./trading-dashboard/mobile/TradingDashboardMobile"),
+  { ssr: false }
+);
 
 type Market = typeof MARKETS[number];
 
-// Componente principal
-const TradingDashboard = () => {
+export default function TradingDashboard() {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // 👈 INICIO: Lógica de carga de datos centralizada
   const { selectedSymbol, setSelectedSymbol, selectedMarket, setDataMarket } = useMarketStore();
-
 
   const loadData = useCallback(
     async (market: Market) => {
-      const res = await fetch(`/api/markets?market=${encodeURIComponent(market)}`);
-      if (!res.ok) throw new Error(`Status ${res.status}`);
+      // Esta función ahora solo se encarga de cargar el mercado que se le pasa.
+      // La lógica para decidir qué mercado cargar está en el useEffect de abajo.
+      if (!market) return;
+      
+      try {
+        const res = await fetch(`/api/markets?market=${encodeURIComponent(market)}`);
+        if (!res.ok) throw new Error(`Status ${res.status}`);
 
-      const data: MarketQuote[] = await res.json();
-      setDataMarket(data);
-      setSelectedSymbol(data[0]?.symbol || null);
+        const data = await res.json();
+        setDataMarket(data);
+        // Solo establece un símbolo si no hay uno ya seleccionado para evitar sobrescribir la selección del usuario.
+        if (!selectedSymbol) {
+          setSelectedSymbol(data[0]?.symbol || null);
+        }
+      } catch (error) {
+        console.error("Failed to load market data:", error);
+        setDataMarket([]); // Limpia los datos en caso de error
+      }
     },
-    [setDataMarket, setSelectedSymbol]
+    [setDataMarket, setSelectedSymbol, selectedSymbol]
   );
 
   useEffect(() => {
-    const marketToLoad = selectedMarket || "indices";
+    // 👉 CAMBIO CLAVE: Decide qué mercado cargar.
+    // Si el mercado seleccionado es 'all' o null, cargamos 'indices' como valor por defecto para tener datos.
+    // Si no, cargamos el mercado seleccionado por el usuario.
+    const marketToFetch = (!selectedMarket || selectedMarket === 'all') ? "indices" : selectedMarket;
 
-    loadData(marketToLoad);
+    loadData(marketToFetch);
 
-    const id = setInterval(() => loadData(marketToLoad), 20_000);
+    // El intervalo de actualización también debe usar el mercado resuelto.
+    const id = setInterval(() => loadData(marketToFetch), 20_000);
     return () => clearInterval(id);
-  }, [selectedMarket, loadData]);
+  }, [selectedMarket, loadData]); // Se ejecutará cada vez que selectedMarket cambie.
+  // 👈 FIN: Lógica de carga de datos
+
+  // Lógica para detectar si la vista es móvil
+  useEffect(() => {
+    const checkViewport = () => setIsMobile(window.innerWidth <= 850);
+    checkViewport();
+    window.addEventListener("resize", checkViewport);
+    return () => window.removeEventListener("resize", checkViewport);
+  }, []);
 
   return (
-    <section className='flex-1 flex-col h-full'>
-      <div className="flex h-[70%] w-full">
-        {/* Panel lateral izquierdo */}
-        <div className="flex flex-col border-r border-gray-200 transition-all duration-300 w-fit">
-
-          <div className="bg-accent-foreground border-gray-200 pb-4 px-2">
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <SearchBar />
-                <TradingDialog text="Abrir Operación" symbol={selectedSymbol} tipoOperacion="buy" />
-              </div>
-
-              <FilterSelect />
-            </div>
-            <MarketHeader />
-          </div>
-
-          <Separator className="bg-gray-500/50" />
-          <div className="flex-1 overflow-hidden">
-            <SymbolList />
-          </div>
-        </div>
-
-        {/* Contenido principal */}
-        <div className="flex-1 flex flex-col">
-          {!!selectedSymbol ? <AlphaCandleChart symbol={selectedSymbol} interval="1min" /> : <div className="p-4">Selecciona un símbolo para ver el gráfico</div>}
-        </div>
-      </div>
-      <footer className="border-t border-gray-200">
-        <div className="p-4">
-          <AccountInfo />
-        </div>
-      </footer>
-    </section>
+    <div className="w-full h-full">
+      {isMobile ? <TradingDashboardMobile /> : <TradingDashboardDesktop />}
+    </div>
   );
-};
-
-export default TradingDashboard;
+}

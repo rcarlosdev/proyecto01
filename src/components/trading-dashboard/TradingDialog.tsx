@@ -1,3 +1,4 @@
+// src/components/trading-dashboard/TradingDialog.tsx
 import { useEffect, useState } from "react"
 import {
   Card,
@@ -52,8 +53,6 @@ export function TradingDialog({ text, symbol, tipoOperacion, colorText }: Tradin
   useEffect(() => {
     setOperationType(tipoOperacion);
   }, [tipoOperacion]);
-
-  console.log("marketInfo en TradingDialog:", marketInfo);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
