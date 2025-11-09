@@ -50,6 +50,7 @@ export default function TradingDashboard() {
     [setDataMarket, setSelectedSymbol, selectedSymbol]
   );
 
+  // Mantener símbolo seleccionado si sigue existiendo en el nuevo dataset
   useEffect(() => {
     // 👉 CAMBIO CLAVE: Decide qué mercado cargar.
     // Si el mercado seleccionado es 'all' o null, cargamos 'indices' como valor por defecto para tener datos.

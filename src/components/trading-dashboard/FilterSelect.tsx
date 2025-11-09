@@ -1,6 +1,7 @@
+// src/components/trading-dashboard/FilterSelect.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   Select,
   SelectContent,
@@ -14,37 +15,54 @@ export function FilterSelect() {
   const {
     markets,
     selectedMarket,
-    setSelectedMarket,
+    selectMarket,       // helper: fetch + stream
+    setSelectedMarket,  // fallback por si lo necesitas en algún flujo
   } = useMarketStore();
 
-  // Efecto para establecer 'indices' como valor por defecto solo al montar el componente
+  // Evita inicializar más de una vez
+  const didInitRef = useRef(false);
+
+  // Establece 'indices' como valor por defecto al montar (si no hay selección)
   useEffect(() => {
-    if (markets.length > 0 && selectedMarket === undefined) {
-      const defaultMarket = markets.find(m => m === "indices") || markets[0];
-      setSelectedMarket(defaultMarket);
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+
+    // Preferimos 'indices' si existe en la lista, si no el primero
+    const defaultMarket =
+      markets.find((m) => m === "indices") || markets[0] || null;
+
+    // Si ya hay seleccionado, no hacemos nada; si no, seleccionamos y arrancamos stream
+    if (!selectedMarket && defaultMarket) {
+      // Usamos selectMarket para asegurar snapshot + SSE
+      selectMarket(defaultMarket);
     }
-  }, [markets, selectedMarket, setSelectedMarket]);
+  }, [markets, selectedMarket, selectMarket]);
 
   // Maneja el cambio de selección
-  const handleChange = (value: string) => {
-    const found = markets.find((m) => m === value) || null;
-    setSelectedMarket(found);
+  const handleChange = async (value: string) => {
+    const found = markets.find((m) => m === value);
+    if (!found) {
+      // Si por alguna razón no está, sólo actualiza el estado “crudo”
+      setSelectedMarket(null);
+      return;
+    }
+    // Usa el helper para cargar y abrir stream
+    await selectMarket(found);
   };
+
+  // Valor controlado: si aún no hay selección, intenta mostrar 'indices' o vacío
+  const controlledValue =
+    selectedMarket ??
+    (markets.includes("indices") ? "indices" : undefined);
 
   return (
     <div className="w-full">
-      <Select
-        value={selectedMarket || "all"}
-        onValueChange={handleChange}
-      >
-        <SelectTrigger
-          className="w-full border border-gray-50/80 text-yellow-300"
-        >
+      <Select value={controlledValue} onValueChange={handleChange}>
+        <SelectTrigger className="w-full border border-gray-50/80 text-yellow-300">
           <SelectValue placeholder="Seleccionar mercado" />
         </SelectTrigger>
 
         <SelectContent className="text-yellow-300 border border-gray-50/80 bg-[#181a20e7]">
-          {/* <SelectItem value="all">Todos</SelectItem> */}
           {markets.map((market) => (
             <SelectItem key={market} value={market}>
               {market}

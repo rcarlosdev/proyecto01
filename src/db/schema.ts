@@ -110,7 +110,7 @@ export const verification = pgTable("verification", {
  * - Todas las operaciones quedan registradas (auditoría)
  */
 export const transactions = pgTable("transactions", {
-  id: serial("id").primaryKey(),
+  id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
@@ -132,7 +132,7 @@ export const transactions = pgTable("transactions", {
  * - Registra cada operación de trading realizada por los usuarios
  */
 export const trades = pgTable("trades", {
-  id: serial("id").primaryKey(),
+  id: text("id").primaryKey(),
 
   // Relación con el usuario
   userId: text("user_id")
@@ -143,7 +143,7 @@ export const trades = pgTable("trades", {
   symbol: text("symbol").notNull(),
   side: text("side").$type<"buy" | "sell">().notNull(), // ✅ lado de la operación
   entryPrice: numeric("entry_price", { precision: 12, scale: 4 }).notNull(), // ✅ precio de entrada
-  closePrice: numeric("close_price", { precision: 12, scale: 4 }), // ✅ precio de cierre
+  closePrice: numeric("close_price", { precision: 12, scale: 4 }), // ✅ precio de cierre (nullable)
   quantity: numeric("quantity", { precision: 12, scale: 4 }).notNull(), // ✅ cantidad
   leverage: numeric("leverage", { precision: 12, scale: 2 }).default("1"), // ✅ apalancamiento
 
