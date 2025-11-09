@@ -1,5 +1,5 @@
 
-// src/components/TradingDashboard.tsx
+// src/components/trading-dashboard/TradingDashboardDesktop.tsx
 // original estaba en: src/components/TradingDashboard.tsx
 'use client';
 
