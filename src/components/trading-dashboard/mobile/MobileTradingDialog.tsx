@@ -17,7 +17,7 @@ const MobileTradingDialog = () => {
         </Button>
       </div>
 
-      <TradingDialog {...({ open, onOpenChange: setOpen } as any)} />
+      {/* <TradingDialog {...({ open, onOpenChange: setOpen } as any)} /> */}
     </>
   );
 };

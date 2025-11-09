@@ -1,6 +1,7 @@
+// src/components/trading-dashboard/FilterSelect.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   Select,
   SelectContent,
@@ -14,44 +15,62 @@ export function FilterSelect() {
   const {
     markets,
     selectedMarket,
+    selectMarket,
     setSelectedMarket,
   } = useMarketStore();
 
-  // Efecto para establecer 'indices' como valor por defecto solo al montar el componente
-  useEffect(() => {
-    if (markets.length > 0 && selectedMarket === undefined) {
-      const defaultMarket = markets.find(m => m === "indices") || markets[0];
-      setSelectedMarket(defaultMarket);
-    }
-  }, [markets, selectedMarket, setSelectedMarket]);
+  const didInitRef = useRef(false);
+  const switchingRef = useRef(false);
 
-  // Maneja el cambio de selección
-  const handleChange = (value: string) => {
-    const found = markets.find((m) => m === value) || null;
-    setSelectedMarket(found);
+  // Selección por defecto al montar
+  useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+
+    const def = markets.find((m) => m === "indices") || markets[0] || null;
+    if (!selectedMarket && def) {
+      // selectMarket acepta string; no hace falta castear a Market
+      void selectMarket(def);
+    }
+  }, [markets, selectedMarket, selectMarket]);
+
+  // Cambio con anti-ráfagas
+  const handleChange = async (value: string) => {
+    if (switchingRef.current) return;
+    switchingRef.current = true;
+    try {
+      const found = markets.find((m) => m === value);
+      if (!found) {
+        setSelectedMarket(null);
+        return;
+      }
+      await selectMarket(found); // tu store define (marketKey: string) => Promise<void>
+    } finally {
+      switchingRef.current = false;
+    }
   };
 
-  return (
-    <div className="w-full">
-      <Select
-        value={selectedMarket || "all"}
-        onValueChange={handleChange}
-      >
-        <SelectTrigger
-          className="w-full border border-gray-50/80 text-yellow-300"
-        >
-          <SelectValue placeholder="Seleccionar mercado" />
-        </SelectTrigger>
+  // Valor controlado (si no hay selección y existe 'indices', úsalo)
+  const controlledValue: string | undefined =
+    selectedMarket ?? (markets.includes("indices") ? "indices" : undefined);
 
-        <SelectContent className="text-yellow-300 border border-gray-50/80 bg-[#181a20e7]">
-          {/* <SelectItem value="all">Todos</SelectItem> */}
-          {markets.map((market) => (
-            <SelectItem key={market} value={market}>
-              {market}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+  return (
+    <Select
+      value={controlledValue}
+      onValueChange={handleChange}
+      disabled={switchingRef.current}
+    >
+      <SelectTrigger className="w-full border border-gray-50/80 text-yellow-300">
+        <SelectValue placeholder="Seleccionar mercado" />
+      </SelectTrigger>
+
+      <SelectContent className="text-yellow-300 border border-gray-50/80 bg-[#181a20e7]">
+        {markets.map((market) => (
+          <SelectItem key={market} value={market}>
+            {market}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

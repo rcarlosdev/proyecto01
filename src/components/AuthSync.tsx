@@ -1,46 +1,54 @@
+// src/components/AuthSync.tsx
 "use client";
 
 import { useEffect } from "react";
 import { useSession } from "@/lib/auth-client";
 import { useUserStore } from "@/stores/useUserStore";
+import { useKeepUserFresh } from "@/hooks/useKeepUserFresh";
 
 export default function AuthSync({ children }: { children: React.ReactNode }) {
   const { data: session, isPending } = useSession();
-  const setUser = useUserStore((state) => state.setUser);
-  const setSession = useUserStore((state) => state.setSession);
-  const clearUser = useUserStore((state) => state.clearUser);
+  const setUser = useUserStore((s) => s.setUser);
+  const setSession = useUserStore((s) => s.setSession);
+  const clearUser = useUserStore((s) => s.clearUser);
+  const _setUserIfChanged = useUserStore((s) => s._setUserIfChanged);
 
   useEffect(() => {
+    let ac = new AbortController();
     async function syncUser() {
       if (session?.user) {
         try {
-          // ✅ Recuperar datos actualizados desde la base de datos
           const res = await fetch("/api/user/me", {
             headers: { "Content-Type": "application/json" },
+            signal: ac.signal,
+            cache: "no-store",
           });
-
           if (!res.ok) {
             console.error("Error al obtener usuario:", res.statusText);
             clearUser();
             return;
           }
-
           const dbUser = await res.json();
-
-          // ✅ Guardamos el usuario y la sesión en el store
-          setUser(dbUser);
+          _setUserIfChanged(dbUser); // evita renders si no cambió
           setSession(session.session);
         } catch (error) {
-          console.error("Error al sincronizar usuario:", error);
-          clearUser();
+          if ((error as any)?.name !== "AbortError") {
+            console.error("Error al sincronizar usuario:", error);
+            clearUser();
+          }
         }
       } else if (!isPending) {
         clearUser();
       }
     }
-
     syncUser();
-  }, [session, isPending, setUser, setSession, clearUser]);
+    return () => {
+      ac.abort();
+    };
+  }, [session, isPending, _setUserIfChanged, setSession, clearUser]);
+
+  // ⬇️ empieza el refresco continuo (polling + focus)
+  useKeepUserFresh();
 
   return <>{children}</>;
 }
