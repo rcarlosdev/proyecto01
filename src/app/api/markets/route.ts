@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { MOCK_BASE } from '@/lib/mockData';
 import { MARKETS } from "@/config/markets";
+import SYMBOLS_MAP from '@/lib/symbolsMap';
 // import { ur } from 'zod/v4/locales';
 
 type Quote = {
@@ -21,16 +22,6 @@ type Quote = {
 const API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 const CACHE_TTL_SEC = 300; // 5 minutos
 const CACHE_TTL_MS = CACHE_TTL_SEC * 1000; // ms para cálculos
-
-/* ---------------------- Símbolos por mercado ---------------------- */
-const SYMBOLS_MAP: Record<string, string[]> = {
-  indices: ['SPY', 'QQQ', 'DIA', 'IWM', 'IVV', 'SPLG', 'VOO', 'EFA', 'EEM', 'VXX'],
-  acciones: ['AAPL', 'MSFT', 'TSLA', 'GOOGL', 'AMZN', 'FB', 'NFLX', 'NVDA', 'BABA', 'JPM', 'V', 'DIS'],
-  commodities: ['GLD', 'USO', 'SLV', 'PALL', 'DBO', 'GDX', 'UNG', 'CORN', 'WEAT', 'SOYB'],
-  crypto: ['BTC', 'ETH', 'LTC', 'XRP', 'DOGE', 'USDT', 'ADA', 'DOT', 'BCH', 'LINK', 'XLM', 'XMR'],
-  fx: ['EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'NZDUSD', 'USDCAD', 'USDCHF', 'EURGBP', 'EURJPY', 'GBPJPY', 'AUDJPY', 'CHFJPY', 'EURAUD', 'NZDJPY', 'CADJPY', 'EURCAD', 'EURNZD', 'AUDCAD', 'AUDNZD', 'GBPCHF', 'NZDCAD'],
-};
-
 
 /* ---------------------- Upstash Redis init + memory fallback ---------------------- */
 let redis: Redis | null = null;
@@ -229,10 +220,10 @@ function smallHash(str: string) {
 }
 function xorshift32(seed: number) {
   let x = seed >>> 0;
-  return function() {
+  return function () {
     x ^= x << 13; x >>>= 0;
     x ^= x >>> 17; x >>>= 0;
-    x ^= x << 5;  x >>>= 0;
+    x ^= x << 5; x >>>= 0;
     return x / 0xffffffff;
   };
 }
@@ -321,16 +312,16 @@ async function fetchSymbolsForMarketWithFallback(market: string): Promise<{ data
 }
 
 // 🔹 Normaliza el nombre del sub-mercado
-  // function normalizeSubMarketKey(marketKey: string, subKeyRaw?: string) {
-  //   if (!subKeyRaw) return undefined;
-  //   const subKey = decodeURIComponent(subKeyRaw).replace(/\+/g, " ").trim().toLowerCase();
-  //   const subMarkets = MARKETS[marketKey]?.subMarkets || {};
+// function normalizeSubMarketKey(marketKey: string, subKeyRaw?: string) {
+//   if (!subKeyRaw) return undefined;
+//   const subKey = decodeURIComponent(subKeyRaw).replace(/\+/g, " ").trim().toLowerCase();
+//   const subMarkets = MARKETS[marketKey]?.subMarkets || {};
 
-  //   // Busca coincidencia exacta insensible a mayúsculas/minúsculas
-  //   return Object.keys(subMarkets).find(
-  //     k => k.trim().toLowerCase() === subKey
-  //   );
-  // }
+//   // Busca coincidencia exacta insensible a mayúsculas/minúsculas
+//   return Object.keys(subMarkets).find(
+//     k => k.trim().toLowerCase() === subKey
+//   );
+// }
 
 /* ---------------------- Handler ---------------------- */
 export async function GET(request: Request) {
@@ -343,7 +334,7 @@ export async function GET(request: Request) {
   const fromLanding = url.searchParams.get('from') === 'landing';
 
 
-  
+
   if (fromLanding) {
     const marketParam = url.searchParams.get('market') || 'Indices';
     const subParam = url.searchParams.get("sub");
@@ -469,7 +460,7 @@ export async function GET(request: Request) {
     console.error('market-data final error', err);
     // final fallback: return dynamic mock (even if unexpected failure)
     const fallback = getDynamicMock(market);
-    try { await setCacheWithMeta(cacheKey, fallback, CACHE_TTL_SEC); } catch {}
+    try { await setCacheWithMeta(cacheKey, fallback, CACHE_TTL_SEC); } catch { }
     return NextResponse.json(fallback, { status: 200 });
   }
 }

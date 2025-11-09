@@ -115,6 +115,8 @@ export default function SymbolRow({
           symbol={symbol}
           tipoOperacion="buy"
           colorText={sellColor}
+          sellPrice={sellPrice}
+          buyPrice={buyPrice}
         />
       </div>
 
@@ -141,6 +143,8 @@ export default function SymbolRow({
           symbol={symbol}
           tipoOperacion="sell"
           colorText={buyColor}
+          sellPrice={sellPrice}
+          buyPrice={buyPrice}
         />
       </div>
     </div>
