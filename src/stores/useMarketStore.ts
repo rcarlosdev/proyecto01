@@ -70,9 +70,14 @@ interface MarketState {
   selectedSymbol: string | null;
   filters: MarketFilters;
   isLoading: boolean;
-  dataSymbolOperation: MarketQuote;
+  dataSymbolOperation: MarketQuote | null;
   livePrices: Prices;              // últimos precios por símbolo (SSE)
   sseMarket: string | null;        // mercado actualmente streameado
+  
+  // control de cambios de mercado / fetch
+  switchingMarket: boolean;
+  fetchController: AbortController | null;
+  requestVersion: number;
 
   // Acciones básicas
   setDataMarket: (markets: MarketQuote[]) => void;
@@ -172,9 +177,12 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   selectedSymbol: null,
   filters: { search: "", sortBy: null },
   isLoading: false,
-  dataSymbolOperation: {} as MarketQuote,
+  dataSymbolOperation: null,
   livePrices: {},
   sseMarket: null,
+  switchingMarket: false,
+  fetchController: null,
+  requestVersion: 0,
 
   // Acciones básicas
   setDataMarket: (dataMarket) => set({ dataMarket }),
@@ -189,21 +197,53 @@ export const useMarketStore = create<MarketState>((set, get) => ({
 
   /** Carga snapshot del mercado desde tu endpoint de backend */
   fetchMarket: async (marketKey: string) => {
-    set({ isLoading: true });
+    // aborta fetch anterior
+    const prev = get().fetchController;
+    prev?.abort();
+
+    // nueva versión de request
+    const version = get().requestVersion + 1;
+    const controller = new AbortController();
+
+    set({
+      isLoading: true,
+      fetchController: controller,
+      requestVersion: version,
+    });
+
     try {
-      const res = await fetch(`/api/alpha-markets?market=${encodeURIComponent(marketKey)}`, {
-        cache: "no-store",
-      });
+      const res = await fetch(
+        `/api/alpha-markets?market=${encodeURIComponent(marketKey)}`,
+        { cache: "no-store", signal: controller.signal }
+      );
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+
       const data: MarketQuote[] = await res.json();
-      // Mezcla snapshot con los livePrices (si ya hay stream)
+
+      // si llegó tarde (versión vieja), ignora
+      if (version !== get().requestVersion) return;
+
       const live = get().livePrices;
       const merged = mergePrices(data, live);
-      set({ dataMarket: merged, isLoading: false });
-    } catch (e) {
+
+      set({
+        dataMarket: merged,
+        isLoading: false,
+        // fija primer símbolo disponible
+        selectedSymbol: merged[0]?.symbol ?? null,
+      });
+    } catch (e: any) {
+      if (e?.name === "AbortError") return; // cambio de mercado, ok
       console.error("fetchMarket error:", e);
       set({ isLoading: false });
+    } finally {
+      // limpia sólo si sigue vigente esta versión
+      if (version === get().requestVersion) {
+        set({ fetchController: null });
+      }
     }
   },
+
 
   /** Inicia/rehace el SSE para un mercado (uno solo vivo a la vez) */
   startMarketStream: (marketKey: string) => {
@@ -256,8 +296,8 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   /** Helper: selecciona mercado => carga snapshot + abre stream */
   selectMarket: async (marketKey: string) => {
     set({ selectedMarket: marketKey as Market });
-    await get().fetchMarket(marketKey);
-    get().startMarketStream(marketKey);
+    get().stopMarketStream();            // ← cierra SSE del mercado anterior
+    await get().fetchMarket(marketKey);  // ← sólo snapshot; el SSE lo activa el chart tras el 1er load
   },
 
   /** Reaplica livePrices al dataMarket (por si actualizas desde fuera) */

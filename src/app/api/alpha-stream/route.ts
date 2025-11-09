@@ -101,8 +101,24 @@ export async function GET(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
-      const write = (line: string) => controller.enqueue(encoder.encode(line));
+      let closed = false;
+      const safeClose = () => {
+        if (closed) return;
+        closed = true;
+        try { controller.close(); } catch {}
+      };
+
+      const write = (line: string) => {
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(line));
+        } catch {
+          // controlador ya cerrado: ignora silenciosamente
+          closed = true;
+        }
+      };
       const send = (obj: unknown) => write(`data: ${JSON.stringify(obj)}\n\n`);
+
 
       // (1) encabezado SSE opcional
       write(`retry: 5000\n`); // hint de reconexión para EventSource
@@ -111,8 +127,10 @@ export async function GET(req: NextRequest) {
 
       // (2) heartbeat cada 10s (mantiene la conexión viva en proxies estrictos)
       const heartbeat = setInterval(() => {
+        if (closed) return;
         write(`: ping ${Date.now()}\n\n`);
       }, 10000);
+
 
       let lastPrices: Record<string, number> = {};
       let lastForcedAt = 0;
@@ -142,6 +160,7 @@ export async function GET(req: NextRequest) {
 
       // (4) loop cada 1s
       const tick = setInterval(async () => {
+        if (closed) return
         try {
           const wrapper = await getBaseWrapper(market);
           if (!wrapper) return;
@@ -165,6 +184,7 @@ export async function GET(req: NextRequest) {
           if (changed || forceDue) {
             lastPrices = prices;
             lastForcedAt = now;
+            if (closed) return;
             send({ prices });
           }
         } catch {
@@ -172,21 +192,29 @@ export async function GET(req: NextRequest) {
         }
       }, 1000);
 
+      // ⏳ Auto-cierre para evitar conexiones muy largas (evita bloqueos en FX)
+      const lifetime = setTimeout(() => {
+        safeClose();
+        clearInterval(tick);
+        clearInterval(heartbeat);
+        clearTimeout(lifetime);
+      }, 120000); // 120 s
+
       // (5) cleanup al cerrar cliente
       const onAbort = () => {
         clearInterval(tick);
         clearInterval(heartbeat);
-        try { controller.close(); } catch {}
+        clearTimeout(lifetime);
+        safeClose();
       };
-      if (req.signal.aborted) onAbort();
-      req.signal.addEventListener("abort", onAbort);
+
     },
   });
 
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
+      "Cache-Control": "no-store, no-transform",
       Connection: "keep-alive",
       "X-Accel-Buffering": "no",
       // "Transfer-Encoding": "chunked", // innecesario en Node, pero no daña
