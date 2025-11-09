@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from "react"
+// src/components/trading-dashboard/TradingDialog.tsx
+import { useEffect, useState } from "react"
 import {
   Card,
   CardContent,

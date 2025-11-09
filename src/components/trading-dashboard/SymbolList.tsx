@@ -1,3 +1,4 @@
+// src/components/trading-dashboard/SymbolList.tsx
 "use client";
 
 import React from "react";
@@ -33,7 +34,7 @@ const SymbolList = () => {
           ))}
         </div>
       ) : (
-        <ScrollArea className="h-80">
+        <ScrollArea  className="h-64 md:h-80 lg:h-96">
           {filteredMarkets.length > 0 ? (
             filteredMarkets.map((market, index) => (
               <SymbolRow key={index} {...market} />
