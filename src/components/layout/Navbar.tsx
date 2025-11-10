@@ -17,13 +17,15 @@ import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
 
 export function Navbar() {
-  const user = useUserStore((state) => state.user);
+  // const user = useUserStore((state) => state.user);
+  const { user, clearUser } = useUserStore();
   // función para redirigir
   const router = useRouter();
   const { toggleSidebar } = useSidebar();
 
   const handleLogout = () => {
     authClient.signOut();
+    clearUser();
     router.push("/landing");
   }
 

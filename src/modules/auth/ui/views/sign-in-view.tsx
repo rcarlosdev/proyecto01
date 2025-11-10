@@ -75,16 +75,16 @@ export const SignInView = () => {
           setLoading(false);
           // route.push("/");
           // route.replace("/"); // 👈 evita que quede en el history el landing
-          },
-          onError: ({ error }) => {
-            setLoading(false);
-            setError(
-              translateErrorMessage(error.message) ||
-                "Ocurrió un error, intenta nuevamente."
-            );
-          },
-        }
-      );
+        },
+        onError: ({ error }) => {
+          setLoading(false);
+          setError(
+            translateErrorMessage(error.message) ||
+            "Ocurrió un error, intenta nuevamente."
+          );
+        },
+      }
+    );
   };
 
   const handleGoogleSignin = () => {
@@ -118,7 +118,7 @@ export const SignInView = () => {
         >
           <CardContent className="p-6 md:p-10">
             <div className="flex items-center gap-2">
-              <Image src="/logo.png" alt="Logo" width={80} height={80} className="" />
+              <Image src="/logo.png" alt="Logo" width={80} height={80} />
               <h1
                 className="mb-2 text-2xl font-bold text-center"
                 style={{ color: "var(--amarillo-principal)" }}
@@ -126,9 +126,9 @@ export const SignInView = () => {
                 BitLance
               </h1>
             </div>
-            {/* <p className="text-sm opacity-80 text-center">
+            <p className="text-sm opacity-80 text-center">
               Inicia sesión para acceder a todas las funcionalidades.
-            </p> */}
+            </p>
 
             <Form {...form}>
               <form
@@ -243,6 +243,15 @@ export const SignInView = () => {
             </Form>
           </CardContent>
         </Card>
+        <div className="text-xs text-center mt-3">
+          ¿No tienes una cuenta?{" "}
+          <a
+            href="/sign-up"
+            style={{ color: "var(--amarillo-principal)" }}
+          >
+            Regístrate
+          </a>
+        </div>
 
         {/* Footer */}
         <div className="text-center text-xs mt-5 opacity-75">
