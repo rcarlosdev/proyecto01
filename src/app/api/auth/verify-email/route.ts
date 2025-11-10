@@ -1,10 +1,11 @@
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { user, verification } from "@/db/schema";
 import { and, eq, gt } from "drizzle-orm";
 import { hashToken } from "@/lib/email-verification";
-
-export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);

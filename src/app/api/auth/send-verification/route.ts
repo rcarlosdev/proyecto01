@@ -1,3 +1,7 @@
+// src/app/api/auth/send-verification/route.ts
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { user, verification } from "@/db/schema";
@@ -5,7 +9,7 @@ import { eq } from "drizzle-orm";
 import { addHours } from "date-fns";
 import { generateToken, hashToken, sendVerificationEmail } from "@/lib/email-verification";
 
-export const dynamic = "force-dynamic"; // necesario para Node runtime
+// export const dynamic = "force-dynamic"; // necesario para Node runtime
 
 // Rate limit simple (en memoria). En producción usa Redis o Supabase.
 const memoryRL = new Map<string, number>(); // key=ip/email, value=timestamp

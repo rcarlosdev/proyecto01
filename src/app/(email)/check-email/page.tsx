@@ -1,3 +1,5 @@
+"use client";
+
 export default function CheckEmailPage() {
   return (
     <main className="min-h-[60vh] grid place-items-center p-6">
