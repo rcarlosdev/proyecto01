@@ -68,6 +68,27 @@ export default function AccountInfo() {
   const [closedTrades, setClosedTrades] = useState<Trade[]>([]);
   const [showDetails, setShowDetails] = useState(false);
   const [view, setView] = useState<"open" | "closed">("open");
+  // ok 09/11/25
+  // Estado exclusivo de acordeón (puede iniciar en "open", "closed" o null)
+  const [expanded, setExpanded] = useState<"open" | "closed" | null>(null);
+
+  const toggleOpenAccordion = async () => {
+    const willExpand = expanded !== "open";
+    setView("open");
+    if (willExpand) await fetchTradesByStatus("open");
+    setExpanded(willExpand ? "open" : null);
+  };
+
+  const toggleClosedAccordion = async () => {
+    const willExpand = expanded !== "closed";
+    setView("closed");
+    if (willExpand) await fetchTradesByStatus("closed");
+    setExpanded(willExpand ? "closed" : null);
+  };
+
+
+
+  
 
   const [metrics, setMetrics] = useState({
     balance: 0,
@@ -407,16 +428,16 @@ export default function AccountInfo() {
       <div className="overflow-x-auto mt-4 hidden md:block">
         <table className="w-full text-sm border-separate border-spacing-y-2">
           <thead>
-            <tr className="text-left text-xs text-gray-400">
-              <th>Instrumento</th>
-              <th>TIPO</th>
-              <th>Importación</th>
-              <th>Precio de apertura</th>
-              <th>Precio actual</th>
-              <th>Leverage</th>
-              <th>Rendimiento</th>
-              <th>Rendimiento %</th>
-              <th></th>
+            <tr className="text-left text-xs text-[var(--color-text-muted)]">
+              <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Instrumento</th>
+              <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">TIPO</th>
+              <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Importación</th>
+              <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Precio de apertura</th>
+              <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Precio actual</th>
+              <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Leverage</th>
+              <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Rendimiento</th>
+              <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Rendimiento %</th>
+              <th className="pb-2 px-4 text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -429,24 +450,35 @@ export default function AccountInfo() {
               const pnlPos = live.pnl >= 0;
 
               return (
-                <tr key={t.id} className="transition">
-                  <td className="py-2 px-3">{t.symbol}</td>
-                  <td className={`px-3 ${t.side === "buy" ? "text-green-400" : "text-red-400"}`}>
+                <tr 
+                  key={t.id} 
+                  className="
+                    transition-all duration-200 
+                    bg-[var(--table-row-bg)]
+                    hover:bg-[var(--table-row-bg)]
+                    border border-[var(--color-border)]
+                    rounded-lg
+                  "
+                >
+                  <td className="py-3 px-4 border-r border-[var(--color-border)]/30 first:rounded-l-lg text-[var(--color-text)]">{t.symbol}</td>
+                  <td className={`py-3 px-4 border-r border-[var(--color-border)]/30 ${t.side === "buy" ? "text-green-400" : "text-red-400"}`}>
                     {t.side.toUpperCase()}
                   </td>
-                  <td className="px-3">{Number(t.quantity)}</td>
-                  <td className="px-3">{formatCurrency(Number(t.entryPrice), "en-US", CURRENCY)}</td>
-                  <td className="px-3">{formatCurrency(live.price, "en-US", CURRENCY)}</td>
-                  <td className="px-3">{t.leverage}x</td>
-                  <td className={`px-3 ${pnlPos ? "text-green-400" : "text-red-400"}`}>
+                  <td className="py-3 px-4 border-r border-[var(--color-border)]/30 text-[var(--color-text)]">{Number(t.quantity)}</td>
+                  <td className="py-3 px-4 border-r border-[var(--color-border)]/30 text-[var(--color-text)]">{formatCurrency(Number(t.entryPrice), "en-US", CURRENCY)}</td>
+                  <td className="py-3 px-4 border-r border-[var(--color-border)]/30 text-[var(--color-text)]">{formatCurrency(live.price, "en-US", CURRENCY)}</td>
+                  <td className="py-3 px-4 border-r border-[var(--color-border)]/30 text-[var(--color-text)]">{t.leverage}x</td>
+                  <td className={`py-3 px-4 border-r border-[var(--color-border)]/30 ${pnlPos ? "text-green-400" : "text-red-400"}`}>
                     {formatCurrency(live.pnl, "en-US", CURRENCY)}
                   </td>
-                  <td className={`px-3 ${pnlPos ? "text-green-400" : "text-red-400"}`}>{live.pct.toFixed(2)}%</td>
-                  <td className="px-3">
+                  <td className={`py-3 px-4 border-r border-[var(--color-border)]/30 ${pnlPos ? "text-green-400" : "text-red-400"}`}>
+                    {live.pct.toFixed(2)}%
+                  </td>
+                  <td className="py-3 px-4 last:rounded-r-lg">
                     <Button
                       size="sm"
                       variant="destructive"
-                      className="ml-2 bg-red-600 hover:bg-red-700 cursor-pointer"
+                      className="ml-2 bg-red-600 hover:bg-red-700 cursor-pointer transition-colors"
                       onClick={() => handleCloseTrade(t)}
                     >
                       Cerrar
@@ -477,101 +509,116 @@ export default function AccountInfo() {
     closedTrades.length === 0 ? (
       <EmptyMsg label="No hay operaciones cerradas." />
     ) : (
-      <div className="mt-4">
-        <div className="overflow-x-auto hidden md:block">
-          <table className="w-full text-sm border-separate border-spacing-y-2">
-            <thead>
-              <tr className="text-left text-xs text-gray-400">
-                <th>Instrumento</th>
-                <th>TIPO</th>
-                <th>Importación</th>
-                <th>Precio de apertura</th>
-                <th>Hora de apertura</th>
-                <th>Precio de cierre</th>
-                <th>Hora de cierre</th>
-                <th>Beneficios</th>
-                <th>Intercambio</th>
-                <th>Comisión</th>
-                <th>Copiado de</th>
-              </tr>
-            </thead>
-            <tbody>
-              {closedPaged.map((t) => {
-                const md = getMeta(t);
-                return (
-                  <tr key={t.id} className="hover:opacity-80 transition">
-                    <td className="py-2 px-3">{t.symbol}</td>
-                    <td className={`px-3 ${t.side === "buy" ? "text-green-400" : "text-red-400"}`}>
-                      {t.side.toUpperCase()}
-                    </td>
-                    <td className="px-3">{Number(t.quantity)}</td>
-                    <td className="px-3">{formatCurrency(toNum(t.entryPrice), "en-US", CURRENCY)}</td>
-                    <td className="px-3">{fmtDate(t.createdAt)}</td>
-                    <td className="px-3">
-                      {t.closePrice ? formatCurrency(toNum(t.closePrice), "en-US", CURRENCY) : "—"}
-                    </td>
-                    <td className="px-3">{fmtDate(t.closedAt)}</td>
-                    <td className={`px-3 ${toNum(t.profit) >= 0 ? "text-green-400" : "text-red-400"}`}>
-                      {formatCurrency(toNum(t.profit), "en-US", CURRENCY)}
-                    </td>
-                    <td className="px-3">{formatCurrency(toNum(md.swap), "en-US", CURRENCY)}</td>
-                    <td className="px-3">{formatCurrency(toNum(md.commission), "en-US", CURRENCY)}</td>
-                    <td className="px-3">{md.copiedFrom ?? "—"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer: total + paginación */}
-        <div className="mt-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div className="text-sm font-medium">
-            Total P/L:&nbsp;
-            <span className={`${totalClosedPL >= 0 ? "text-green-400" : "text-red-400"}`}>
-              {formatCurrency(totalClosedPL, "en-US", CURRENCY)}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label className="text-sm">Filas por página:</label>
-            <select
-              className="bg-transparent border rounded px-2 py-1"
-              value={rowsPerPage}
-              onChange={(e) => {
-                setRowsPerPage(Number(e.target.value));
-                setPage(0);
-              }}
+<div className="mt-4">
+  <div className="overflow-x-auto hidden md:block">
+    <table className="w-full text-sm border-separate border-spacing-y-2">
+      <thead>
+        <tr className="text-left text-xs text-[var(--color-text-muted)]">
+          <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Instrumento</th>
+          <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">TIPO</th>
+          <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Importación</th>
+          <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Precio de apertura</th>
+          <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Hora de apertura</th>
+          <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Precio de cierre</th>
+          <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Hora de cierre</th>
+          <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Beneficios</th>
+          <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Intercambio</th>
+          <th className="pb-2 px-4 border-r border-[var(--color-border)]/30 text-center">Comisión</th>
+          <th className="pb-2 px-4 text-center">Copiado de</th>
+        </tr>
+      </thead>
+      <tbody>
+        {closedPaged.map((t) => {
+          const md = getMeta(t);
+          return (
+            <tr 
+              key={t.id} 
+              className="
+                transition-all duration-200 
+                bg-[var(--table-row-bg)]
+                hover:bg-[var(--table-row-hover)]
+                border border-[var(--color-border)]
+                rounded-lg
+              "
             >
-              {[4, 10, 25].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-            <div className="text-sm ml-2">
-              {closedTrades.length === 0
-                ? "0-0 of 0"
-                : `${page * rowsPerPage + 1}-${Math.min(
-                    (page + 1) * rowsPerPage,
-                    closedTrades.length
-                  )} of ${closedTrades.length}`}
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setPage((p) => Math.max(p - 1, 0))}>
-              {"<"}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                setPage((p) => ((p + 1) * rowsPerPage < closedTrades.length ? p + 1 : p))
-              }
-            >
-              {">"}
-            </Button>
-          </div>
-        </div>
+              <td className="py-3 px-4 border-r border-[var(--color-border)]/30 first:rounded-l-lg text-[var(--color-text)]">{t.symbol}</td>
+              <td className={`py-3 px-4 border-r border-[var(--color-border)]/30 ${t.side === "buy" ? "text-green-400" : "text-red-400"}`}>
+                {t.side.toUpperCase()}
+              </td>
+              <td className="py-3 px-4 border-r border-[var(--color-border)]/30 text-[var(--color-text)]">{Number(t.quantity)}</td>
+              <td className="py-3 px-4 border-r border-[var(--color-border)]/30 text-[var(--color-text)]">{formatCurrency(toNum(t.entryPrice), "en-US", CURRENCY)}</td>
+              <td className="py-3 px-4 border-r border-[var(--color-border)]/30 text-[var(--color-text)]">{fmtDate(t.createdAt)}</td>
+              <td className="py-3 px-4 border-r border-[var(--color-border)]/30 text-[var(--color-text)]">
+                {t.closePrice ? formatCurrency(toNum(t.closePrice), "en-US", CURRENCY) : "—"}
+              </td>
+              <td className="py-3 px-4 border-r border-[var(--color-border)]/30 text-[var(--color-text)]">{fmtDate(t.closedAt)}</td>
+              <td className={`py-3 px-4 border-r border-[var(--color-border)]/30 ${toNum(t.profit) >= 0 ? "text-green-400" : "text-red-400"}`}>
+                {formatCurrency(toNum(t.profit), "en-US", CURRENCY)}
+              </td>
+              <td className="py-3 px-4 border-r border-[var(--color-border)]/30 text-[var(--color-text)]">{formatCurrency(toNum(md.swap), "en-US", CURRENCY)}</td>
+              <td className="py-3 px-4 border-r border-[var(--color-border)]/30 text-[var(--color-text)]">{formatCurrency(toNum(md.commission), "en-US", CURRENCY)}</td>
+              <td className="py-3 px-4 last:rounded-r-lg text-[var(--color-text)]">{md.copiedFrom ?? "—"}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+
+  {/* Footer: total + paginación */}
+  <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 pt-4 border-t border-[var(--color-border)]">
+    <div className="text-sm font-medium text-[var(--color-text)]">
+      Total P/L:&nbsp;
+      <span className={`${totalClosedPL >= 0 ? "text-green-400" : "text-red-400"}`}>
+        {formatCurrency(totalClosedPL, "en-US", CURRENCY)}
+      </span>
+    </div>
+
+    <div className="flex items-center gap-2">
+      <label className="text-sm text-[var(--color-text-muted)]">Filas por página:</label>
+      <select
+        className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-[var(--color-text)] transition-colors"
+        value={rowsPerPage}
+        onChange={(e) => {
+          setRowsPerPage(Number(e.target.value));
+          setPage(0);
+        }}
+      >
+        {[4, 10, 25].map((n) => (
+          <option key={n} value={n}>
+            {n}
+          </option>
+        ))}
+      </select>
+      <div className="text-sm text-[var(--color-text-muted)] ml-2">
+        {closedTrades.length === 0
+          ? "0-0 of 0"
+          : `${page * rowsPerPage + 1}-${Math.min(
+              (page + 1) * rowsPerPage,
+              closedTrades.length
+            )} of ${closedTrades.length}`}
       </div>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={() => setPage((p) => Math.max(p - 1, 0))}
+        className="border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]"
+      >
+        {"<"}
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() =>
+          setPage((p) => ((p + 1) * rowsPerPage < closedTrades.length ? p + 1 : p))
+        }
+        className="border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]"
+      >
+        {">"}
+      </Button>
+    </div>
+  </div>
+</div>
     );
 
   /* ===================== Datos de cabecera ===================== */
@@ -587,88 +634,123 @@ export default function AccountInfo() {
 
   /* ===================== Render principal ===================== */
   return (
-    <div className="rounded-2xl border border-gray-50/80 p-4 md:p-6">
+    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-4 md:p-6 transition-colors">
       <div className="cursor-pointer select-none" onClick={() => setShowDetails((p) => !p)}>
-        <h2 className="text-base md:text-lg font-semibold mb-4">Información de cuenta</h2>
+        <h2 className="text-base md:text-lg font-semibold mb-4 text-[var(--color-text)] border-l-4 border-[var(--color-primary)] pl-2">
+          Información de cuenta
+        </h2>
 
         {/* Grilla métrica */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-y-3 gap-x-4 md:gap-x-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-y-4 gap-x-4 md:gap-x-6">
           {isLoading ? (
             Array.from({ length: 7 }).map((_, i) => (
               <div key={i}>
-                <Skeleton className="h-3 w-20 md:w-24 mb-2" />
-                <Skeleton className="h-4 w-14 md:w-16" />
+                <Skeleton className="h-3 w-20 md:w-24 mb-2 bg-[var(--color-border)]" />
+                <Skeleton className="h-4 w-14 md:w-16 bg-[var(--color-border)]" />
               </div>
             ))
           ) : (
             accountData.map((item, index) => (
               <div key={index} className="col-span-1">
-                <p className="text-[11px] md:text-xs text-muted mb-1 tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
+                <p className="text-[11px] md:text-xs text-[var(--color-text-muted)] mb-1 tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
                   {item.label}
                 </p>
-                <p className={`text-sm md:text-base font-medium ${Number(item.value) < 0 ? "text-red-500" : "text-white"}`}>
+                <p className={`text-sm md:text-base font-medium ${
+                  Number(item.value) < 0 
+                    ? "text-red-400" 
+                    : "text-[var(--color-text)]"
+                }`}>
                   {formatCurrency(Number(item.value), "en-US", CURRENCY)}
                 </p>
-
               </div>
             ))
           )}
         </div>
       </div>
 
-      {/* Detalles */}
-      {showDetails && (
-        <div className="mt-6">
-          <div className="grid grid-cols-2 gap-2 w-full sticky top-0 z-10">
-            <Button
+        {/* Detalles */}
+        {/* ===== Bloque: Posiciones (botones acordeón lado a lado) ===== */}
+      
+        {/* Header con los dos acordeones, siempre visible y lado a lado */}
+        {/* ===== Bloque: Posiciones (botones individuales tipo acordeón) ===== */}
+        <div className="mt-6 pt-4 border-t border-[var(--color-border)] space-y-2">
+          {/* Fila de botones lado a lado */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* Posiciones abiertas */}
+            <button
+              onClick={toggleOpenAccordion}
+              aria-expanded={expanded === "open"}
               type="button"
-              onClick={async () => {
-                setView("open");
-                await fetchTradesByStatus("open"); // consulta al hacer click
-              }}
-              aria-pressed={view === "open"}
-              className={`w-full py-2 md:py-1 ${
-                view === "open"
-                  ? "bg-yellow-400 text-white hover:bg-yellow-500 cursor-pointer"
-                  : "border bg-muted text-foreground hover:opacity-90 cursor-pointer"
-              }`}
+              className={`flex items-center justify-between w-full px-4 py-3 text-base font-medium rounded-xl border transition-all duration-200
+                ${
+                  expanded === "open"
+                    ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-sm"
+                    : "bg-transparent border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] hover:text-[var(--color-primary)]"
+                }`}
             >
-              Posiciones abiertas
-            </Button>
-            <Button
+              <span>Posiciones abiertas</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`w-5 h-5 transition-transform ${expanded === "open" ? "rotate-180" : "rotate-0"}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Posiciones cerradas */}
+            <button
+              onClick={toggleClosedAccordion}
+              aria-expanded={expanded === "closed"}
               type="button"
-              onClick={async () => {
-                setView("closed");
-                await fetchTradesByStatus("closed"); // consulta al hacer click
-              }}
-              aria-pressed={view === "closed"}
-              className={`w-full py-2 md:py-1 ${
-                view === "closed"
-                  ? "bg-yellow-400 text-white hover:bg-yellow-500 cursor-pointer"
-                  : "border bg-muted text-foreground hover:opacity-90 cursor-pointer"
-              }`}
+              className={`flex items-center justify-between w-full px-4 py-3 text-base font-medium rounded-xl border transition-all duration-200
+                ${
+                  expanded === "closed"
+                    ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-sm"
+                    : "bg-transparent border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] hover:text-[var(--color-primary)]"
+                }`}
             >
-              Posiciones cerradas
-            </Button>
+              <span>Posiciones cerradas</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`w-5 h-5 transition-transform ${expanded === "closed" ? "rotate-180" : "rotate-0"}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
           </div>
 
-          {view === "open" ? (
-            <>
-              <div className="md:hidden">
+          {/* Contenido acordeón (sin contenedor ni fondo) */}
+          {expanded === "open" && (
+            <div className="transition-all duration-300">
+              <div className="md:hidden p-3">
                 <OpenTradesMobile />
               </div>
-              <OpenTradesTable />
-            </>
-          ) : (
-            <>
-              <div className="md:hidden">
+              <div className="hidden md:block">
+                <OpenTradesTable />
+              </div>
+            </div>
+          )}
+
+          {expanded === "closed" && (
+            <div className="transition-all duration-300">
+              <div className="md:hidden p-3">
                 <ClosedTradesMobile />
               </div>
-              <ClosedTradesTable />
-            </>
+              <div className="hidden md:block">
+                <ClosedTradesTable />
+              </div>
+            </div>
           )}
         </div>
-      )}
-    </div>
+      </div>
   );
+
 }

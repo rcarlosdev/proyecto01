@@ -26,12 +26,12 @@ export default function SymbolRow({
   changePercent,
   latestTradingDay,
 }: MarketQuote) {
-  const { setSelectedSymbol, getLivePrice } = useMarketStore();
+  const { setSelectedSymbol } = useMarketStore();
 
   // Precio en vivo desde el store (SSE centralizado) con fallback a prop.price
   const live = useMarketStore((s) => s.getLivePrice(symbol)) ?? price ?? 0;
 
-  // Spread visual “como antes”, pero basado en live
+  // Spread visual basado en mercado
   const market = useMemo(() => marketOfSymbol(symbol), [symbol]);
   const spreadPctByMarket: Record<string, number> = useMemo(
     () => ({
@@ -66,7 +66,7 @@ export default function SymbolRow({
 
   const short = (v?: number) => (v !== undefined ? v.toFixed(2) : "-");
 
-  // Actualiza valores y colores cuando cambian los targets (cada tick del SSE)
+  // Actualiza valores/colores cuando cambian los targets
   useEffect(() => {
     const newSell = targetSell;
     const newBuy = targetBuy;
@@ -85,7 +85,7 @@ export default function SymbolRow({
       setIsNegative(true);
     }
 
-    // variaciones SELL / BUY para parpadeo
+    // variaciones SELL / BUY
     if (newSell > prevSell) setSellColor("#16a34a");
     else if (newSell < prevSell) setSellColor("#db3535");
     else setSellColor("#2B3245");
@@ -94,66 +94,73 @@ export default function SymbolRow({
     else if (newBuy < prevBuy) setBuyColor("#db3535");
     else setBuyColor("#2B3245");
 
-    // aplicar valores
     setSellPrice(newSell);
     setBuyPrice(newBuy);
     setChangeValue(newChange);
 
-    // guardar referencias
     prevSellRef.current = newSell;
     prevBuyRef.current = newBuy;
     prevChangeRef.current = newChange;
   }, [targetSell, targetBuy, targetChange]);
 
   return (
-    <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 p-3 rounded-md hover:opacity-90 transition">
-      {/* Symbol */}
-      <div onClick={() => setSelectedSymbol(symbol)} className="flex items-center gap-2 leading-tight cursor-pointer">
-        <span className="text-sm font-semibold">{symbol}</span>
-      </div>
-
-      {/* Botón de vender (usa sellPrice) */}
+    // Contenedor principal: sin bordes, solo margen/padding
+    <div className="mx-1 my-2 mt-3 transition-all duration-200">
+      {/* Contenedor interior: fondo y borde (invertidos respecto al anterior), hover suave */}
       <div
-        className="rounded-md transition-colors duration-300"
-        style={{ backgroundColor: sellColor === "#2B3245" ? "transparent" : sellColor + "20" }}
+        onClick={() => setSelectedSymbol(symbol)}
+        className="
+          grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 p-2
+          rounded-xl border border-[var(--color-border)]
+          bg-[var(--color-surface-alt)]
+          hover:bg-[var(--color-surface)]
+          transition-colors cursor-pointer
+        "
       >
-        {/* NO modificar estilos ni colores del botón interno */}
-        <TradingDialog
-          text={short(sellPrice)}
-          symbol={symbol}
-          tipoOperacion="buy"
-          colorText={sellColor}
-          sellPrice={sellPrice}
-          buyPrice={buyPrice}
-        />
-      </div>
+        {/* Symbol */}
+        <div className="flex items-center gap-2 leading-tight p-1">
+          <span className="text-sm font-semibold text-[var(--color-text)]">
+            {symbol}
+          </span>
+        </div>
 
-      {/* Cambio (NO tocar estilos ni color) */}
-      <div
-        className="min-w-[35px] text-center text-[13px] font-semibold transition-colors duration-300"
-        style={{ color: changeColor }}
-      >
-        {isNegative ? "▼" : "▲"} {Math.abs(changeValue).toFixed(2)}
-      </div>
+        {/* Botón de vender (no tocar estilos internos ni fondo dinámico) */}
+        <div
+          className="rounded-md transition-colors duration-300"
+          style={{ backgroundColor: sellColor === "#2B3245" ? "transparent" : sellColor + "20" }}
+        >
+          <TradingDialog
+            text={short(sellPrice)}
+            symbol={symbol}
+            tipoOperacion="buy"
+            colorText={sellColor}
+            sellPrice={sellPrice}
+            buyPrice={buyPrice}
+          />
+        </div>
 
-      {/* Botón de comprar (mantiene su estilo interno y fondo dinámico externo) */}
-      <div
-        className="rounded-md transition-colors duration-300"
-        style={{
-          // conservar el fondo que tenían los valores numéricos
-          backgroundColor:
-            buyColor === "#2B3245" ? "transparent" : buyColor + "20",
-        }}
-      >
-        {/* NO modificar estilos ni colores del botón interno */}
-        <TradingDialog
-          text={short(buyPrice)}
-          symbol={symbol}
-          tipoOperacion="sell"
-          colorText={buyColor}
-          sellPrice={sellPrice}
-          buyPrice={buyPrice}
-        />
+        {/* Cambio (no tocar estilos ni color) */}
+        <div
+          className="min-w-[35px] text-center text-[13px] font-semibold transition-colors duration-300"
+          style={{ color: changeColor }}
+        >
+          {isNegative ? "▼" : "▲"} {Math.abs(changeValue).toFixed(2)}
+        </div>
+
+        {/* Botón de comprar (no tocar estilos internos ni fondo dinámico) */}
+        <div
+          className="rounded-md transition-colors duration-300"
+          style={{ backgroundColor: buyColor === "#2B3245" ? "transparent" : buyColor + "20" }}
+        >
+          <TradingDialog
+            text={short(buyPrice)}
+            symbol={symbol}
+            tipoOperacion="sell"
+            colorText={buyColor}
+            sellPrice={sellPrice}
+            buyPrice={buyPrice}
+          />
+        </div>
       </div>
     </div>
   );
