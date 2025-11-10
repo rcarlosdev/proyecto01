@@ -1,27 +1,20 @@
 "use client";
 
+import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 
-export default function VerifiedPage() {
+function VerifiedContent() {
   const [err, setErr] = useState(false);
   const [errMsg, setErrMsg] = useState("");
 
   const sp = useSearchParams();
   const router = useRouter();
 
-  // Parámetros de la URL
   const status = sp.get("status");
   const email = sp.get("email");
   const ok = status === "ok";
 
-  /** Redirige al inicio de sesión */
-  function handleGoToSignIn() {
-    router.push("/sign-in");
-  }
-
-  /** Permite reenviar el correo de verificación */
   async function handleResendVerification() {
     if (!email) {
       setErr(true);
@@ -44,14 +37,12 @@ export default function VerifiedPage() {
         return;
       }
 
-      // ✅ Caso: correo ya verificado
       if (data.alreadyVerified || data.message?.includes("ya fue verificado")) {
         setErr(true);
         setErrMsg("El correo ya fue verificado. Puedes iniciar sesión directamente.");
         return;
       }
 
-      // ✅ Caso: envío correcto
       router.push("/check-email");
     } catch (error) {
       console.error(error);
@@ -74,7 +65,6 @@ export default function VerifiedPage() {
         </p>
 
         <div className="flex gap-3 justify-center flex-wrap mt-4">
-          {/* Botón principal */}
           <Button
             className="w-full cursor-pointer hover:underline"
             style={{
@@ -82,12 +72,11 @@ export default function VerifiedPage() {
               backgroundColor: "var(--amarillo-principal)",
               color: "var(--text-color)",
             }}
-            onClick={handleGoToSignIn}
+            onClick={() => router.push("/sign-in")}
           >
             Ir a iniciar sesión
           </Button>
 
-          {/* Botón de reenvío solo si no fue verificado */}
           {!ok && (
             <Button
               variant="outline"
@@ -99,14 +88,21 @@ export default function VerifiedPage() {
             </Button>
           )}
 
-          {/* Mensaje de error */}
           {err && (
             <p className="w-full text-red-400 mt-3 text-sm">
-              {errMsg !== "" ? errMsg : "Error al reenviar el correo de verificación."}
+              {errMsg || "Error al reenviar el correo de verificación."}
             </p>
           )}
         </div>
       </div>
     </main>
+  );
+}
+
+export default function VerifiedPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Cargando...</div>}>
+      <VerifiedContent />
+    </Suspense>
   );
 }
