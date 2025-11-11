@@ -51,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Script>
       </head>
       <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <Toaster />
         <AuthSync>
           {children}
         </AuthSync>
