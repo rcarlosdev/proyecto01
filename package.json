@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:seed:rbac": "tsx -r dotenv/config src/db/seed.rbac.ts",
+    "db:assign-roles": "tsx -r dotenv/config src/db/assign-default-roles.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
