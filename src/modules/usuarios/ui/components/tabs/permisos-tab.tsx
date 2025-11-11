@@ -1,12 +1,14 @@
+// src/modules/usuarios/ui/components/tabs/PermisosTab.tsx
 "use client";
+
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Shield, Lock } from "lucide-react";
+import { useUserStore } from "@/stores/useUserStore";
 
 /* ---- Componentes de diálogo ---- */
 const AlertDialog = ({ open, onOpenChange, children }: any) => {
   if (!open) return null;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
@@ -16,23 +18,17 @@ const AlertDialog = ({ open, onOpenChange, children }: any) => {
     </div>
   );
 };
-
 const AlertDialogContent = ({ children }: any) => <div className="p-6">{children}</div>;
-
 const AlertDialogHeader = ({ children }: any) => <div className="mb-4">{children}</div>;
-
 const AlertDialogTitle = ({ children }: any) => (
   <h2 className="text-lg font-semibold text-[var(--color-primary)]">{children}</h2>
 );
-
 const AlertDialogDescription = ({ children }: any) => (
   <p className="text-sm text-[var(--color-text-muted)] mt-2">{children}</p>
 );
-
 const AlertDialogFooter = ({ children }: any) => (
   <div className="flex justify-end gap-3 mt-6">{children}</div>
 );
-
 const AlertDialogAction = ({ children, onClick }: any) => (
   <button
     onClick={onClick}
@@ -41,7 +37,6 @@ const AlertDialogAction = ({ children, onClick }: any) => (
     {children}
   </button>
 );
-
 const AlertDialogCancel = ({ children, onClick }: any) => (
   <button
     onClick={onClick}
@@ -103,8 +98,10 @@ export function PermisosTab({ usuarioId }: Props) {
   const [roles, setRoles] = useState<{ id: RoleId; name: string }[]>([]);
   const [catalog, setCatalog] = useState<PermRow[]>([]);
   const [userRole, setUserRole] = useState<RoleId>("user");
-  const [actorRole, setActorRole] = useState<RoleId>("user");
-  const [actorId, setActorId] = useState<string>("");
+
+  // ── Ahora el rol e id del actor vienen del STORE ──────────────────────────────
+  const actorRole = useUserStore((s) => s.role);
+  const actorId = useUserStore((s) => s.user?.id || "");
 
   const [effective, setEffective] = useState<Record<string, boolean>>({});
   const [matrixForSelectedRole, setMatrixForSelectedRole] = useState<RoleMatrix>({});
@@ -120,28 +117,24 @@ export function PermisosTab({ usuarioId }: Props) {
   useEffect(() => {
     (async () => {
       try {
-        const [rRes, pRes, urRes, effRes, meRoleRes] = await Promise.all([
-          fetch("/api/roles"),
-          fetch("/api/permissions"),
-          fetch(`/api/users/${usuarioId}/roles`),
-          fetch(`/api/users/${usuarioId}/permissions`),
-          fetch(`/api/user/me/role`), // debe devolver { userId, roleId }
+        const [rRes, pRes, urRes, effRes] = await Promise.all([
+          fetch("/api/roles", { credentials: "include", cache: "no-store" }),
+          fetch("/api/permissions", { credentials: "include", cache: "no-store" }),
+          fetch(`/api/users/${usuarioId}/roles`, { credentials: "include", cache: "no-store" }),
+          fetch(`/api/users/${usuarioId}/permissions`, { credentials: "include", cache: "no-store" }),
         ]);
         const rolesJson = await rRes.json();
         const permsJson = await pRes.json();
         const urJson = await urRes.json();
         const effJson = await effRes.json();
-        const meRoleJson = meRoleRes.ok ? await meRoleRes.json() : { roleId: "user" as RoleId, userId: "" };
 
         setRoles(rolesJson);
         setCatalog(permsJson);
         setUserRole(urJson.roleId);
         setSelectedRole(urJson.roleId);
         setEffective(effJson.permissions);
-        setActorRole(meRoleJson.roleId ?? "user");
-        setActorId(meRoleJson.userId ?? "");
 
-        const mRes = await fetch(`/api/roles/${urJson.roleId}/permissions`);
+        const mRes = await fetch(`/api/roles/${urJson.roleId}/permissions`, { credentials: "include", cache: "no-store" });
         setMatrixForSelectedRole(await mRes.json());
       } catch {
         toast.error("No se pudieron cargar los permisos.");
@@ -154,7 +147,7 @@ export function PermisosTab({ usuarioId }: Props) {
   const changeRole = async (role: RoleId) => {
     setSelectedRole(role);
     setHasChanges(true);
-    const res = await fetch(`/api/roles/${role}/permissions`);
+    const res = await fetch(`/api/roles/${role}/permissions`, { credentials: "include", cache: "no-store" });
     const base: RoleMatrix = await res.json();
     const proposal: Record<string, boolean> = {};
     for (const p of catalog) {
@@ -168,6 +161,7 @@ export function PermisosTab({ usuarioId }: Props) {
   const toggle = (permId: string) => {
     const type = matrixForSelectedRole[permId];
     if (type === "mandatory" || type === "blocked") return;
+    // regla especial pasarela
     if (permId === "payments_gateway" && actorRole !== "super") return;
     setEffective(prev => ({ ...prev, [permId]: !prev[permId] }));
     setHasChanges(true);
@@ -186,28 +180,18 @@ export function PermisosTab({ usuarioId }: Props) {
   const save = async () => {
     setSaving(true);
     try {
-
+      // bloqueo: solo SUPER puede asignar 'super'
       if (selectedRole === "super" && actorRole !== "super") {
         toast.error("Solo un SUPER puede asignar el rol 'Super'.");
         setSaving(false);
         return;
       }
 
-      // ⚠️ confirmación de degradación si el actor se edita a sí mismo
+      // confirmación si el actor se está degradando a sí mismo
       const actorSeEdita = usuarioId === actorId;
-      const esDegradacion = RANK[selectedRole] < RANK[actorRole];
+      const esDegradacion = RANK[selectedRole] < RANK[actorRole as RoleId];
       if (actorSeEdita && esDegradacion) {
-        const msg = `Estás a punto de asignarte el rol "${selectedRole}" (inferior a tu rol actual "${actorRole}").
-          Perderás permisos de nivel superior (p. ej., asignar/modificar permisos, configuración del sistema, ver logs y Pasarela de Pagos si aplica).
-          ¿Deseas continuar?
-        `;
-
-        // Guardamos la función de guardado para ejecutarla después de la confirmación
-        setPendingSave(() => async () => {
-          await executeSave();
-        });
-
-        // Mostramos el diálogo de confirmación
+        setPendingSave(() => async () => { await executeSave(); });
         setShowConfirmDialog(true);
         setSaving(false);
         return;
@@ -225,15 +209,15 @@ export function PermisosTab({ usuarioId }: Props) {
       if (selectedRole !== userRole) {
         const r = await fetch(`/api/users/${usuarioId}/roles`, {
           method: "PUT",
+          credentials: "include",
           body: JSON.stringify({ roleId: selectedRole }),
         });
-        // if (!r.ok) throw new Error("Error al guardar rol");
         if (!r.ok) {
           let msg = "Error al guardar rol";
           try {
             const j = await r.json();
             if (j?.error) msg = `${msg}: ${j.error}${j.detail ? ` – ${JSON.stringify(j.detail)}` : ""}`;
-          } catch { }
+          } catch {}
           throw new Error(msg);
         }
       }
@@ -249,7 +233,7 @@ export function PermisosTab({ usuarioId }: Props) {
         try {
           const j = await res.json();
           if (j?.error) msg = `${msg}: ${j.error}${j.detail ? ` – ${JSON.stringify(j.detail)}` : ""}`;
-        } catch { }
+        } catch {}
         throw new Error(msg);
       }
 
@@ -271,7 +255,6 @@ export function PermisosTab({ usuarioId }: Props) {
       setPendingSave(null);
     }
   };
-
   const handleCancelSave = () => {
     setShowConfirmDialog(false);
     setPendingSave(null);
@@ -300,7 +283,7 @@ export function PermisosTab({ usuarioId }: Props) {
           </p>
 
           {/* aviso visible si el actor se está degradando a sí mismo */}
-          {usuarioId === actorId && RANK[selectedRole] < RANK[actorRole] && (
+          {usuarioId === actorId && RANK[selectedRole] < RANK[(actorRole as RoleId)] && (
             <div className="rounded-xl border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 px-3 py-2 text-sm">
               <span className="font-semibold text-[var(--color-danger)]">Advertencia:</span>{" "}
               Estás seleccionando un <b>rol inferior</b> para ti mismo. Al guardar, <b>perderás permisos de nivel superior</b>
@@ -308,27 +291,10 @@ export function PermisosTab({ usuarioId }: Props) {
             </div>
           )}
 
-          {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {roles.map(r => {
-              const disableSuper = r.id === "super" && actorRole !== "super"; // 👈
-              return (
-                <Button
-                  key={r.id}
-                  variant={r.id === selectedRole ? "default" : "outline"}
-                  onClick={() => changeRole(r.id)}
-                  disabled={disableSuper}                     // 👈
-                  title={disableSuper ? "Solo un SUPER puede asignar el rol super" : undefined}
-                >
-                  {r.name}
-                </Button>
-              );
-            })}
-          </div> */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {roles.map(r => {
               const isSuperRole = r.id === "super";
-              const disabled = isSuperRole && actorRole !== "super"; // 👈 bloqueo visual
-
+              const disabled = isSuperRole && actorRole !== "super"; // bloqueo visual
               return (
                 <Button
                   key={r.id}
@@ -370,8 +336,9 @@ export function PermisosTab({ usuarioId }: Props) {
                     return (
                       <div
                         key={p.id}
-                        className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-xl transition-colors ${locked ? "opacity-60 cursor-not-allowed" : "hover:bg-[var(--color-surface)]"
-                          }`}
+                        className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-xl transition-colors ${
+                          locked ? "opacity-60 cursor-not-allowed" : "hover:bg-[var(--color-surface)]"
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <Checkbox checked={checked} disabled={locked} onChange={() => toggle(p.id)} />
