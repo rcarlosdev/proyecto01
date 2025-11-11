@@ -7,7 +7,13 @@ import {
   numeric,
   serial,
   jsonb,
+  primaryKey,
+  pgEnum,
 } from "drizzle-orm/pg-core";
+
+export const roleIdEnum = pgEnum("role_id_enum", ["user", "collaborator", "admin", "super"]);
+export const permTypeEnum = pgEnum("perm_type_enum", ["mandatory", "optional", "blocked"]);
+export const permCatEnum = pgEnum("perm_cat_enum", ["trading", "analysis", "support", "admin", "admin2", "payments"]);
 
 /**
  * Tabla de usuarios
@@ -41,6 +47,48 @@ export const user = pgTable("user", {
     .defaultNow()
     .notNull(),
 });
+
+export const roles = pgTable("roles", {
+  id: roleIdEnum("id").primaryKey(),               // 'user' | 'collaborator' | 'admin' | 'super'
+  name: text("name").notNull(),                    // legible
+  level: text("level").notNull(),                  // "1","2","3","4" (opcional)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const permissions = pgTable("permissions", {
+  id: text("id").primaryKey(),                     // slug: 'trading_operate', 'payments_gateway', etc.
+  name: text("name").notNull(),
+  description: text("description"),
+  category: permCatEnum("category").notNull(),     // 'trading'|'analysis'|'support'|'admin'|'admin2'|'payments'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const userRoles = pgTable("user_roles", {
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }).notNull(),
+  roleId: roleIdEnum("role_id").references(() => roles.id).notNull(),
+  assignedBy: text("assigned_by"), // opcional: auditoría de quién asigna
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.userId] }),         // 1 rol por usuario
+}));
+
+export const rolePermissions = pgTable("role_permissions", {
+  roleId: roleIdEnum("role_id").references(() => roles.id).notNull(),
+  permissionId: text("permission_id").references(() => permissions.id).notNull(),
+  type: permTypeEnum("type").notNull(),            // 'mandatory'|'optional'|'blocked'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.roleId, t.permissionId] }),
+}));
+
+export const userPermissions = pgTable("user_permissions", {
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }).notNull(),
+  permissionId: text("permission_id").references(() => permissions.id).notNull(),
+  allow: boolean("allow").notNull(),               // true = conceder; false = revocar (solo aplica en optional)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.userId, t.permissionId] }),
+}));
 
 /**
  * Tabla de sesiones (BetterAuth)
