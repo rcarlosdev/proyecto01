@@ -35,8 +35,13 @@ export class UserService {
     return newUser[0];
   }
 
+  static async getUserById(userId: string) {
+    const result = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+    return result[0] ?? null;
+  }
+
   static async getUserByEmail(email: string) {
-    const result = await db.select().from(user).where(eq(user.email, email));
+    const result = await db.select().from(user).where(eq(user.email, email)).limit(1);
     return result[0] ?? null;
   }
 
