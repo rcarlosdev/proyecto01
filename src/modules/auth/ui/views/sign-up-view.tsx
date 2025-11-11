@@ -82,7 +82,7 @@ export const SignUpView = () => {
       "Invalid email or password": "Datos inválidos.",
       "Too many requests": "Demasiadas solicitudes. Intenta de nuevo más tarde.",
       "Email not verified": "Debes verificar tu correo para continuar.",
-      "User already exists. Use another email.": "Debes verificar tu correo para continuar.",
+      "User already exists. Use another email.": "Este correo ya está registrado.",
     };
     return translations[message] || message;
   };
@@ -97,14 +97,6 @@ export const SignUpView = () => {
         {
           onSuccess: async () => {
             setLoading(false);
-            // try {
-            //   await fetch("/api/auth/send-verification", {
-            //     method: "POST",
-            //     headers: { "Content-Type": "application/json" },
-            //     body: JSON.stringify({ email: form.getValues("email") }),
-            //   });
-            // } catch { }
-            // route.replace("/check-email");
             alert("Registro exitoso. Revisa tu correo para verificar tu cuenta.");
             route.replace("/");
           },

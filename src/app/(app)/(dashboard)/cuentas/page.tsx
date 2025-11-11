@@ -1,13 +1,26 @@
-// src/app/(platform)/cuentas/page.tsx
+/// src/app/(app)/(dashboard)/cuentas/page.tsx
 "use client";
 
-import { useEffect, useState, useCallback, ReactNode } from "react";
+import { useEffect, useState, useCallback, ReactNode, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Plus, CreditCard, ArrowLeft, Eye, Download } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  CreditCard,
+  ArrowLeft,
+  Eye,
+  Download,
+  Info,
+  ChevronDown,
+  ChevronsUpDown,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import AddAccountDrawer from "./_components/AddAccountDrawer";
+import AccountCard, { AccountCardProps } from "./_components/AccountCard";
 
-/* === COMPONENTES BASE === */
+
+/* === COMPONENTES BASE (mantienen estilo y tema) === */
 const Card = ({ children, className = "" }: { children?: ReactNode; className?: string }) => (
   <div className={`rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg ${className}`}>
     {children}
@@ -24,8 +37,11 @@ const CardTitle = ({ children, className = "" }: { children?: ReactNode; classNa
 const CardContent = ({ children, className = "" }: { children?: ReactNode; className?: string }) => (
   <div className={`p-4 md:p-6 pt-2 ${className}`}>{children}</div>
 );
-const Badge = ({ children, className = "" }: { children?: ReactNode; className?: string }) => (
-  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${className}`}>
+const Badge = ({ children, className = "", title }: { children?: ReactNode; className?: string; title?: string }) => (
+  <span
+    title={title}
+    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${className}`}
+  >
     {children}
   </span>
 );
@@ -35,84 +51,183 @@ interface Cuenta {
   id: string;
   numero: string;
   tipo: "trading" | "inversion" | "ahorro";
-  moneda: string;
+  moneda: "USD" | "BTC" | "ETH" | string;
   balance: number;
   balanceDisponible: number;
   estado: "activa" | "suspendida" | "cerrada";
-  fechaCreacion: string;
+  fechaCreacion: string; // ISO
 }
+
+/* === Conversión simulada para Resumen (mejora: Balance Total por divisa base) === */
+const FX_SIM: Record<string, number> = {
+  USD: 1,
+  BTC: 65000, // 1 BTC ≈ 65k USD (simulado)
+  ETH: 3000,  // 1 ETH ≈ 3k USD (simulado)
+};
 
 export default function MisCuentasView() {
   const router = useRouter();
+
+  /* Estado UI */
   const [cuentas, setCuentas] = useState<Cuenta[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchCuentas = useCallback(async () => {
-    setLoading(true);
+  /* Filtros/orden (mejora) */
+  const [query, setQuery] = useState("");
+  const [fTipo, setFTipo] = useState<"" | Cuenta["tipo"]>("");
+  const [fEstado, setFEstado] = useState<"" | Cuenta["estado"]>("");
+  const [fMoneda, setFMoneda] = useState<"" | Cuenta["moneda"]>("");
+  const [orden, setOrden] = useState<"creada_desc" | "creada_asc" | "balance_desc" | "balance_asc">("creada_desc");
+
+  /* Divisa base para resumen (mejora) */
+  const [baseCurrency, setBaseCurrency] = useState<"USD" | "BTC" | "ETH">("USD");
+
+// ⬇️ Reemplaza COMPLETO el contenido de tu función fetchCuentas por esto
+
+const fetchCuentas = useCallback(async () => {
+  setLoading(true);
+  try {
+    // 1) Intenta consultar backend (cuando exista)
+    let fromApi: Cuenta[] = [];
     try {
-      // Simular fetch de datos
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const mockData: Cuenta[] = [
-        {
-          id: "1",
-          numero: "BTC-784512369",
-          tipo: "trading",
-          moneda: "BTC",
-          balance: 2.456,
-          balanceDisponible: 2.123,
-          estado: "activa",
-          fechaCreacion: "2024-01-15"
-        },
-        {
-          id: "2",
-          numero: "USD-951753468",
-          tipo: "trading",
-          moneda: "USD",
-          balance: 12500.75,
-          balanceDisponible: 12000.50,
-          estado: "activa",
-          fechaCreacion: "2024-01-10"
-        },
-        {
-          id: "3",
-          numero: "ETH-357159486",
-          tipo: "inversion",
-          moneda: "ETH",
-          balance: 15.75,
-          balanceDisponible: 15.75,
-          estado: "activa",
-          fechaCreacion: "2024-02-01"
-        }
-      ];
-      setCuentas(mockData);
+      const res = await fetch("/api/cuentas", { headers: { Accept: "application/json" } });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) fromApi = data as Cuenta[];
+      }
     } catch {
-      toast.error("Error al cargar las cuentas");
-    } finally {
-      setLoading(false);
+      // si falla la consulta, fromApi se queda como []
     }
-  }, []);
+
+    // 2) Mocks (⚠️ elimina este bloque cuando conectes backend)
+    const mocks: Cuenta[] = [
+      {
+        id: "1",
+        numero: "BTC-784512369",
+        tipo: "trading",
+        moneda: "BTC",
+        balance: 2.456,             // 2,456 BTC
+        balanceDisponible: 2.123,   // 2,123 BTC
+        estado: "activa",
+        fechaCreacion: "2024-01-14" // 14/1/2024
+      },
+      {
+        id: "2",
+        numero: "USD-951753468",
+        tipo: "trading",
+        moneda: "USD",
+        balance: 12500.75,
+        balanceDisponible: 12000.50,
+        estado: "activa",
+        fechaCreacion: "2024-01-09"
+      },
+      {
+        id: "3",
+        numero: "ETH-357159486",
+        tipo: "inversion",
+        moneda: "ETH",
+        balance: 15.75,
+        balanceDisponible: 15.75,
+        estado: "activa",
+        fechaCreacion: "2024-01-31"
+      }
+    ];
+
+    // 3) “Push” de lo que venga del backend (o []), más los mocks
+    setCuentas(() => [...fromApi, ...mocks]);
+
+  } catch {
+    toast.error("Error al cargar las cuentas. Usando datos simulados.");
+    // fallback solo a mocks
+    setCuentas([
+      {
+        id: "1",
+        numero: "BTC-784512369",
+        tipo: "trading",
+        moneda: "BTC",
+        balance: 2.456,
+        balanceDisponible: 2.123,
+        estado: "activa",
+        fechaCreacion: "2024-01-14"
+      }
+    ]);
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
 
   useEffect(() => {
     fetchCuentas();
   }, [fetchCuentas]);
 
+  /* Helpers de estilo */
   const getTipoClasses = (tipo: string) => {
     switch (tipo) {
-      case "trading": return "bg-blue-500/15 text-blue-400 border-blue-400/30";
-      case "inversion": return "bg-green-500/15 text-green-400 border-green-400/30";
-      case "ahorro": return "bg-purple-500/15 text-purple-400 border-purple-400/30";
-      default: return "bg-gray-500/15 text-gray-400 border-gray-400/30";
+      case "trading":
+        return "bg-blue-500/15 text-blue-400 border-blue-400/30";
+      case "inversion":
+        return "bg-green-500/15 text-green-400 border-green-400/30";
+      case "ahorro":
+        return "bg-purple-500/15 text-purple-400 border-purple-400/30";
+      default:
+        return "bg-gray-500/15 text-gray-400 border-gray-400/30";
+    }
+  };
+  const getEstadoClasses = (estado: string) => {
+    switch (estado) {
+      case "activa":
+        return "bg-emerald-500/15 text-emerald-400 border-emerald-400/30";
+      case "suspendida":
+        return "bg-amber-500/15 text-amber-400 border-amber-400/30";
+      case "cerrada":
+        return "bg-red-500/15 text-red-400 border-red-400/30";
+      default:
+        return "bg-gray-500/15 text-gray-400 border-gray-400/30";
     }
   };
 
-  const getEstadoClasses = (estado: string) => {
-    switch (estado) {
-      case "activa": return "bg-emerald-500/15 text-emerald-400 border-emerald-400/30";
-      case "suspendida": return "bg-amber-500/15 text-amber-400 border-amber-400/30";
-      case "cerrada": return "bg-red-500/15 text-red-400 border-red-400/30";
-      default: return "bg-gray-500/15 text-gray-400 border-gray-400/30";
+  /* Filtros + Orden (mejora) */
+  const cuentasFiltradas = useMemo(() => {
+    let arr = [...cuentas];
+
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      arr = arr.filter(
+        (c) =>
+          c.numero.toLowerCase().includes(q) ||
+          c.moneda.toLowerCase().includes(q) ||
+          c.tipo.toLowerCase().includes(q)
+      );
     }
-  };
+    if (fTipo) arr = arr.filter((c) => c.tipo === fTipo);
+    if (fEstado) arr = arr.filter((c) => c.estado === fEstado);
+    if (fMoneda) arr = arr.filter((c) => c.moneda === fMoneda);
+
+    switch (orden) {
+      case "creada_asc":
+        arr.sort((a, b) => +new Date(a.fechaCreacion) - +new Date(b.fechaCreacion));
+        break;
+      case "creada_desc":
+        arr.sort((a, b) => +new Date(b.fechaCreacion) - +new Date(a.fechaCreacion));
+        break;
+      case "balance_asc":
+        arr.sort((a, b) => a.balance - b.balance);
+        break;
+      case "balance_desc":
+        arr.sort((a, b) => b.balance - a.balance);
+        break;
+    }
+    return arr;
+  }, [cuentas, query, fTipo, fEstado, fMoneda, orden]);
+
+  /* Resumen: Balance total convertido a baseCurrency (simulado) */
+  const totalBase = useMemo(() => {
+    const toUSD = (c: Cuenta) => (c.balance * (FX_SIM[c.moneda] ?? 1));
+    const totalUSD = cuentas.reduce((acc, c) => acc + toUSD(c), 0);
+    const invRate = 1 / (FX_SIM[baseCurrency] ?? 1);
+    return totalUSD * invRate;
+  }, [cuentas, baseCurrency]);
 
   if (loading) {
     return (
@@ -154,17 +269,24 @@ export default function MisCuentasView() {
               <p className="text-sm text-muted-foreground">Gestión de todas tus cuentas de trading</p>
             </div>
           </div>
-          <Button className="bg-yellow-400 text-black hover:bg-yellow-500">
-            <Plus className="w-4 h-4 mr-2" />
-            Nueva Cuenta
-          </Button>
+          
         </div>
       </div>
-
       {/* Contenido */}
       <div className="flex-1 overflow-y-auto mt-4 rounded-2xl bg-muted p-6">
         <div className="space-y-6 max-w-6xl mx-auto">
-          {/* Resumen General */}
+          <div className="flex-shrink-0 mb-1 mr-3">
+            <div className="flex items-center justify-end">
+              <AddAccountDrawer
+                  onCreated={(nueva) => {
+                    // hace push al estado actual SIN tocar backend
+                    setCuentas((prev) => [nueva, ...prev]);
+                    // opcional: aquí podrías hacer scroll/resaltar la fila nueva
+                  }}
+                  />
+            </div>
+          </div>
+          {/* Resumen General con divisa base (mejora) */}
           <Card className="border-l-4 border-l-yellow-400">
             <CardHeader>
               <CardTitle className="text-yellow-400">
@@ -173,29 +295,96 @@ export default function MisCuentasView() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div className="p-4 text-center border rounded-lg bg-[var(--color-surface-alt)]">
                   <div className="text-2xl font-bold text-yellow-400">{cuentas.length}</div>
                   <div className="text-sm text-[var(--color-text-muted)]">Total Cuentas</div>
                 </div>
                 <div className="p-4 text-center border rounded-lg bg-[var(--color-surface-alt)]">
                   <div className="text-2xl font-bold text-green-400">
-                    {cuentas.filter(c => c.estado === 'activa').length}
+                    {cuentas.filter((c) => c.estado === "activa").length}
                   </div>
                   <div className="text-sm text-[var(--color-text-muted)]">Activas</div>
                 </div>
                 <div className="p-4 text-center border rounded-lg bg-[var(--color-surface-alt)]">
                   <div className="text-2xl font-bold text-blue-400">
-                    {cuentas.filter(c => c.tipo === 'trading').length}
+                    {cuentas.filter((c) => c.tipo === "trading").length}
                   </div>
                   <div className="text-sm text-[var(--color-text-muted)]">Trading</div>
                 </div>
+
+                {/* Divisa base */}
+                <div className="p-4 border rounded-lg bg-[var(--color-surface-alt)]">
+                  <div className="text-xs text-[var(--color-text-muted)] mb-1">Divisa base</div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={baseCurrency}
+                      onChange={(e) => setBaseCurrency(e.target.value as any)}
+                      className="w-full rounded-md border bg-transparent p-2 text-sm"
+                    >
+                      <option value="USD">USD</option>
+                      <option value="BTC">BTC</option>
+                      <option value="ETH">ETH</option>
+                    </select>
+                    <span title="Conversión simulada para fines de UI">
+                      <Info className="w-4 h-4 text-[var(--color-text-muted)]" />
+                    </span>
+                  </div>
+                </div>
+
                 <div className="p-4 text-center border rounded-lg bg-[var(--color-surface-alt)]">
                   <div className="text-2xl font-bold text-purple-400">
-                    ${cuentas.reduce((acc, c) => acc + c.balance, 0).toLocaleString()}
+                    {baseCurrency === "USD" ? "$" : ""}{totalBase.toLocaleString(undefined, { maximumFractionDigits: 2 })} {baseCurrency !== "USD" ? baseCurrency : ""}
                   </div>
-                  <div className="text-sm text-[var(--color-text-muted)]">Balance Total</div>
+                  <div className="text-sm text-[var(--color-text-muted)]">Balance Total ≈</div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Filtros / Orden (mejora) */}
+          <Card className="border-l-4 border-l-yellow-400">
+            <CardHeader>
+              <CardTitle className="text-yellow-400">Filtros y orden</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Buscar por número, moneda o tipo…"
+                  className="rounded-md border bg-transparent p-2 text-sm"
+                />
+                <select value={fTipo} onChange={(e) => setFTipo(e.target.value as any)} className="rounded-md border bg-transparent p-2 text-sm">
+                  <option value="">Tipo (todos)</option>
+                  <option value="trading">Trading</option>
+                  <option value="inversion">Inversión</option>
+                  <option value="ahorro">Ahorro</option>
+                </select>
+                <select value={fEstado} onChange={(e) => setFEstado(e.target.value as any)} className="rounded-md border bg-transparent p-2 text-sm">
+                  <option value="">Estado (todos)</option>
+                  <option value="activa">Activa</option>
+                  <option value="suspendida">Suspendida</option>
+                  <option value="cerrada">Cerrada</option>
+                </select>
+                <select value={fMoneda} onChange={(e) => setFMoneda(e.target.value as any)} className="rounded-md border bg-transparent p-2 text-sm">
+                  <option value="">Moneda (todas)</option>
+                  <option value="USD">USD</option>
+                  <option value="BTC">BTC</option>
+                  <option value="ETH">ETH</option>
+                </select>
+                <button
+                  onClick={() =>
+                    setOrden((prev) =>
+                      prev === "creada_desc" ? "creada_asc" : prev === "creada_asc" ? "balance_desc" : prev === "balance_desc" ? "balance_asc" : "creada_desc"
+                    )
+                  }
+                  className="inline-flex items-center justify-center rounded-md border px-3 py-2 text-sm"
+                  title="Alternar orden (creación/balance)"
+                >
+                  <ChevronsUpDown className="w-4 h-4 mr-2" />
+                  {orden.includes("creada") ? `Fecha ${orden.endsWith("desc") ? "↓" : "↑"}` : `Balance ${orden.endsWith("desc") ? "↓" : "↑"}`}
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -206,61 +395,36 @@ export default function MisCuentasView() {
               <CardTitle className="text-yellow-400">Todas las Cuentas</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {cuentas.map((cuenta) => (
-                  <div key={cuenta.id} className="border rounded-xl p-4 bg-[var(--color-surface-alt)] hover:bg-[var(--color-surface)] transition-colors">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-bold text-lg">{cuenta.numero}</h4>
-                          <div className="flex gap-2">
-                            <Badge className={getTipoClasses(cuenta.tipo)}>
-                              {cuenta.tipo === 'trading' ? 'Trading' : cuenta.tipo === 'inversion' ? 'Inversión' : 'Ahorro'}
-                            </Badge>
-                            <Badge className={getEstadoClasses(cuenta.estado)}>
-                              {cuenta.estado === 'activa' ? 'Activa' : cuenta.estado === 'suspendida' ? 'Suspendida' : 'Cerrada'}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <span className="text-[var(--color-text-muted)]">Moneda:</span>
-                            <span className="font-medium ml-2">{cuenta.moneda}</span>
-                          </div>
-                          <div>
-                            <span className="text-[var(--color-text-muted)]">Balance:</span>
-                            <span className="font-medium ml-2">
-                              {cuenta.moneda === 'USD' ? '$' : ''}{cuenta.balance.toLocaleString()} {cuenta.moneda}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[var(--color-text-muted)]">Disponible:</span>
-                            <span className="font-medium ml-2">
-                              {cuenta.moneda === 'USD' ? '$' : ''}{cuenta.balanceDisponible.toLocaleString()} {cuenta.moneda}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[var(--color-text-muted)]">Creada:</span>
-                            <span className="font-medium ml-2">
-                              {new Date(cuenta.fechaCreacion).toLocaleDateString('es-ES')}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="w-4 h-4 mr-1" />
-                          Ver
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Download className="w-4 h-4 mr-1" />
-                          Estado
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+              {/* Grid único: desktop y móvil usan la misma tarjeta */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {cuentasFiltradas.map((c) => (
+                  <AccountCard
+                    key={c.id}
+                    id={c.id}
+                    numero={c.numero}
+                    tipo={c.tipo}
+                    moneda={c.moneda as AccountCardProps["moneda"]}
+                    balance={c.balance}
+                    balanceDisponible={c.balanceDisponible}
+                    estado={c.estado}
+                    fechaCreacion={c.fechaCreacion}
+                    // opcional: muestra una “etiqueta” si quieres
+                    badges={c.tipo === "trading" ? ["DEMO"] : []}
+                    // acciones rápidas
+                    onView={(id) => router.push(`/cuentas/${id}`)}
+                    onStatus={() => toast.info("Panel de Estado — próximamente")}
+                    onOperate={() => toast.success("Abrir Plataforma Trading — próximamente")}
+                    onSelectActive={() => toast.success("Cuenta seleccionada como activa")}
+                  />
                 ))}
+
+                {cuentasFiltradas.length === 0 && (
+                  <div className="col-span-full text-center text-[var(--color-text-muted)] py-10 border rounded-xl">
+                    No hay cuentas que coincidan con los filtros actuales.
+                  </div>
+                )}
               </div>
+
             </CardContent>
           </Card>
         </div>

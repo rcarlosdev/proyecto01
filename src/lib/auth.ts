@@ -9,6 +9,7 @@ import * as schema from "@/db/schema";
 export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
+    emailVerification: false, // 👈 Desactiva temporalmente la verificación
   },
   socialProviders: {
     google: {
