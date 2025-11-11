@@ -31,7 +31,7 @@ export function Navbar() {
 
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between h-20 px-4 py-3 border-b">
+    <header className="sticky top-0 z-40 flex items-center justify-between h-20 px-4 py-3 border-b bg-[var(--color-bg)]">
       {/* Botón para colapsar sidebar */}
       <div className="flex items-center gap-2">
         {/* <SidebarTrigger /> */}
