@@ -10,6 +10,19 @@ const publicOnlyRoutes = ["/sign-in", "/landing"]; // 👈 rutas que solo deben 
 
 export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
+
+  // 🛑 Nunca interceptes /api (ni assets)
+  const p = url.pathname;
+  if (
+    p.startsWith("/api") ||
+    p.startsWith("/_next") ||
+    p.startsWith("/favicon") ||
+    p.startsWith("/assets") ||
+    p.startsWith("/public")
+  ) {
+    return NextResponse.next();
+  }
+
   const token = req.cookies.get("better-auth.session-token")?.value;
 
   if (!token) {
@@ -29,7 +42,7 @@ export async function middleware(req: NextRequest) {
     return res;
   }
 
-  const user = await UserService.getUserByEmail(session.userId);
+  const user = await UserService.getUserById(session.userId);
   if (!user || user.status !== "active") {
     return NextResponse.redirect(new URL("/blocked", req.url));
   }

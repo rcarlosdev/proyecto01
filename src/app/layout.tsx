@@ -37,6 +37,7 @@ const setInitialTheme = `(function() {
 })();`;
 
 import Script from "next/script";
+import { Toaster } from "sonner";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -51,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Script>
       </head>
       <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Toaster />
+        <Toaster position="top-right" richColors closeButton  />
         <AuthSync>
           {children}
         </AuthSync>

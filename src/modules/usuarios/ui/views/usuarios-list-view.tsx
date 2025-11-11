@@ -56,8 +56,8 @@ export default function UsuariosListView() {
 
     const coincideRol =
       filtroRol === "todos" ||
-      (filtroRol === "admin" && usuario.rol.toLowerCase().includes("admin")) ||
-      (filtroRol === "colaborador" && usuario.rol.toLowerCase().includes("colaborador")) ||
+      (filtroRol === "admin" && (usuario.rol.toLowerCase().includes("admin"))) ||
+      (filtroRol === "colaborador" && (usuario.rol.toLowerCase().includes("colaborador") || usuario.rol.toLowerCase().includes("collaborator"))) ||
       (filtroRol === "usuario" && !usuario.rol.toLowerCase().includes("admin") && !usuario.rol.toLowerCase().includes("colaborador"));
 
     return coincideBusqueda && coincideEstado && coincideRol;
@@ -81,7 +81,7 @@ export default function UsuariosListView() {
   };
 
   return (
-    <div className="space-y-8 bg-[var(--color-bg)] text-[var(--color-text)] transition-colors">
+    <div className="space-y-8 bg-[var(--color-bg)] text-[var(--color-text)] transition-colors px-2 sm:px-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
@@ -92,7 +92,7 @@ export default function UsuariosListView() {
             Administra todos los usuarios del sistema de trading
           </p>
         </div>
-        <Button className="btn-primary flex items-center gap-2">
+        <Button className="btn-primary flex items-center gap-2 w-full sm:w-auto">
           <UserPlus className="w-4 h-4" />
           Nuevo Usuario
         </Button>
@@ -112,7 +112,7 @@ export default function UsuariosListView() {
               />
             </div>
             <select
-              className="px-3 py-2 border rounded-md bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)]"
+              className="px-3 py-2 border rounded-md bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)] w-full sm:w-auto"
               value={filtroEstado}
               onChange={(e) => setFiltroEstado(e.target.value)}
             >
@@ -126,7 +126,7 @@ export default function UsuariosListView() {
       </Card>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           {
             label: "Total Usuarios",
@@ -161,7 +161,6 @@ export default function UsuariosListView() {
           </Card>
         ))}
       </div>
-
 
       {/* Lista */}
       <Card className="card">
@@ -201,10 +200,10 @@ export default function UsuariosListView() {
                 <div
                   key={usuario.id}
                   onClick={() => navegarAUsuario(usuario.id)}
-                  className="flex items-center justify-between p-4 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-alt)] hover:bg-[var(--color-surface)] cursor-pointer transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-alt)] hover:bg-[var(--color-surface)] cursor-pointer transition-colors gap-3"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-[var(--color-primary)] rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-[var(--color-primary)] rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="font-bold text-black">
                         {usuario.nombre[0]}
                         {usuario.apellido[0]}
@@ -220,14 +219,16 @@ export default function UsuariosListView() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline">{usuario.rol}</Badge>
-                    <Badge variant={getBadgeVariant(usuario.estado)}>
-                      {usuario.estado}
-                    </Badge>
-                    {usuario.kycVerificado && (
-                      <Badge className="bg-green-500 text-white">KYC</Badge>
-                    )}
+                  <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline">{usuario.rol}</Badge>
+                      <Badge variant={getBadgeVariant(usuario.estado)}>
+                        {usuario.estado}
+                      </Badge>
+                      {usuario.kycVerificado && (
+                        <Badge className="bg-green-500 text-white">KYC</Badge>
+                      )}
+                    </div>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -235,7 +236,7 @@ export default function UsuariosListView() {
                         e.stopPropagation();
                         navegarAUsuario(usuario.id);
                       }}
-                      className="text-muted-foreground hover:text-[var(--color-primary)]"
+                      className="text-muted-foreground hover:text-[var(--color-primary)] p-2"
                     >
                       <Settings className="w-4 h-4" />
                     </Button>

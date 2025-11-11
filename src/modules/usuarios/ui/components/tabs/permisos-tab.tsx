@@ -1,239 +1,345 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Shield, Lock } from "lucide-react";
 
-/* -------------------------------------------------------------------------- */
-/*                         COMPONENTES BÁSICOS (ESTILO)                       */
-/* -------------------------------------------------------------------------- */
-const Card = ({ children, className = "" }: { children?: React.ReactNode; className?: string }) => (
-  <div className={`rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg ${className}`}>
-    {children}
-  </div>
-);
-const CardHeader = ({ children }: { children?: React.ReactNode }) => <div className="p-4 md:p-6 pb-2">{children}</div>;
-const CardTitle = ({ children, className = "" }: { children?: React.ReactNode; className?: string }) => (
-  <h3 className={`text-xl font-semibold text-[var(--color-primary)] flex items-center gap-2 ${className}`}>{children}</h3>
-);
-const CardContent = ({ children, className = "" }: { children?: React.ReactNode; className?: string }) => (
-  <div className={`p-4 md:p-6 pt-2 ${className}`}>{children}</div>
-);
-const Button = ({
-  children,
-  onClick,
-  variant = "default",
-  disabled,
-}: {
-  children?: React.ReactNode;
-  onClick?: () => void;
-  variant?: "default" | "outline" | "destructive";
-  disabled?: boolean;
-}) => {
-  const base =
-    "px-4 py-2 rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
-  const styles: Record<string, string> = {
-    default:
-      "bg-[var(--color-primary)] text-[var(--color-bg)] hover:bg-[var(--color-primary-light)]",
-    outline:
-      "border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]",
-    destructive: "bg-[var(--color-danger)] hover:bg-red-600 text-white",
-  };
+/* ---- Componentes de diálogo ---- */
+const AlertDialog = ({ open, onOpenChange, children }: any) => {
+  if (!open) return null;
+
   return (
-    <button onClick={onClick} disabled={disabled} className={`${base} ${styles[variant]}`}>
-      {children}
-    </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
+      <div className="relative bg-[var(--color-surface)] rounded-lg shadow-lg max-w-md w-full mx-4 border border-[var(--color-border)]">
+        {children}
+      </div>
+    </div>
   );
 };
-const Input = ({
-  placeholder,
-  value,
-  onChange,
-}: {
-  placeholder?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) => (
+
+const AlertDialogContent = ({ children }: any) => <div className="p-6">{children}</div>;
+
+const AlertDialogHeader = ({ children }: any) => <div className="mb-4">{children}</div>;
+
+const AlertDialogTitle = ({ children }: any) => (
+  <h2 className="text-lg font-semibold text-[var(--color-primary)]">{children}</h2>
+);
+
+const AlertDialogDescription = ({ children }: any) => (
+  <p className="text-sm text-[var(--color-text-muted)] mt-2">{children}</p>
+);
+
+const AlertDialogFooter = ({ children }: any) => (
+  <div className="flex justify-end gap-3 mt-6">{children}</div>
+);
+
+const AlertDialogAction = ({ children, onClick }: any) => (
+  <button
+    onClick={onClick}
+    className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-md hover:bg-[var(--color-primary-light)]"
+  >
+    {children}
+  </button>
+);
+
+const AlertDialogCancel = ({ children, onClick }: any) => (
+  <button
+    onClick={onClick}
+    className="px-4 py-2 border border-[var(--color-border)] rounded-md hover:bg-[var(--color-surface-alt)]"
+  >
+    {children}
+  </button>
+);
+
+/* ---- UI básicos ---- */
+const Card = ({ children, className = "" }: any) => (
+  <div className={`rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg ${className}`}>{children}</div>
+);
+const CardHeader = ({ children }: any) => <div className="p-4 md:p-6 pb-2">{children}</div>;
+const CardTitle = ({ children, className = "" }: any) => (
+  <h3 className={`text-lg sm:text-xl font-semibold text-[var(--color-primary)] flex items-center gap-2 ${className}`}>{children}</h3>
+);
+const CardContent = ({ children, className = "" }: any) => <div className={`p-4 md:p-6 pt-2 ${className}`}>{children}</div>;
+const Button = ({ children, onClick, variant = "default", disabled = false }: any) => {
+  const base = "px-4 py-2 rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+  const styles: Record<string, string> = {
+    default: "bg-[var(--color-primary)] text-[var(--color-bg)] hover:bg-[var(--color-primary-light)]",
+    outline: "border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]",
+    destructive: "bg-[var(--color-danger)] hover:bg-red-600 text-white",
+  };
+  return <button onClick={onClick} disabled={disabled} className={`${base} ${styles[variant]}`}>{children}</button>;
+};
+const Input = (p: any) => (
   <input
-    placeholder={placeholder}
-    value={value}
-    onChange={onChange}
-    className="w-full p-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-alt)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-primary)]"
+    {...p}
+    className="w-full h-11 px-3 border border-[var(--color-border)] rounded-xl bg-[var(--color-surface-alt)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-primary)]"
   />
 );
-const Checkbox = ({
-  checked,
-  disabled,
-  onChange,
-}: {
-  checked: boolean;
-  disabled?: boolean;
-  onChange: (value: boolean) => void;
-}) => (
+const Checkbox = ({ checked, disabled, onChange }: any) => (
   <input
     type="checkbox"
     checked={checked}
     disabled={disabled}
     onChange={(e) => onChange(e.target.checked)}
-    className={`w-4 h-4 accent-[var(--color-primary)] cursor-pointer ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+    className={`w-5 h-5 accent-[var(--color-primary)] cursor-pointer ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
   />
 );
-const Badge = ({ children, className = "" }: { children?: React.ReactNode; className?: string }) => (
-  <span
-    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border border-[var(--color-border)] ${className}`}
-  >
-    {children}
-  </span>
+const Badge = ({ children, className = "" }: any) => (
+  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border border-[var(--color-border)] ${className}`}>{children}</span>
 );
 
-/* -------------------------------------------------------------------------- */
-/*                             TIPO E INTERFAZ                                */
-/* -------------------------------------------------------------------------- */
-interface PermisosTabProps {
-  usuarioId?: string;
-}
-type Permiso = {
-  id: string;
-  nombre: string;
-  categoria: string;
-  descripcion: string;
-};
+/* ---- Tipos ---- */
+type RoleId = "user" | "collaborator" | "admin" | "super";
+type PermRow = { id: string; name: string; description?: string; category: "trading" | "analysis" | "support" | "admin" | "admin2" | "payments" };
+type RoleMatrix = Record<string, "mandatory" | "optional" | "blocked">;
 
-/* -------------------------------------------------------------------------- */
-/*                            COMPONENTE PRINCIPAL                            */
-/* -------------------------------------------------------------------------- */
-export function PermisosTab({ usuarioId }: PermisosTabProps) {
+/* Ranking para detectar degradaciones */
+const RANK: Record<RoleId, number> = { user: 1, collaborator: 2, admin: 3, super: 4 };
+
+interface Props { usuarioId?: string }
+
+export function PermisosTab({ usuarioId }: Props) {
   const [loading, setLoading] = useState(true);
-  const [busqueda, setBusqueda] = useState("");
-  const [permisosUsuario, setPermisosUsuario] = useState<string[]>([]);
-  const [rol, setRol] = useState<"Usuario" | "Colaborador" | "Administrador">("Usuario");
+  const [roles, setRoles] = useState<{ id: RoleId; name: string }[]>([]);
+  const [catalog, setCatalog] = useState<PermRow[]>([]);
+  const [userRole, setUserRole] = useState<RoleId>("user");
+  const [actorRole, setActorRole] = useState<RoleId>("user");
+  const [actorId, setActorId] = useState<string>("");
 
-  /* ----------------------------- LISTA PERMISOS ---------------------------- */
-  const permisos: Permiso[] = [
-    // Trading
-    { id: "operar", nombre: "Operar", categoria: "trading", descripcion: "Realizar operaciones de compra y venta" },
-    { id: "limite_alto", nombre: "Límite Alto", categoria: "trading", descripcion: "Operar con montos elevados" },
-    { id: "mercado_cripto", nombre: "Mercado Cripto", categoria: "trading", descripcion: "Acceso al mercado cripto" },
-    // Análisis
-    { id: "graficos_avanzados", nombre: "Gráficos Avanzados", categoria: "analisis", descripcion: "Herramientas de análisis técnico" },
-    { id: "reportes", nombre: "Reportes", categoria: "analisis", descripcion: "Acceso a reportes detallados" },
-    // Soporte
-    { id: "soporte_usuario", nombre: "Soporte a Usuarios", categoria: "soporte", descripcion: "Atender solicitudes de usuarios" },
-    { id: "ver_tickets", nombre: "Ver Tickets", categoria: "soporte", descripcion: "Ver y gestionar tickets de soporte" },
-    // Administración
-    { id: "gestion_usuarios", nombre: "Gestión de Usuarios", categoria: "admin", descripcion: "Administrar usuarios del sistema" },
-    { id: "gestion_saldos", nombre: "Gestión de Saldos", categoria: "admin", descripcion: "Puede realizar transacciones sobre las cuentas de los usuarios" },
-    { id: "asignar_permisos", nombre: "Asignar/Modificar Permisos", categoria: "admin", descripcion: "Puede otorgar o revocar permisos a otros usuarios" },
-    { id: "config_sistema", nombre: "Configuración del Sistema", categoria: "admin", descripcion: "Modificar configuración global" },
-    { id: "ver_logs", nombre: "Ver Logs", categoria: "admin", descripcion: "Acceso a auditorías del sistema" },
-  ];
+  const [effective, setEffective] = useState<Record<string, boolean>>({});
+  const [matrixForSelectedRole, setMatrixForSelectedRole] = useState<RoleMatrix>({});
+  const [search, setSearch] = useState("");
+  const [hasChanges, setHasChanges] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<RoleId>("user");
 
-  /* --------------------------- ROLES Y PERMISOS BASE ----------------------- */
-  const permisosPorRol: Record<string, string[]> = {
-    Usuario: permisos.filter(p => p.categoria !== "admin" && p.categoria !== "soporte").map(p => p.id),
-    Colaborador: [
-      ...permisos.filter(p => ["trading", "analisis", "soporte"].includes(p.categoria)).map(p => p.id),
-    ],
-    Administrador: permisos.map(p => p.id),
-  };
+  // Estado para controlar el diálogo de confirmación
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingSave, setPendingSave] = useState<(() => Promise<void>) | null>(null);
 
-  /* ----------------------------- EFECTO INICIAL ---------------------------- */
   useEffect(() => {
-    if (usuarioId) setRol("Usuario"); // Simulado
-    setPermisosUsuario(permisosPorRol["Usuario"]);
-    setLoading(false);
+    (async () => {
+      try {
+        const [rRes, pRes, urRes, effRes, meRoleRes] = await Promise.all([
+          fetch("/api/roles"),
+          fetch("/api/permissions"),
+          fetch(`/api/users/${usuarioId}/roles`),
+          fetch(`/api/users/${usuarioId}/permissions`),
+          fetch(`/api/user/me/role`), // debe devolver { userId, roleId }
+        ]);
+        const rolesJson = await rRes.json();
+        const permsJson = await pRes.json();
+        const urJson = await urRes.json();
+        const effJson = await effRes.json();
+        const meRoleJson = meRoleRes.ok ? await meRoleRes.json() : { roleId: "user" as RoleId, userId: "" };
+
+        setRoles(rolesJson);
+        setCatalog(permsJson);
+        setUserRole(urJson.roleId);
+        setSelectedRole(urJson.roleId);
+        setEffective(effJson.permissions);
+        setActorRole(meRoleJson.roleId ?? "user");
+        setActorId(meRoleJson.userId ?? "");
+
+        const mRes = await fetch(`/api/roles/${urJson.roleId}/permissions`);
+        setMatrixForSelectedRole(await mRes.json());
+      } catch {
+        toast.error("No se pudieron cargar los permisos.");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [usuarioId]);
 
-  /* ----------------------------- CAMBIO DE ROL ----------------------------- */
-  const handleRolChange = (nuevoRol: typeof rol) => {
-    setRol(nuevoRol);
-    setPermisosUsuario(permisosPorRol[nuevoRol]);
-  };
-
-  /* -------------------------- LÓGICA DE BLOQUEO ---------------------------- */
-  const esPermisoFijo = (permiso: Permiso): boolean =>
-    ["operar", "graficos_avanzados", "reportes"].includes(permiso.id);
-
-  const esEditablePorAdminSolo = (permiso: Permiso): boolean =>
-    ["gestion_usuarios", "gestion_saldos"].includes(permiso.id);
-
-  const isPermisoBloqueado = (permiso: Permiso): boolean => {
-    if (esPermisoFijo(permiso)) return true; // siempre fijo
-    if (rol === "Administrador") return false;
-    if (rol === "Usuario") return permiso.categoria === "admin" || permiso.categoria === "soporte";
-    if (rol === "Colaborador" && permiso.categoria === "admin") {
-      return !esEditablePorAdminSolo(permiso); // solo esos dos son editables
+  const changeRole = async (role: RoleId) => {
+    setSelectedRole(role);
+    setHasChanges(true);
+    const res = await fetch(`/api/roles/${role}/permissions`);
+    const base: RoleMatrix = await res.json();
+    const proposal: Record<string, boolean> = {};
+    for (const p of catalog) {
+      const t = base[p.id];
+      proposal[p.id] = t === "mandatory" ? true : t === "blocked" ? false : effective[p.id] ?? false;
     }
-    return false;
+    setMatrixForSelectedRole(base);
+    setEffective(proposal);
   };
 
-  const isCheckedFijo = (permiso: Permiso): boolean => {
-    if (esPermisoFijo(permiso)) return true;
-    if (rol === "Administrador") return true;
-    if (rol === "Usuario") return permisosUsuario.includes(permiso.id);
-    if (rol === "Colaborador") {
-      if (esEditablePorAdminSolo(permiso)) return permisosUsuario.includes(permiso.id);
-      return permisosUsuario.includes(permiso.id);
+  const toggle = (permId: string) => {
+    const type = matrixForSelectedRole[permId];
+    if (type === "mandatory" || type === "blocked") return;
+    if (permId === "payments_gateway" && actorRole !== "super") return;
+    setEffective(prev => ({ ...prev, [permId]: !prev[permId] }));
+    setHasChanges(true);
+  };
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? catalog.filter(p => (p.name + (p.description || "")).toLowerCase().includes(q)) : catalog;
+  }, [catalog, search]);
+
+  const byCat = useMemo(() => {
+    const cats = ["trading", "analysis", "support", "admin", "admin2", "payments"] as const;
+    return cats.map(c => ({ cat: c, items: filtered.filter(p => p.category === c) }));
+  }, [filtered]);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+
+      if (selectedRole === "super" && actorRole !== "super") {
+        toast.error("Solo un SUPER puede asignar el rol 'Super'.");
+        setSaving(false);
+        return;
+      }
+
+      // ⚠️ confirmación de degradación si el actor se edita a sí mismo
+      const actorSeEdita = usuarioId === actorId;
+      const esDegradacion = RANK[selectedRole] < RANK[actorRole];
+      if (actorSeEdita && esDegradacion) {
+        const msg = `Estás a punto de asignarte el rol "${selectedRole}" (inferior a tu rol actual "${actorRole}").
+          Perderás permisos de nivel superior (p. ej., asignar/modificar permisos, configuración del sistema, ver logs y Pasarela de Pagos si aplica).
+          ¿Deseas continuar?
+        `;
+
+        // Guardamos la función de guardado para ejecutarla después de la confirmación
+        setPendingSave(() => async () => {
+          await executeSave();
+        });
+
+        // Mostramos el diálogo de confirmación
+        setShowConfirmDialog(true);
+        setSaving(false);
+        return;
+      }
+
+      await executeSave();
+    } catch (e: any) {
+      toast.error(e.message || "No se pudieron guardar los cambios");
+      setSaving(false);
     }
-    return false;
   };
 
-  /* ------------------------------ TOGGLE PERMISOS -------------------------- */
-  const togglePermiso = (id: string) => {
-    const permiso = permisos.find((p) => p.id === id);
-    if (!permiso || isPermisoBloqueado(permiso) || esPermisoFijo(permiso)) return;
-    setPermisosUsuario((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+  const executeSave = async () => {
+    try {
+      if (selectedRole !== userRole) {
+        const r = await fetch(`/api/users/${usuarioId}/roles`, {
+          method: "PUT",
+          body: JSON.stringify({ roleId: selectedRole }),
+        });
+        // if (!r.ok) throw new Error("Error al guardar rol");
+        if (!r.ok) {
+          let msg = "Error al guardar rol";
+          try {
+            const j = await r.json();
+            if (j?.error) msg = `${msg}: ${j.error}${j.detail ? ` – ${JSON.stringify(j.detail)}` : ""}`;
+          } catch { }
+          throw new Error(msg);
+        }
+      }
+
+      const res = await fetch(`/api/users/${usuarioId}/permissions/sync`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ roleId: selectedRole, state: effective }),
+      });
+      if (!res.ok) {
+        let msg = "Error al sincronizar permisos";
+        try {
+          const j = await res.json();
+          if (j?.error) msg = `${msg}: ${j.error}${j.detail ? ` – ${JSON.stringify(j.detail)}` : ""}`;
+        } catch { }
+        throw new Error(msg);
+      }
+
+      setUserRole(selectedRole);
+      setHasChanges(false);
+      toast.success("Permisos guardados correctamente");
+    } catch (e: any) {
+      toast.error(e.message || "No se pudieron guardar los cambios");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  /* ------------------------------- FILTRO UI ------------------------------- */
-  const permisosFiltrados = permisos.filter(
-    (p) =>
-      p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      p.descripcion.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const handleConfirmSave = async () => {
+    setShowConfirmDialog(false);
+    if (pendingSave) {
+      setSaving(true);
+      await pendingSave();
+      setPendingSave(null);
+    }
+  };
 
-  const categoriasOrdenadas = ["trading", "analisis", "soporte", "admin"];
-  const permisosPorCategoria = categoriasOrdenadas.reduce((acc, cat) => {
-    acc[cat] = permisosFiltrados.filter((p) => p.categoria === cat);
-    return acc;
-  }, {} as Record<string, Permiso[]>);
+  const handleCancelSave = () => {
+    setShowConfirmDialog(false);
+    setPendingSave(null);
+  };
 
   if (loading)
     return (
       <div className="flex flex-col items-center justify-center py-16 text-[var(--color-text-muted)]">
         <Loader2 className="animate-spin h-8 w-8 mb-4 text-[var(--color-primary)]" />
-        <p>Cargando permisos...</p>
+        <p>Cargando permisos…</p>
       </div>
     );
 
-  /* -------------------------------------------------------------------------- */
-  /*                                  UI FINAL                                 */
-  /* -------------------------------------------------------------------------- */
   return (
-    <div className="space-y-6 max-w-5xl mx-auto p-4 md:p-6">
+    <div className="space-y-6 w-full max-w-[700px] mx-auto px-3 sm:px-5 md:px-6">
       {/* Rol */}
       <Card className="border-l-4 border-l-yellow-400">
         <CardHeader>
-          <CardTitle className="text-yellow-400 flex items-center gap-2">
-            <Shield className="h-5 w-5" /> Rol Asignado
+          <CardTitle className="text-yellow-400">
+            <Shield className="h-5 w-5" /> Rol asignado
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-[var(--color-text-muted)] text-sm">
-            Este usuario pertenece al rol: <b>{rol}</b>
+          <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
+            Rol actual: <b className="capitalize">{userRole}</b> — En edición: <b className="capitalize">{selectedRole}</b> — Tu rol: <b className="capitalize">{actorRole}</b>
           </p>
-          <div className="flex flex-wrap gap-3">
-            {["Usuario", "Colaborador", "Administrador"].map((r) => (
-              <Button
-                key={r}
-                variant={r === rol ? "default" : "outline"}
-                onClick={() => handleRolChange(r as any)}
-              >
-                {r}
-              </Button>
-            ))}
+
+          {/* aviso visible si el actor se está degradando a sí mismo */}
+          {usuarioId === actorId && RANK[selectedRole] < RANK[actorRole] && (
+            <div className="rounded-xl border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 px-3 py-2 text-sm">
+              <span className="font-semibold text-[var(--color-danger)]">Advertencia:</span>{" "}
+              Estás seleccionando un <b>rol inferior</b> para ti mismo. Al guardar, <b>perderás permisos de nivel superior</b>
+              (asignar/modificar permisos, configuración del sistema, ver logs y Pasarela de Pagos si aplica).
+            </div>
+          )}
+
+          {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {roles.map(r => {
+              const disableSuper = r.id === "super" && actorRole !== "super"; // 👈
+              return (
+                <Button
+                  key={r.id}
+                  variant={r.id === selectedRole ? "default" : "outline"}
+                  onClick={() => changeRole(r.id)}
+                  disabled={disableSuper}                     // 👈
+                  title={disableSuper ? "Solo un SUPER puede asignar el rol super" : undefined}
+                >
+                  {r.name}
+                </Button>
+              );
+            })}
+          </div> */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {roles.map(r => {
+              const isSuperRole = r.id === "super";
+              const disabled = isSuperRole && actorRole !== "super"; // 👈 bloqueo visual
+
+              return (
+                <Button
+                  key={r.id}
+                  variant={r.id === selectedRole ? "default" : "outline"}
+                  onClick={() => !disabled && changeRole(r.id)}
+                  disabled={disabled}
+                >
+                  {r.name}
+                </Button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
@@ -242,60 +348,81 @@ export function PermisosTab({ usuarioId }: PermisosTabProps) {
       <Card className="border-l-4 border-l-blue-400">
         <CardHeader>
           <CardTitle className="text-blue-400 flex items-center gap-2">
-            <Lock className="h-5 w-5" /> Permisos Personalizados
+            <Lock className="h-5 w-5" /> Permisos
           </CardTitle>
+          <div className="mt-3">
+            <Input placeholder="Buscar permisos…" value={search} onChange={(e: any) => setSearch(e.target.value)} />
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <Input placeholder="Buscar permisos..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
 
-          <div className="space-y-5">
-            {Object.entries(permisosPorCategoria).map(([categoria, lista]) => (
-              <div key={categoria} className="border rounded-xl bg-[var(--color-surface-alt)]">
+        <CardContent className="space-y-5">
+          {byCat.map(({ cat, items }) =>
+            items.length ? (
+              <div key={cat} className="border rounded-xl bg-[var(--color-surface-alt)]">
                 <div className="p-3 border-b bg-[var(--color-surface)] font-semibold text-[var(--color-primary)] capitalize">
-                  {categoria}
+                  {cat}
                 </div>
                 <div className="p-4 space-y-3">
-                  {lista.map((permiso) => {
-                    const bloqueado = isPermisoBloqueado(permiso);
-                    const checked = isCheckedFijo(permiso) || permisosUsuario.includes(permiso.id);
+                  {items.map(p => {
+                    const type = matrixForSelectedRole[p.id] ?? "optional";
+                    const locked = type !== "optional" || (p.id === "payments_gateway" && actorRole !== "super");
+                    const checked = !!effective[p.id];
                     return (
                       <div
-                        key={permiso.id}
-                        className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
-                          bloqueado ? "opacity-60 cursor-not-allowed" : "hover:bg-[var(--color-surface)]"
-                        }`}
+                        key={p.id}
+                        className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-xl transition-colors ${locked ? "opacity-60 cursor-not-allowed" : "hover:bg-[var(--color-surface)]"
+                          }`}
                       >
-                        <div className="flex items-center space-x-3">
-                          <Checkbox
-                            checked={checked}
-                            onChange={() => togglePermiso(permiso.id)}
-                            disabled={bloqueado}
-                          />
+                        <div className="flex items-start gap-3">
+                          <Checkbox checked={checked} disabled={locked} onChange={() => toggle(p.id)} />
                           <div>
-                            <div className="font-medium">{permiso.nombre}</div>
-                            <div className="text-sm text-[var(--color-text-muted)]">{permiso.descripcion}</div>
+                            <div className="font-medium">{p.name}</div>
+                            {p.description && (
+                              <div className="text-sm text-[var(--color-text-muted)]">{p.description}</div>
+                            )}
                           </div>
                         </div>
-                        <Badge className="capitalize">{permiso.categoria}</Badge>
+                        <div className="flex items-center flex-wrap gap-2 mt-2 sm:mt-0">
+                          {type !== "optional" && <Badge className="capitalize">{type}</Badge>}
+                          <Badge className="capitalize">{p.category}</Badge>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
-            ))}
-          </div>
+            ) : null
+          )}
         </CardContent>
       </Card>
 
       {/* Acciones */}
-      <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={() => handleRolChange(rol)}>
+      <div className="flex flex-col sm:flex-row gap-3 justify-end">
+        <Button variant="outline" onClick={() => { setSelectedRole(userRole); changeRole(userRole); setHasChanges(false); }}>
           Restablecer
         </Button>
-        <Button onClick={() => toast.success("Permisos guardados correctamente")}>
-          Guardar Permisos
+        <Button onClick={save} disabled={!hasChanges || saving}>
+          {saving ? <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Guardando…</span> : "Guardar Cambios"}
         </Button>
       </div>
+
+      {/* Diálogo de confirmación */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar cambio de rol</AlertDialogTitle>
+            <AlertDialogDescription>
+              Estás a punto de asignarte el rol "{selectedRole}" (inferior a tu rol actual "{actorRole}").
+              Perderás permisos de nivel superior (p. ej., asignar/modificar permisos, configuración del sistema, ver logs y Pasarela de Pagos si aplica).
+              ¿Deseas continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelSave}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSave}>Continuar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
