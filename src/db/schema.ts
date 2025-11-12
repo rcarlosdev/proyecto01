@@ -179,30 +179,63 @@ export const transactions = pgTable("transactions", {
 /** * Tabla de trades
  * - Registra cada operación de trading realizada por los usuarios
  */
+// export const trades = pgTable("trades", {
+//   id: text("id").primaryKey(),
+
+//   // Relación con el usuario
+//   userId: text("user_id")
+//     .notNull()
+//     .references(() => user.id, { onDelete: "cascade" }),
+
+//   // Información del trade
+//   symbol: text("symbol").notNull(),
+//   side: text("side").$type<"buy" | "sell">().notNull(), // ✅ lado de la operación
+//   entryPrice: numeric("entry_price", { precision: 12, scale: 4 }).notNull(), // ✅ precio de entrada
+//   closePrice: numeric("close_price", { precision: 12, scale: 4 }), // ✅ precio de cierre (nullable)
+//   quantity: numeric("quantity", { precision: 12, scale: 4 }).notNull(), // ✅ cantidad
+//   leverage: numeric("leverage", { precision: 12, scale: 2 }).default("1"), // ✅ apalancamiento
+
+//   // Resultados
+//   profit: numeric("profit", { precision: 12, scale: 2 }).default("0.00"), // ✅ PnL
+//   status: text("status").$type<"open" | "closed">().default("open").notNull(),
+
+//   // Metadatos flexibles (puedes guardar fees, timestamps, condiciones, etc.)
+//   metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+
+//   // Tiempos
+//   createdAt: timestamp("created_at").defaultNow().notNull(),
+//   closedAt: timestamp("closed_at"),
+// });
+
 export const trades = pgTable("trades", {
   id: text("id").primaryKey(),
 
-  // Relación con el usuario
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 
-  // Información del trade
   symbol: text("symbol").notNull(),
-  side: text("side").$type<"buy" | "sell">().notNull(), // ✅ lado de la operación
-  entryPrice: numeric("entry_price", { precision: 12, scale: 4 }).notNull(), // ✅ precio de entrada
-  closePrice: numeric("close_price", { precision: 12, scale: 4 }), // ✅ precio de cierre (nullable)
-  quantity: numeric("quantity", { precision: 12, scale: 4 }).notNull(), // ✅ cantidad
-  leverage: numeric("leverage", { precision: 12, scale: 2 }).default("1"), // ✅ apalancamiento
+  side: text("side").$type<"buy" | "sell">().notNull(),
 
-  // Resultados
-  profit: numeric("profit", { precision: 12, scale: 2 }).default("0.00"), // ✅ PnL
-  status: text("status").$type<"open" | "closed">().default("open").notNull(),
+  // ⬇️ Hacemos entryPrice opcional para permitir 'pending'
+  entryPrice: numeric("entry_price", { precision: 12, scale: 4 }),
 
-  // Metadatos flexibles (puedes guardar fees, timestamps, condiciones, etc.)
+  closePrice: numeric("close_price", { precision: 12, scale: 4 }),
+  quantity: numeric("quantity", { precision: 12, scale: 4 }).notNull(),
+  leverage: numeric("leverage", { precision: 12, scale: 2 }).default("1"),
+
+  profit: numeric("profit", { precision: 12, scale: 2 }).default("0.00"),
+
+  // ⬇️ Extendemos el enum de estado
+  status: text("status").$type<"open" | "closed" | "pending">().default("open").notNull(),
+
+  // ⬇️ Nuevos campos para pendientes
+  triggerPrice: numeric("trigger_price", { precision: 12, scale: 4 }),       // precio objetivo
+  triggerRule: text("trigger_rule").$type<"gte" | "lte">(),                   // condición: >= o <=
+  expiresAt: timestamp("expires_at"),                                         // opcional
+
   metadata: jsonb("metadata").$type<Record<string, unknown>>(),
 
-  // Tiempos
   createdAt: timestamp("created_at").defaultNow().notNull(),
   closedAt: timestamp("closed_at"),
 });
