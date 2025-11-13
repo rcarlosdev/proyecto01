@@ -2,13 +2,14 @@
 'use client';
 
 import { Separator } from '@/components/ui/separator';
+import { useMarketStore } from '@/stores/useMarketStore';
 import SearchBar from '@/components/trading-dashboard/SearchBar';
 import SymbolList from '@/components/trading-dashboard/SymbolList';
-import { useMarketStore } from '@/stores/useMarketStore';
-import AccountInfo from '@/components/trading-dashboard/AccountInfo';
 import MarketHeader from '@/components/trading-dashboard/MarketHeader';
+import OperationsInfo from '@/components/trading-dashboard/OperationsInfo';
 import { FilterSelect } from '@/components/trading-dashboard/FilterSelect';
 import AlphaCandleChart from '@/components/trading-dashboard/AlphaCandleChart';
+import { ConfirmProvider } from '../common/ConfirmDialog';
 
 const TradingDashboard = () => {
   const { selectedSymbol } = useMarketStore();
@@ -44,7 +45,9 @@ const TradingDashboard = () => {
 
       <footer className="border-t border-gray-200">
         <div className="p-4">
-          <AccountInfo />
+          <ConfirmProvider>
+            <OperationsInfo />
+          </ConfirmProvider>
         </div>
       </footer>
     </section>

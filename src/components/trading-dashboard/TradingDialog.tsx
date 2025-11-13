@@ -15,12 +15,12 @@ import { formatCurrency } from "@/lib/utils";
 import { useUserStore } from "@/stores/useUserStore";
 import { useMarketStore } from "@/stores/useMarketStore";
 
-import { ModeToggle } from "./operations-components/ModeToggle";
-import { SideToggle } from "./operations-components/SideToggle";
-import { UnitsTable } from "./operations-components/UnitsTable";
-import { OrderPanelMarket } from "./operations-components/OrderPanelMarket";
-import { DialogHeaderTrade } from "./operations-components/DialogHeaderTrade";
-import { OrderPanelPending } from "./operations-components/OrderPanelPending";
+import { ModeToggle } from "./trading-dialog-components/ModeToggle";
+import { SideToggle } from "./trading-dialog-components/SideToggle";
+import { UnitsTable } from "./trading-dialog-components/UnitsTable";
+import { OrderPanelMarket } from "./trading-dialog-components/OrderPanelMarket";
+import { DialogHeaderTrade } from "./trading-dialog-components/DialogHeaderTrade";
+import { OrderPanelPending } from "./trading-dialog-components/OrderPanelPending";
 import { toast } from "sonner";
 
 export interface TradingDialogProps {

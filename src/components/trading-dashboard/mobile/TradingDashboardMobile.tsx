@@ -1,19 +1,20 @@
 // src/components/trading-dashboard/mobile/TradingDashboardMobile.tsx
 "use client";
 
+import OperationsInfo from "../OperationsInfo";
+import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useState } from "react";
 import { useMarketStore } from "@/stores/useMarketStore";
 import SearchBar from "@/components/trading-dashboard/SearchBar";
-const SearchBarAny = SearchBar as any;
 import SymbolList from "@/components/trading-dashboard/SymbolList";
-const SymbolListAny = SymbolList as any;
-import AccountInfo from "@/components/trading-dashboard/AccountInfo";
-import MobileTradingDialog from "@/components/trading-dashboard/mobile/MobileTradingDialog";
 import AlphaCandleChart from "@/components/trading-dashboard/AlphaCandleChart";
-import { Button } from "@/components/ui/button";
+import MobileTradingDialog from "@/components/trading-dashboard/mobile/MobileTradingDialog";
 
 type Market = "indices" | "acciones" | "commodities" | "crypto" | "fx" | "all" | null;
+
 const MARKETS: Exclude<Market, null>[] = ["indices", "acciones", "commodities", "crypto", "fx", "all"];
+const SearchBarAny = SearchBar as any;
+const SymbolListAny = SymbolList as any;
 
 export default function TradingDashboardMobile() {
   const { selectedMarket, setSelectedMarket, selectedSymbol } = useMarketStore();
@@ -40,7 +41,7 @@ export default function TradingDashboardMobile() {
   return (
     <div className="flex flex-col w-full min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
       <div className="flex flex-col gap-4 p-4">
-        <AccountInfo {...({ compact: true } as any)} />
+        <OperationsInfo {...({ compact: true } as any)} />
 
         <div className="flex flex-wrap gap-2 justify-center">
           {MARKETS.map((market) => {
