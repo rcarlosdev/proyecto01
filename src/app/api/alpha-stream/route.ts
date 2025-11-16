@@ -29,7 +29,7 @@ const redis =
     ? new Redis({ url: UPSTASH_REDIS_REST_URL, token: UPSTASH_REDIS_REST_TOKEN })
     : null;
 
-/* ---------- simulación determinista (coherente en todo el front) ---------- */
+/* ---------- helpers deterministas para simulación ---------- */
 function smallHash(str: string) {
   let h = 2166136261 >>> 0;
   for (let i = 0; i < str.length; i++) {
@@ -41,13 +41,17 @@ function smallHash(str: string) {
 function xorshift32(seed: number) {
   let x = seed >>> 0;
   return function () {
-    x ^= x << 13; x >>>= 0;
-    x ^= x >>> 17; x >>>= 0;
-    x ^= x << 5; x >>>= 0;
+    x ^= x << 13;
+    x >>>= 0;
+    x ^= x >>> 17;
+    x >>>= 0;
+    x ^= x << 5;
+    x >>>= 0;
     return x / 0xffffffff;
   };
 }
 
+// Simula pequeños movimientos a partir del snapshot base
 function simulatePrices(
   wrapper: CacheWrapper,
   opts?: { maxPctPerMinute?: number; bucketMs?: number }
@@ -68,7 +72,8 @@ function simulatePrices(
     const signed = rand * 2 - 1;
     const deltaFraction = signed * (cappedMaxPct / 100);
     const newPrice = q.price * (1 + deltaFraction);
-    const prev = typeof q.previousClose === "number" ? q.previousClose : q.price;
+    const prev =
+      typeof q.previousClose === "number" ? q.previousClose : q.price;
     const change = newPrice - prev;
     const changePercent = prev !== 0 ? (change / prev) * 100 : 0;
 
@@ -81,22 +86,43 @@ function simulatePrices(
   });
 }
 
+// Lee wrapper desde Redis (si tu job ya lo escribe)
 async function getBaseWrapper(market: string): Promise<CacheWrapper | null> {
   if (!redis) return null;
   try {
     const raw = await redis.get<CacheWrapper | string>(CACHE_KEY(market));
     if (!raw) return null;
-    const parsed = typeof raw === "string" ? (JSON.parse(raw) as CacheWrapper) : raw;
-    if (!parsed || !Array.isArray(parsed.data) || typeof parsed.ts !== "number") return null;
+    const parsed =
+      typeof raw === "string" ? (JSON.parse(raw) as CacheWrapper) : raw;
+    if (!parsed || !Array.isArray(parsed.data) || typeof parsed.ts !== "number")
+      return null;
     return parsed;
   } catch {
     return null;
   }
 }
 
+// 🔹 NUEVO: fallback a /api/markets cuando no hay wrapper en Redis
+async function fetchBaseQuotesFromMarkets(origin: string, market: string): Promise<Quote[] | null> {
+  try {
+    const res = await fetch(
+      `${origin}/api/markets?market=${encodeURIComponent(market)}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as Quote[];
+    if (!Array.isArray(data)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
+  const url = new URL(req.url);
+  const { searchParams } = url;
   const market = (searchParams.get("market") || "indices").toLowerCase();
+  const origin = url.origin; // para llamar a /api/markets
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -105,7 +131,9 @@ export async function GET(req: NextRequest) {
       const safeClose = () => {
         if (closed) return;
         closed = true;
-        try { controller.close(); } catch {}
+        try {
+          controller.close();
+        } catch {}
       };
 
       const write = (line: string) => {
@@ -113,33 +141,48 @@ export async function GET(req: NextRequest) {
         try {
           controller.enqueue(encoder.encode(line));
         } catch {
-          // controlador ya cerrado: ignora silenciosamente
           closed = true;
         }
       };
       const send = (obj: unknown) => write(`data: ${JSON.stringify(obj)}\n\n`);
 
-
-      // (1) encabezado SSE opcional
-      write(`retry: 5000\n`); // hint de reconexión para EventSource
+      // Encabezado SSE
+      write(`retry: 5000\n`);
       write(`event: ready\n`);
       write(`data: "ok"\n\n`);
 
-      // (2) heartbeat cada 10s (mantiene la conexión viva en proxies estrictos)
+      // Heartbeat cada 10s
       const heartbeat = setInterval(() => {
         if (closed) return;
         write(`: ping ${Date.now()}\n\n`);
       }, 10000);
 
-
       let lastPrices: Record<string, number> = {};
       let lastForcedAt = 0;
 
-      // (3) first snapshot inmediato (si existe en Redis)
+      // 🔹 NUEVO: baseFallback se llena una sola vez desde /api/markets si Redis está vacío
+      let baseFallback: CacheWrapper | null = null;
+
+      // (1) snapshot inicial
       try {
-        const wrapper = await getBaseWrapper(market);
-        if (wrapper) {
-          const simulated = simulatePrices(wrapper, { maxPctPerMinute: 0.25, bucketMs: 1000 });
+        let base = await getBaseWrapper(market);
+
+        if (!base) {
+          const baseQuotes = await fetchBaseQuotesFromMarkets(origin, market);
+          if (baseQuotes && baseQuotes.length > 0) {
+            base = {
+              ts: Date.now(),
+              data: baseQuotes,
+            };
+            baseFallback = base;
+          }
+        }
+
+        if (base) {
+          const simulated = simulatePrices(base, {
+            maxPctPerMinute: 0.25,
+            bucketMs: 1000,
+          });
           const prices: Record<string, number> = {};
           for (const q of simulated) {
             if (q?.symbol && typeof q.price === "number") {
@@ -150,22 +193,25 @@ export async function GET(req: NextRequest) {
           lastForcedAt = Date.now();
           send({ prices });
         } else {
-          // informa ausencia de base (útil para debug)
-          send({ prices: {}, note: "no-base-wrapper" });
+          // ⬅ solo si falla Redis y también /api/markets
+          send({ prices: {}, note: "no-base-wrapper-and-no-markets" });
         }
-      } catch (e) {
-        // no rompas el stream por errores puntuales
+      } catch {
         send({ prices: {}, error: "initial_read_failed" });
       }
 
-      // (4) loop cada 1s
+      // (2) loop cada 1s: re-simulación a partir de Redis o del fallback
       const tick = setInterval(async () => {
-        if (closed) return
+        if (closed) return;
         try {
-          const wrapper = await getBaseWrapper(market);
+          // intenta Redis primero, si no hay, usa el fallback en memoria
+          const wrapper = (await getBaseWrapper(market)) ?? baseFallback;
           if (!wrapper) return;
 
-          const simulated = simulatePrices(wrapper, { maxPctPerMinute: 0.25, bucketMs: 1000 });
+          const simulated = simulatePrices(wrapper, {
+            maxPctPerMinute: 0.25,
+            bucketMs: 1000,
+          });
           const prices: Record<string, number> = {};
           for (const q of simulated) {
             if (q?.symbol && typeof q.price === "number") {
@@ -173,13 +219,12 @@ export async function GET(req: NextRequest) {
             }
           }
 
-          // ¿cambió algo?
           const changed =
             Object.keys(prices).length !== Object.keys(lastPrices).length ||
             Object.keys(prices).some((k) => prices[k] !== lastPrices[k]);
 
           const now = Date.now();
-          const forceDue = now - lastForcedAt >= 10000; // fuerza envío cada 10s aunque no cambie
+          const forceDue = now - lastForcedAt >= 10000; // fuerza cada 10s
 
           if (changed || forceDue) {
             lastPrices = prices;
@@ -188,19 +233,19 @@ export async function GET(req: NextRequest) {
             send({ prices });
           }
         } catch {
-          // sigue, el heartbeat mantiene la conexión
+          // sigue, heartbeat mantiene conexión
         }
       }, 1000);
 
-      // ⏳ Auto-cierre para evitar conexiones muy largas (evita bloqueos en FX)
+      // (3) auto-cierre a los 120s
       const lifetime = setTimeout(() => {
         safeClose();
         clearInterval(tick);
         clearInterval(heartbeat);
         clearTimeout(lifetime);
-      }, 120000); // 120 s
+      }, 120000);
 
-      // (5) cleanup al cerrar cliente
+      // (4) cleanup cuando el cliente cierra
       const onAbort = () => {
         clearInterval(tick);
         clearInterval(heartbeat);
@@ -208,6 +253,8 @@ export async function GET(req: NextRequest) {
         safeClose();
       };
 
+      // Nota: si quieres, puedes enganchar onAbort a req.signal cuando Next lo soporte
+      // req.signal.addEventListener("abort", onAbort);
     },
   });
 
@@ -217,7 +264,6 @@ export async function GET(req: NextRequest) {
       "Cache-Control": "no-store, no-transform",
       Connection: "keep-alive",
       "X-Accel-Buffering": "no",
-      // "Transfer-Encoding": "chunked", // innecesario en Node, pero no daña
     },
   });
 }
