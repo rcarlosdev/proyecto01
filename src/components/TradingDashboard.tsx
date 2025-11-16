@@ -1,13 +1,11 @@
 // src/components/TradingDashboard.tsx
-
 "use client";
 
 import dynamic from "next/dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { useMarketStore } from "@/stores/useMarketStore";
-import { MARKETS } from '@/lib/markets'; // Asegúrate de que esta ruta sea correcta
+import { MARKETS } from "@/lib/markets";
 
-// 🔹 Importaciones dinámicas (evita cargar ambas versiones al mismo tiempo)
 const TradingDashboardDesktop = dynamic(
   () => import("./trading-dashboard/TradingDashboardDesktop"),
   { ssr: false }
@@ -18,54 +16,109 @@ const TradingDashboardMobile = dynamic(
   { ssr: false }
 );
 
-type Market = typeof MARKETS[number];
+type Market = (typeof MARKETS)[number] | "indices" | "all";
 
 export default function TradingDashboard() {
   const [isMobile, setIsMobile] = useState(false);
-  
-  // 👈 INICIO: Lógica de carga de datos centralizada
-  const { selectedSymbol, setSelectedSymbol, selectedMarket, setDataMarket } = useMarketStore();
 
+  const {
+    selectedSymbol,
+    setSelectedSymbol,
+    selectedMarket,
+    setDataMarket,
+    // 👇 usamos también el stream de mercados del store
+    startMarketStream,
+    stopMarketStream,
+  } = useMarketStore();
+
+  /** 🔹 Carga REST desde /api/markets (snapshot) */
   const loadData = useCallback(
     async (market: Market) => {
-      // Esta función ahora solo se encarga de cargar el mercado que se le pasa.
-      // La lógica para decidir qué mercado cargar está en el useEffect de abajo.
       if (!market) return;
-      
+
+      const resolvedMarket =
+        !market || market === "all" ? "indices" : market;
+
       try {
-        const res = await fetch(`/api/markets?market=${encodeURIComponent(market)}`);
+        const controller = new AbortController();
+        const res = await fetch(
+          `/api/markets?market=${encodeURIComponent(resolvedMarket)}`,
+          {
+            method: "GET",
+            cache: "no-store",
+            signal: controller.signal,
+          }
+        );
+
         if (!res.ok) throw new Error(`Status ${res.status}`);
 
         const data = await res.json();
+
+        // Snapshot al store
         setDataMarket(data);
-        // Solo establece un símbolo si no hay uno ya seleccionado para evitar sobrescribir la selección del usuario.
-        if (!selectedSymbol) {
-          setSelectedSymbol(data[0]?.symbol || null);
+
+        // Mantener/ajustar símbolo seleccionado
+        if (!selectedSymbol && data.length > 0) {
+          setSelectedSymbol(data[0].symbol);
+        } else if (selectedSymbol) {
+          const stillExists = data.some(
+            (item: any) => item.symbol === selectedSymbol
+          );
+          if (!stillExists && data.length > 0) {
+            setSelectedSymbol(data[0].symbol);
+          }
         }
       } catch (error) {
         console.error("Failed to load market data:", error);
-        setDataMarket([]); // Limpia los datos en caso de error
+        setDataMarket([]);
       }
     },
     [setDataMarket, setSelectedSymbol, selectedSymbol]
   );
 
-  // Mantener símbolo seleccionado si sigue existiendo en el nuevo dataset
+  /** 🔁 Polling REST: snapshot inmediato y luego cada 20s */
   useEffect(() => {
-    // 👉 CAMBIO CLAVE: Decide qué mercado cargar.
-    // Si el mercado seleccionado es 'all' o null, cargamos 'indices' como valor por defecto para tener datos.
-    // Si no, cargamos el mercado seleccionado por el usuario.
-    const marketToFetch = (!selectedMarket || selectedMarket === 'all') ? "indices" : selectedMarket;
+    const marketToFetch: Market =
+      !selectedMarket || selectedMarket === "all"
+        ? "indices"
+        : selectedMarket;
 
+    // Primera carga inmediata
     loadData(marketToFetch);
 
-    // El intervalo de actualización también debe usar el mercado resuelto.
-    const id = setInterval(() => loadData(marketToFetch), 20_000);
-    return () => clearInterval(id);
-  }, [selectedMarket, loadData]); // Se ejecutará cada vez que selectedMarket cambie.
-  // 👈 FIN: Lógica de carga de datos
+    // Polling cada 20 segundos
+    const intervalId = setInterval(() => {
+      loadData(marketToFetch);
+    }, 20_000);
 
-  // Lógica para detectar si la vista es móvil
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [selectedMarket, loadData]);
+
+
+  /** 🔴 SSE: arranca el stream 2s después de cambiar de mercado */
+  useEffect(() => {
+    const marketToStream: Market =
+      !selectedMarket || selectedMarket === "all"
+        ? "indices"
+        : selectedMarket;
+
+    if (!marketToStream) return;
+
+    // esperamos 2s antes de iniciar el stream
+    const timeoutId = setTimeout(() => {
+      startMarketStream(marketToStream);
+    }, 2000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      stopMarketStream();
+    };
+  }, [selectedMarket, startMarketStream, stopMarketStream]);
+
+
+  /** 📱 Detección de mobile */
   useEffect(() => {
     const checkViewport = () => setIsMobile(window.innerWidth <= 850);
     checkViewport();
