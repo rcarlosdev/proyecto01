@@ -2,32 +2,40 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  Card, CardContent, CardHeader, CardTitle,
-} from "@/components/ui/card";
-import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import Image from "next/image";
-import SYMBOLS_MAP from "@/lib/symbolsMap";
-import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useUserStore } from "@/stores/useUserStore";
 import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
+
+import SYMBOLS_MAP from "@/lib/symbolsMap";
+import { formatCurrency } from "@/lib/utils";
+import { useUserStore } from "@/stores/useUserStore";
 import { useMarketStore } from "@/stores/useMarketStore";
 
+import { ModeToggle } from "./trading-dialog-components/ModeToggle";
+import { SideToggle } from "./trading-dialog-components/SideToggle";
+import { UnitsTable } from "./trading-dialog-components/UnitsTable";
+import { OrderPanelMarket } from "./trading-dialog-components/OrderPanelMarket";
+import { DialogHeaderTrade } from "./trading-dialog-components/DialogHeaderTrade";
+import { OrderPanelPending } from "./trading-dialog-components/OrderPanelPending";
+import { toast } from "sonner";
+
 export interface TradingDialogProps {
-  text: string;                       // fallback legible (p.ej. "123.45")
+  text: string;
   symbol: string | null;
   tipoOperacion: "buy" | "sell";
   colorText: string;
-  /** Fallbacks si no hay precio en vivo aún */
   sellPrice?: number;
   buyPrice?: number;
 }
 
-/* ===================== Helpers ===================== */
+type Mode = "market" | "pending";
+type TriggerRule = "gte" | "lte";
+
+/* ===== Helpers originales ===== */
 function marketOfSymbol(sym: string | null): keyof typeof SYMBOLS_MAP | "acciones" {
   if (!sym) return "acciones";
   const S = sym.toUpperCase();
@@ -39,7 +47,7 @@ function marketOfSymbol(sym: string | null): keyof typeof SYMBOLS_MAP | "accione
 
 const MARGIN_CONFIG = {
   crypto: 0.05,
-  fx: 0.03,              // usa 'fx' (coincide con tu symbolsMap)
+  fx: 0.03,
   indices: 0.05,
   acciones: 0.10,
   commodities: 0.08,
@@ -53,7 +61,6 @@ const SPREAD_BY_MARKET: Record<string, number> = {
   commodities: 0.001,
 };
 
-/* ===================== Componente ===================== */
 export function TradingDialog({
   text,
   symbol,
@@ -62,21 +69,29 @@ export function TradingDialog({
   sellPrice: sellPriceProp,
   buyPrice: buyPriceProp,
 }: TradingDialogProps) {
-  const [selectedUnitOption, setSelectedUnitOption] = useState<number>(1);
-  const [operationType, setOperationType] = useState<"buy" | "sell">(tipoOperacion || "buy");
+  /* ===== Estado general ===== */
   const [isOpen, setIsOpen] = useState(false);
   const [imageExists, setImageExists] = useState(true);
+  const [operationType, setOperationType] = useState<"buy" | "sell">(tipoOperacion || "buy");
+
+  // nuevo: modo de orden
+  const [mode, setMode] = useState<Mode>("market");
+
+  // unidades (se conserva la UX original)
+  const [selectedUnitOption, setSelectedUnitOption] = useState<number>(1);
+
+  // pending-only
+  const [triggerPrice, setTriggerPrice] = useState<string>("");
+  const [triggerRule, setTriggerRule] = useState<TriggerRule>("gte");
 
   const { user, updateUserBalance } = useUserStore();
 
-  // ✅ Selector que re-renderiza cuando cambia el precio del símbolo en el store
+  // live price del store (igual que antes)
   const liveFromStore = useMarketStore((s) => {
     if (!symbol) return undefined;
     const S = symbol.toUpperCase();
-    // 1) intentar livePrices
     const live = s.livePrices[S];
     if (typeof live === "number") return live;
-    // 2) fallback a snapshot dataMarket
     const row = s.dataMarket.find((q) =>
       [q.symbol, (q as any).ticker, (q as any).code]
         .map((x) => String(x || "").toUpperCase())
@@ -89,14 +104,13 @@ export function TradingDialog({
   const marginRate = MARGIN_CONFIG[market as keyof typeof MARGIN_CONFIG] ?? 0.05;
   const spread = SPREAD_BY_MARKET[market] ?? 0.002;
 
-  // Precio medio: primero store, si no hay -> parse de 'text', por último props heredadas.
+  // mid price con fallbacks (igual que antes)
   const liveMid = useMemo(() => {
     if (typeof liveFromStore === "number" && Number.isFinite(liveFromStore)) return liveFromStore;
 
     const fromText = parseFloat(String(text ?? "").replace(/[^\d.-]/g, ""));
     if (Number.isFinite(fromText)) return fromText;
 
-    // último último recurso: si venían props de SymbolRow
     const propMid =
       typeof buyPriceProp === "number" && typeof sellPriceProp === "number"
         ? (buyPriceProp + sellPriceProp) / 2
@@ -105,17 +119,10 @@ export function TradingDialog({
     return Number.isFinite(propMid) ? (propMid as number) : 0;
   }, [liveFromStore, text, buyPriceProp, sellPriceProp]);
 
-  // Derivar bid/ask desde liveMid (consistente con SymbolRow)
-  const derivedSell = useMemo(
-    () => Number((liveMid * (1 + spread)).toFixed(2)),
-    [liveMid, spread]
-  );
-  const derivedBuy = useMemo(
-    () => Number((liveMid * (1 - spread)).toFixed(2)),
-    [liveMid, spread]
-  );
+  const derivedSell = useMemo(() => Number((liveMid * (1 + spread)).toFixed(4)), [liveMid, spread]);
+  const derivedBuy = useMemo(() => Number((liveMid * (1 - spread)).toFixed(4)), [liveMid, spread]);
 
-  // Precio actual según operación (con fallback a props)
+  // precio “actual” según lado
   const currentPrice = useMemo(() => {
     if (operationType === "buy") {
       if (Number.isFinite(derivedBuy)) return derivedBuy;
@@ -128,31 +135,60 @@ export function TradingDialog({
     return Number.isFinite(priceFromText) ? priceFromText : 0;
   }, [operationType, derivedBuy, derivedSell, buyPriceProp, sellPriceProp, text]);
 
-  // Máximo de unidades (conservador)
+  // máximo de unidades (sin cambios)
   const maxUnits = useMemo(() => {
     const balance = Number(user?.balance ?? 0);
     if (balance <= 0 || currentPrice <= 0 || marginRate <= 0) return 0;
-
     const maxFromMargin = Math.floor(balance / (currentPrice * marginRate));
     const maxFromTotalValue = Math.floor(balance / currentPrice);
     const max = Math.min(maxFromMargin, maxFromTotalValue);
-
     return Number.isFinite(max) && max > 0 ? max : 0;
   }, [user?.balance, currentPrice, marginRate]);
 
-  // Mantener selección dentro del rango
   useEffect(() => {
     if (maxUnits <= 0) setSelectedUnitOption(0);
     else if (selectedUnitOption < 1 || selectedUnitOption > maxUnits) setSelectedUnitOption(1);
   }, [maxUnits, selectedUnitOption]);
 
-  // Opciones de unidades (limito por performance)
+
   const unitOptions = useMemo(() => {
     if (maxUnits <= 0) return [];
-    return Array.from({ length: Math.min(maxUnits, 500) }, (_, i) => i + 1);
+
+    const options: number[] = [];
+    for (let i = 1; i <= maxUnits;) {
+      options.push(i);
+
+      // Determina el salto según el rango en el que se encuentra 'i'
+      let step;
+      if (i < 10) {
+        step = 1;
+      } else if (i < 100) {
+        step = 10;
+      } else if (i < 1000) {
+        step = 50; // Asegura que aparezcan 100, 150, 200, 250...
+      } else if (i < 10000) {
+        step = 500; // Asegura 1000, 1500, 2000...
+      } else if (i < 100000) {
+        step = 5000;
+      } else {
+        // Para números muy grandes, el salto es 5 * 10^(n-1)
+        // donde n es el número de dígitos de i.
+        const magnitude = Math.floor(Math.log10(i));
+        step = 5 * Math.pow(10, magnitude - 1);
+      }
+
+      i += step;
+    }
+
+    // Asegurarse de que maxUnits sea la última opción si no está ya en la lista
+    if (options[options.length - 1] !== maxUnits) {
+      options.push(maxUnits);
+    }
+
+    return options;
   }, [maxUnits]);
 
-  // Cálculos principales
+  // cálculos principales (igual que antes)
   const calculations = useMemo(() => {
     const cantidad = Number(selectedUnitOption ?? 0);
     const valor = cantidad * currentPrice;
@@ -166,25 +202,35 @@ export function TradingDialog({
 
   const hasSufficientBalance = useMemo(() => {
     const balance = Number(user?.balance ?? 0);
-    const { valor, margenEstimado } = calculations;
-    if (!Number.isFinite(balance) || !Number.isFinite(valor) || !Number.isFinite(margenEstimado)) return false;
-    return balance >= margenEstimado && valor <= balance;
+    const { margenEstimado } = calculations;
+    if (!Number.isFinite(balance) || !Number.isFinite(margenEstimado)) return false;
+    return balance >= margenEstimado;
   }, [user?.balance, calculations]);
 
-  // Sincroniza tipo de operación con prop
+  // sincroniza tipo de operación con prop (como antes)
   useEffect(() => {
     setOperationType(tipoOperacion);
   }, [tipoOperacion]);
 
+  // Título, label y helpers
   const dialogTitle = operationType === "buy" ? "Comprar" : "Vender";
-  const short = (v?: number) => (typeof v === "number" ? v.toFixed(2) : "-");
+  const short = (v?: number) => (typeof v === "number" ? v.toFixed(4) : "-");
 
-  /* ===================== Confirmar operación ===================== */
+  // label del botón que dispara el diálogo (igual)
+  const triggerLabel = useMemo(() => {
+    const dynamic = operationType === "buy" ? derivedBuy : derivedSell;
+    if (Number.isFinite(dynamic)) return short(dynamic);
+    const parsed = parseFloat(String(text ?? "").replace(/[^\d.-]/g, ""));
+    if (Number.isFinite(parsed)) return short(parsed);
+    return text;
+  }, [operationType, derivedBuy, derivedSell, text]);
+
+  /* ===== Handlers: mismo funcionamiento ===== */
   async function handleConfirmTrade() {
-    if (!user?.id) {
-      console.error("No authenticated user - cannot open trade");
-      return;
-    }
+    if (!user?.id) return toast.error("No autenticado");
+    if (!hasSufficientBalance) return toast.error("Saldo insuficiente para abrir la operación");
+    if (calculations.cantidad <= 0) return toast.error("Selecciona una cantidad válida de unidades");
+
     try {
       const res = await fetch("/api/trade/open", {
         method: "POST",
@@ -198,29 +244,57 @@ export function TradingDialog({
           leverage: 1,
         }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Error al abrir operación");
-
-      alert("Operación abierta exitosamente");
+      toast.success("Operación abierta exitosamente");
       if (typeof data?.trade?.balanceAfter === "number") {
         updateUserBalance(Number(data.trade.balanceAfter));
       }
-      // setIsOpen(false);
+      setIsOpen(false);
     } catch (err) {
       console.error("❌ Error al abrir operación:", err);
-      alert("Error al abrir la operación: " + String(err));
+      toast.error("Error al abrir la operación: " + String(err));
     }
   }
 
-  // Label dinámico del botón (usa el bid/ask derivado; text queda como fallback visual)
-  const triggerLabel = useMemo(() => {
-    const dynamic = operationType === "buy" ? derivedBuy : derivedSell;
-    if (Number.isFinite(dynamic)) return short(dynamic);
-    const parsed = parseFloat(String(text ?? "").replace(/[^\d.-]/g, ""));
-    if (Number.isFinite(parsed)) return short(parsed);
-    return text;
-  }, [operationType, derivedBuy, derivedSell, text]);
+  // pending
+  const triggerPriceNum = useMemo(
+    () => Number(String(triggerPrice).replace(/[^\d.-]/g, "")),
+    [triggerPrice]
+  );
+  const pendingValid =
+    mode === "pending" &&
+    symbol &&
+    calculations.cantidad > 0 &&
+    Number.isFinite(triggerPriceNum) &&
+    triggerPriceNum > 0;
+
+  async function handleCreatePending() {
+    if (!user?.id) return toast.error("No autenticado");
+    if (!pendingValid) return toast.error("Revisa el precio objetivo y la condición");
+    try {
+      const res = await fetch("/api/trade/pending", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          symbol,
+          side: operationType,
+          quantity: calculations.cantidad,
+          leverage: 1,
+          triggerPrice: triggerPriceNum,
+          triggerRule,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "No se pudo crear la operación pendiente");
+      toast.success("Orden pendiente creada");
+      setIsOpen(false);
+    } catch (err) {
+      console.error("❌ Error creando pendiente:", err);
+      toast.error("Error creando pendiente: " + String(err));
+    }
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -236,7 +310,7 @@ export function TradingDialog({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[425px] bg-[#202126] border border-gray-50/80">
+      <DialogContent className="sm:max-w-[480px] bg-[#202126] border border-gray-50/80">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 pt-2">
             {imageExists ? (
@@ -257,6 +331,7 @@ export function TradingDialog({
               </div>
             )}
 
+            {/* Header compactado y reutilizable */}
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">{dialogTitle}</span>
@@ -267,139 +342,59 @@ export function TradingDialog({
             </div>
           </DialogTitle>
 
-          <div className="text-lg font-bold flex justify-between gap-2 mt-2">
-            <div className="flex flex-col">
-              <span className="text-sm font-normal mr-1">Precio actual:</span>
-              <Badge variant="outline" className={operationType === "buy" ? "text-green-500" : "text-red-500"}>
-                {formatCurrency(currentPrice, "en-US", "USD")}
-              </Badge>
-            </div>
-
-            <div className="flex flex-col">
-              <span className="text-sm font-normal mr-1">Margen estimado:</span>
-              <Badge variant="outline">
-                {formatCurrency(calculations.margenEstimado, "en-US", "USD")}
-              </Badge>
-            </div>
-
-            <div className="flex flex-col">
-              <span className="text-sm font-normal mr-1">Saldo disponible:</span>
-              {(() => {
-                const balance = Number(user?.balance ?? 0);
-                if (!Number.isFinite(balance)) {
-                  return <Badge variant="outline" className="text-red-500">—</Badge>;
-                }
-                return (
-                  <Badge variant="outline" className={balance <= 0 ? "text-red-500" : "text-green-500"}>
-                    {formatCurrency(balance, "en-US", "USD")}
-                  </Badge>
-                );
-              })()}
-            </div>
-          </div>
+          {/* Resumen (igual estilo) */}
+          <DialogHeaderTrade
+            currentPrice={currentPrice}
+            operationType={operationType}
+            userBalance={Number(user?.balance ?? 0)}
+            marginEstimate={calculations.margenEstimado}
+            formatCurrency={formatCurrency}
+          />
         </DialogHeader>
 
         <DialogDescription>
-          Rellena los detalles para abrir una nueva operación de {dialogTitle.toLowerCase()} en {symbol}.
+          Elige si deseas abrir al precio de mercado o crear una orden pendiente automatizada.
         </DialogDescription>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant={operationType === "buy" ? "default" : "outline"}
-              className={`${operationType === "buy"
-                ? "bg-green-600 hover:bg-green-700 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                } transition-colors duration-200 cursor-pointer`}
-              onClick={() => setOperationType("buy")}
-            >
-              Comprar
-            </Button>
-            <Button
-              variant={operationType === "sell" ? "default" : "outline"}
-              className={`${operationType === "sell"
-                ? "bg-red-600 hover:bg-red-700 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                } transition-colors duration-200 cursor-pointer`}
-              onClick={() => setOperationType("sell")}
-              disabled   // habilita cuando soportes ventas
-            >
-              Vender
-            </Button>
-          </div>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Detalles de la operación</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="max-h-[200px] overflow-y-auto border border-gray-700 rounded-md">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-[#181a20] z-10">
-                    <tr className="text-gray-400 text-left border-b border-gray-700">
-                      <th className="py-2 px-3 font-semibold">Unidades</th>
-                      <th className="py-2 px-3 font-semibold">Valor total</th>
-                      <th className="py-2 px-3 font-semibold">Margen estimado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {unitOptions.length === 0 ? (
-                      <tr>
-                        <td colSpan={3} className="py-3 px-3 text-center text-muted-foreground">
-                          No hay unidades disponibles con el saldo y el margen actuales.
-                        </td>
-                      </tr>
-                    ) : (
-                      unitOptions.map((unit) => {
-                        const valor = unit * currentPrice;
-                        const margen = valor * marginRate;
-                        return (
-                          <tr
-                            key={unit}
-                            className={`hover:bg-gray-800/40 cursor-pointer transition-colors ${selectedUnitOption === unit ? "bg-gray-800/60" : ""}`}
-                            onClick={() => setSelectedUnitOption(unit)}
-                          >
-                            <td className="py-2 px-3 font-medium">{unit.toLocaleString()}</td>
-                            <td className="py-2 px-3">{formatCurrency(valor, "en-US", "USD")}</td>
-                            <td className="py-2 px-3 text-muted-foreground">{formatCurrency(margen, "en-US", "USD")}</td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="text-xs text-gray-400 text-center">
-                Cantidad máxima disponible:{" "}
-                <span className="font-semibold text-white">{maxUnits.toLocaleString()}</span> unidades
-              </div>
-
-              <div className={`text-xs text-center ${hasSufficientBalance ? "text-green-500" : "text-red-500"}`}>
-                {hasSufficientBalance
-                  ? "✓ Saldo suficiente para abrir esta operación"
-                  : maxUnits <= 0
-                    ? "✗ Sin unidades disponibles con el saldo y margen actual"
-                    : "✗ Saldo insuficiente para esta operación"}
-              </div>
-            </CardContent>
-          </Card>
-
-          <DialogFooter />
-
-          <div className="flex gap-2 pt-2">
-            <Button variant="outline" className="flex-1 cursor-pointer" onClick={() => setIsOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white cursor-pointer"
-              onClick={handleConfirmTrade}
-              disabled={!hasSufficientBalance || calculations.cantidad <= 0 || maxUnits <= 0}
-            >
-              Abrir Operación | {symbol}
-            </Button>
-          </div>
+        {/* Modo y lado */}
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <ModeToggle mode={mode} onChange={setMode} />
+          <SideToggle side={operationType} onChange={setOperationType} disableSell />
         </div>
+
+        {/* Tabla de unidades (sin cambios visuales) */}
+        <UnitsTable
+          currentPrice={currentPrice}
+          marginRate={marginRate}
+          unitOptions={unitOptions}
+          selectedUnit={selectedUnitOption}
+          onSelectUnit={setSelectedUnitOption}
+          formatCurrency={formatCurrency}
+          maxUnits={maxUnits}
+          hasSufficientBalance={hasSufficientBalance}
+        />
+
+        {/* Panel según modo */}
+        {mode === "market" ? (
+          <OrderPanelMarket
+            symbol={symbol}
+            disabled={!hasSufficientBalance || calculations.cantidad <= 0 || maxUnits <= 0}
+            onConfirm={handleConfirmTrade}
+          />
+        ) : (
+          <OrderPanelPending
+            symbol={symbol}
+            triggerPrice={triggerPrice}
+            setTriggerPrice={setTriggerPrice}
+            triggerRule={triggerRule}
+            setTriggerRule={setTriggerRule}
+            currentPrice={currentPrice}
+            disabled={!pendingValid || calculations.cantidad <= 0}
+            onCreatePending={handleCreatePending}
+          />
+        )}
+
+        <DialogFooter />
       </DialogContent>
     </Dialog>
   );
