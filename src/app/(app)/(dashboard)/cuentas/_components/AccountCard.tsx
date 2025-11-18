@@ -1,3 +1,4 @@
+// src/app/(app)/(dashboard)/cuentas/_components/AccountCard.tsx
 "use client";
 
 import { Eye, Download } from "lucide-react";
@@ -62,13 +63,24 @@ function Sparkline({ points = [] }: { points?: number[] }) {
       <path d={d} fill="none" stroke="currentColor" className="text-[var(--color-primary)]" strokeWidth="1.5" />
     </svg>
   );
-}
+}// src/app/(app)/(dashboard)/cuentas/_components/AccountCard.tsx
 
 export default function AccountCard({
-  id, numero, tipo, moneda, balance, balanceDisponible, estado, fechaCreacion,
-  sparkline, badges = [], onView, onStatus, onOperate, onSelectActive,
+  id,
+  numero,
+  tipo,
+  moneda,
+  balance,
+  balanceDisponible,
+  estado,
+  fechaCreacion,
+  sparkline,
+  badges = [],
+  onView,
+  onStatus,
+  onOperate,
+  onSelectActive,
 }: AccountCardProps) {
-
   // Genera sparkline si no llega: pequeña variación pseudoaleatoria estable por id
   const fallback = (() => {
     const seed = [...id].reduce((a, c) => a + c.charCodeAt(0), 0);
@@ -80,67 +92,152 @@ export default function AccountCard({
   })();
 
   const fmt = (val: number) =>
-    moneda === "USD" ? `$${val.toLocaleString()}` : `${val.toLocaleString()} ${moneda}`;
+    moneda === "USD"
+      ? `$${val.toLocaleString()}`
+      : `${val.toLocaleString()} ${moneda}`;
+
+  const fecha = new Date(fechaCreacion).toLocaleDateString("es-ES");
 
   return (
     <div className="border rounded-xl p-4 bg-[var(--color-surface-alt)] hover:bg-[var(--color-surface)] transition-colors">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex flex-col gap-3">
+        {/* ===== CABECERA COMPLETA (tipo card header) ===== */}
+        <div className="flex flex-wrap justify-between items-start gap-3">
+          {/* IZQUIERDA: número + chips de tipo/estado/badges */}
+          <div className="min-w-0">
             <h4 className="font-bold text-lg truncate">{numero}</h4>
-            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${tipoClasses(tipo)}`}>
-              {tipo === "trading" ? "Trading" : tipo === "inversion" ? "Inversión" : "Ahorro"}
-            </span>
-            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${estadoClasses(estado)}`}>
-              {estado === "activa" ? "Activa" : estado === "suspendida" ? "Suspendida" : "Cerrada"}
-            </span>
-            {badges.map((b, i) => (
-              <span key={i} className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border border-yellow-400/30 text-yellow-400 bg-yellow-400/10">
-                {b}
+
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${tipoClasses(
+                  tipo
+                )}`}
+              >
+                {tipo === "trading"
+                  ? "Trading"
+                  : tipo === "inversion"
+                  ? "Inversión"
+                  : "Ahorro"}
               </span>
-            ))}
+
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${estadoClasses(
+                  estado
+                )}`}
+              >
+                {estado === "activa"
+                  ? "Activa"
+                  : estado === "suspendida"
+                  ? "Suspendida"
+                  : "Cerrada"}
+              </span>
+
+              {badges.map((b, i) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border border-yellow-400/30 text-yellow-400 bg-yellow-400/10"
+                >
+                  {b}
+                </span>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-3">
+          {/* DERECHA: moneda + fecha de creación, alineadas tipo resumen */}
+          <div className="text-xs text-right space-y-1">
+            
             <div>
-              <span className="text-[var(--color-text-muted)]">Moneda:</span>
-              <span className="font-medium ml-2">{moneda}</span>
+              <span className="text-[var(--color-text-muted)] mr-1">
+                Creada
+              </span>
+              <span className="font-medium text-[var(--color-text)]">
+                {fecha}
+              </span>
             </div>
-            <div>
-              <span className="text-[var(--color-text-muted)]">Balance:</span>
-              <span className="font-medium ml-2">{fmt(balance)}</span>
-            </div>
-            <div>
-              <span className="text-[var(--color-text-muted)]">Disponible:</span>
-              <span className="font-medium ml-2">{fmt(balanceDisponible)}</span>
-            </div>
-            <div>
-              <span className="text-[var(--color-text-muted)]">Creada:</span>
-              <span className="font-medium ml-2">{new Date(fechaCreacion).toLocaleDateString("es-ES")}</span>
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <Sparkline points={sparkline ?? fallback} />
           </div>
         </div>
 
-        {/* Acciones rápidas */}
-        <div className="flex flex-col gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => onView?.(id)}>
-            <Eye className="w-4 h-4 mr-1" /> Ver
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => onStatus?.(id)}>
-            <Download className="w-4 h-4 mr-1" /> Estado
-          </Button>
-          <Button className="bg-yellow-400 text-black hover:bg-yellow-500" size="sm" onClick={() => onOperate?.(id)}>
-            Operar
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => onSelectActive?.(id)}>
-            Seleccionar activa
-          </Button>
+        {/* ===== CUERPO: métricas + sparkline + acciones ===== */}
+        <div className="flex flex-col md:flex-row gap-4 items-stretch">
+          {/* IZQUIERDA: métricas + sparkline */}
+          <div className="flex-1 min-w-0 flex flex-col gap-3">
+            {/* Métricas en bloques, sin grid para evitar solapes */}
+            <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+              <div className="flex flex-col min-w-[140px]">
+                <span className="text-[var(--color-text-muted)] mr-1">
+                  Moneda
+                </span>
+                <span className="font-medium text-[var(--color-text)]">
+                  {moneda}
+                </span>
+              </div>
+              <div className="flex flex-col min-w-[140px]">
+                <span className="text-[var(--color-text-muted)]">
+                  Balance
+                </span>
+                <span className="font-medium">{fmt(balance)}</span>
+              </div>
+
+              <div className="flex flex-col min-w-[140px]">
+                <span className="text-[var(--color-text-muted)]">
+                  Disponible
+                </span>
+                <span className="font-medium">
+                  {fmt(balanceDisponible)}
+                </span>
+              </div>
+            </div>
+
+            {/* Sparkline */}
+            <div className="mt-1">
+              <Sparkline points={sparkline ?? fallback} />
+            </div>
+          </div>
+
+          {/* DERECHA: columna de acciones */}
+          <div className="flex flex-row md:flex-col gap-2 w-full md:w-auto md:items-stretch">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 md:flex-none"
+              onClick={() => onView?.(id)}
+            >
+              <Eye className="w-4 h-4 mr-1" /> Ver
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 md:flex-none"
+              onClick={() => onStatus?.(id)}
+            >
+              <Download className="w-4 h-4 mr-1" /> Estado
+            </Button>
+
+            <Button
+              className="bg-yellow-400 text-black hover:bg-yellow-500 flex-1 md:flex-none"
+              size="sm"
+              onClick={() => onOperate?.(id)}
+            >
+              Operar
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              className="flex-1 md:flex-none"
+              onClick={() => onSelectActive?.(id)}
+            >
+              Seleccionar activa
+            </Button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
+
+
+
+
