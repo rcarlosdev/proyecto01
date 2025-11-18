@@ -1,4 +1,4 @@
-/// src/app/(app)/(dashboard)/cuentas/page.tsx
+// src/app/(app)/(dashboard)/cuentas/page.tsx
 "use client";
 
 import { useEffect, useState, useCallback, ReactNode, useMemo } from "react";
@@ -51,11 +51,12 @@ interface Cuenta {
   id: string;
   numero: string;
   tipo: "trading" | "inversion" | "ahorro";
-  moneda: "USD" | "BTC" | "ETH" | string;
+  moneda: "USD" | "BTC" | "ETH" | string; // puedes dejarla así
   balance: number;
   balanceDisponible: number;
   estado: "activa" | "suspendida" | "cerrada";
   fechaCreacion: string; // ISO
+  badges?: string[];     
 }
 
 /* === Conversión simulada para Resumen (mejora: Balance Total por divisa base) === */
@@ -82,79 +83,29 @@ export default function MisCuentasView() {
   /* Divisa base para resumen (mejora) */
   const [baseCurrency, setBaseCurrency] = useState<"USD" | "BTC" | "ETH">("USD");
 
-// ⬇️ Reemplaza COMPLETO el contenido de tu función fetchCuentas por esto
+  // ⬇️ Reemplaza COMPLETO el contenido de tu función fetchCuentas por esto
 
-const fetchCuentas = useCallback(async () => {
-  setLoading(true);
-  try {
-    // 1) Intenta consultar backend (cuando exista)
-    let fromApi: Cuenta[] = [];
+  const fetchCuentas = useCallback(async () => {
+    setLoading(true);
     try {
-      const res = await fetch("/api/cuentas", { headers: { Accept: "application/json" } });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) fromApi = data as Cuenta[];
-      }
-    } catch {
-      // si falla la consulta, fromApi se queda como []
+      const res = await fetch("/api/cuentas", {
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) throw new Error("Error consultando cuentas");
+
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error("Respuesta inválida");
+
+      setCuentas(data as Cuenta[]);
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudieron cargar las cuentas del usuario.");
+      setCuentas([]);
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    // 2) Mocks (⚠️ elimina este bloque cuando conectes backend)
-    const mocks: Cuenta[] = [
-      {
-        id: "1",
-        numero: "BTC-784512369",
-        tipo: "trading",
-        moneda: "BTC",
-        balance: 2.456,             // 2,456 BTC
-        balanceDisponible: 2.123,   // 2,123 BTC
-        estado: "activa",
-        fechaCreacion: "2024-01-14" // 14/1/2024
-      },
-      {
-        id: "2",
-        numero: "USD-951753468",
-        tipo: "trading",
-        moneda: "USD",
-        balance: 12500.75,
-        balanceDisponible: 12000.50,
-        estado: "activa",
-        fechaCreacion: "2024-01-09"
-      },
-      {
-        id: "3",
-        numero: "ETH-357159486",
-        tipo: "inversion",
-        moneda: "ETH",
-        balance: 15.75,
-        balanceDisponible: 15.75,
-        estado: "activa",
-        fechaCreacion: "2024-01-31"
-      }
-    ];
-
-    // 3) “Push” de lo que venga del backend (o []), más los mocks
-    setCuentas(() => [...fromApi, ...mocks]);
-
-  } catch {
-    toast.error("Error al cargar las cuentas. Usando datos simulados.");
-    // fallback solo a mocks
-    setCuentas([
-      {
-        id: "1",
-        numero: "BTC-784512369",
-        tipo: "trading",
-        moneda: "BTC",
-        balance: 2.456,
-        balanceDisponible: 2.123,
-        estado: "activa",
-        fechaCreacion: "2024-01-14"
-      }
-    ]);
-  } finally {
-    setLoading(false);
-  }
-}, []);
 
 
   useEffect(() => {
@@ -269,7 +220,7 @@ const fetchCuentas = useCallback(async () => {
               <p className="text-sm text-muted-foreground">Gestión de todas tus cuentas de trading</p>
             </div>
           </div>
-          
+
         </div>
       </div>
       {/* Contenido */}
@@ -278,12 +229,12 @@ const fetchCuentas = useCallback(async () => {
           <div className="flex-shrink-0 mb-1 mr-3">
             <div className="flex items-center justify-end">
               <AddAccountDrawer
-                  onCreated={(nueva) => {
-                    // hace push al estado actual SIN tocar backend
-                    setCuentas((prev) => [nueva, ...prev]);
-                    // opcional: aquí podrías hacer scroll/resaltar la fila nueva
-                  }}
-                  />
+                onCreated={(nueva) => {
+                  // hace push al estado actual SIN tocar backend
+                  setCuentas((prev) => [nueva, ...prev]);
+                  // opcional: aquí podrías hacer scroll/resaltar la fila nueva
+                }}
+              />
             </div>
           </div>
           {/* Resumen General con divisa base (mejora) */}
@@ -395,37 +346,36 @@ const fetchCuentas = useCallback(async () => {
               <CardTitle className="text-yellow-400">Todas las Cuentas</CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Grid único: desktop y móvil usan la misma tarjeta */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="-mx-2 flex flex-wrap">
                 {cuentasFiltradas.map((c) => (
-                  <AccountCard
+                  <div
                     key={c.id}
-                    id={c.id}
-                    numero={c.numero}
-                    tipo={c.tipo}
-                    moneda={c.moneda as AccountCardProps["moneda"]}
-                    balance={c.balance}
-                    balanceDisponible={c.balanceDisponible}
-                    estado={c.estado}
-                    fechaCreacion={c.fechaCreacion}
-                    // opcional: muestra una “etiqueta” si quieres
-                    badges={c.tipo === "trading" ? ["DEMO"] : []}
-                    // acciones rápidas
-                    onView={(id) => router.push(`/cuentas/${id}`)}
-                    onStatus={() => toast.info("Panel de Estado — próximamente")}
-                    onOperate={() => toast.success("Abrir Plataforma Trading — próximamente")}
-                    onSelectActive={() => toast.success("Cuenta seleccionada como activa")}
-                  />
+                    className="w-full lg:w-1/2 xlg:w-1/3 px-2 mb-4 flex"
+                  >
+                    <AccountCard
+                      key={c.id}
+                      id={c.id}
+                      numero={c.numero}
+                      tipo={c.tipo}
+                      moneda={c.moneda as AccountCardProps["moneda"]}
+                      balance={c.balance}
+                      balanceDisponible={c.balanceDisponible}
+                      estado={c.estado}
+                      fechaCreacion={c.fechaCreacion}
+                      badges={c.badges ?? []}
+                    />
+                  </div>
                 ))}
 
                 {cuentasFiltradas.length === 0 && (
-                  <div className="col-span-full text-center text-[var(--color-text-muted)] py-10 border rounded-xl">
+                  <div className="w-full text-center text-[var(--color-text-muted)] py-10 border rounded-xl">
                     No hay cuentas que coincidan con los filtros actuales.
                   </div>
                 )}
               </div>
-
             </CardContent>
+
+
           </Card>
         </div>
       </div>

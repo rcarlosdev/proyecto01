@@ -146,7 +146,7 @@ export const useMarketStore = create<MarketState>((set, get) => ({
 
     try {
       const res = await fetch(
-        `/api/markets-symbols?market=${encodeURIComponent(marketKey)}`,
+        `/api/markets?market=${encodeURIComponent(marketKey)}`,
         { cache: "no-store", signal: controller.signal }
       );
       if (!res.ok) throw new Error(`Status ${res.status}`);

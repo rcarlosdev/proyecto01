@@ -334,9 +334,15 @@ export function useAlphaChart(initialInterval: string) {
     }
   }, [selectedSymbol, cancelActive]);
 
-  /* ===================== Render serie ===================== */
+  /* ===================== Render serie =====================
+    🔧 FIX: Se agregó verificación de refs.current.chart antes de acceder
+    a chart.timeScale(), especialmente dentro de callbacks y timeouts,
+    evitando TypeError cuando el chart se vuelve null tras cleanup()
+    (cambio de símbolo, unmount o reinicialización del gráfico).
+  ========================================================== */
   const renderSeries = useCallback(async (force = false) => {
-    if (!refs.current.chart || !chartReady) return;
+    const chart = refs.current.chart;
+    if (!chart || !chartReady) return;
 
     const candles = await load(force);
     if (!candles.length) {
@@ -347,38 +353,73 @@ export function useAlphaChart(initialInterval: string) {
     const s = createSeries(candles);
     if (!s) return;
 
-    const ts = refs.current.chart.timeScale();
+    // 🔐 Re-leer chart por si algo cambió mientras cargábamos
+    const chartAfterCreate = refs.current.chart;
+    if (!chartAfterCreate) return;
+
+    const tsInit = chartAfterCreate.timeScale();
     const total = candles.length;
     if (total) {
       const last = candles[total - 1].time as Time;
       const first = candles[Math.max(0, total - Math.min(100, total))].time as Time;
-      ts.setVisibleRange({ from: first, to: last });
+      tsInit.setVisibleRange({ from: first, to: last });
     }
 
     // crosshair (suscripción simple; lightweight-charts ignora subs duplicadas iguales)
-    refs.current.chart.subscribeCrosshairMove((param) => {
-      const d = param?.seriesData.get(refs.current.series!);
-      if (!d) { setCurrentPrice(""); setCurrentTime(""); return; }
+    chartAfterCreate.subscribeCrosshairMove((param) => {
+      const seriesRef = refs.current.series;
+      if (!seriesRef) {
+        setCurrentPrice("");
+        setCurrentTime("");
+        return;
+      }
+
+      const d = param?.seriesData.get(seriesRef);
+      if (!d) {
+        setCurrentPrice("");
+        setCurrentTime("");
+        return;
+      }
+
       let price: number | undefined;
       if ("value" in d && typeof d.value === "number") price = d.value;
       else if ("close" in d && typeof d.close === "number") price = d.close;
-      else { setCurrentPrice(""); setCurrentTime(""); return; }
+      else {
+        setCurrentPrice("");
+        setCurrentTime("");
+        return;
+      }
 
       const time = "time" in d && d.time ? d.time : param.time;
       if (!price || !time) return;
 
       setCurrentPrice(formatPrice(price, selectedSymbol));
       const date = new Date((time as number) * 1000);
-      setCurrentTime(date.toLocaleString("es-ES", {
-        day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
-      }));
+      setCurrentTime(
+        date.toLocaleString("es-ES", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
     });
 
     // lazy-load en bordes
     const onRange = () => {
-      if (refs.current.loadMoreTimeout) clearTimeout(refs.current.loadMoreTimeout);
+      // ⛔ si el chart ya no existe (cleanup, cambio de símbolo, etc.), no hacemos nada
+      if (!refs.current.chart) return;
+
+      if (refs.current.loadMoreTimeout) {
+        clearTimeout(refs.current.loadMoreTimeout);
+      }
+
       refs.current.loadMoreTimeout = setTimeout(async () => {
-        const ts = refs.current.chart!.timeScale();
+        const chartForRange = refs.current.chart;
+        if (!chartForRange) return;
+
+        const ts = chartForRange.timeScale();
         const vr = ts.getVisibleRange();
         if (!vr) return;
 
@@ -398,6 +439,7 @@ export function useAlphaChart(initialInterval: string) {
             setCached(selectedSymbol || "", refs.current.interval, merged);
           }
         }
+
         if (Number(vr.to) >= latest - buf) {
           const fwd = await loadMore("forward", latest);
           if (fwd.length) {
@@ -409,8 +451,14 @@ export function useAlphaChart(initialInterval: string) {
         }
       }, 300);
     };
-    refs.current.chart.timeScale().subscribeVisibleTimeRangeChange(onRange);
-    refs.current.chart.timeScale().subscribeSizeChange(onRange);
+
+    // 🔐 Volvemos a comprobar que el chart siga existiendo antes de suscribir
+    const chartForSubs = refs.current.chart;
+    if (!chartForSubs) return;
+
+    const tsSubs = chartForSubs.timeScale();
+    tsSubs.subscribeVisibleTimeRangeChange(onRange);
+    tsSubs.subscribeSizeChange(onRange);
   }, [chartReady, load, createSeries, updateSeries, mergeNoDup, loadMore, selectedSymbol]);
 
   /* ===================== Zoom ===================== */

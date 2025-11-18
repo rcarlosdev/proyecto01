@@ -9,6 +9,7 @@ import {
   jsonb,
   primaryKey,
   pgEnum,
+  integer,
 } from "drizzle-orm/pg-core";
 
 export const roleIdEnum = pgEnum("role_id_enum", ["user", "collaborator", "admin", "super"]);
@@ -63,14 +64,29 @@ export const permissions = pgTable("permissions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const userRoles = pgTable("user_roles", {
-  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }).notNull(),
-  roleId: roleIdEnum("role_id").references(() => roles.id).notNull(),
-  assignedBy: text("assigned_by"), // opcional: auditoría de quién asigna
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-}, (t) => ({
-  pk: primaryKey({ columns: [t.userId] }),         // 1 rol por usuario
-}));
+export const userRoles = pgTable(
+  "user_roles",
+  {
+    userId: text("user_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    roleId: roleIdEnum("role_id")
+      .references(() => roles.id)
+      .notNull(),
+    assignedBy: text("assigned_by"), // opcional: auditoría de quién asigna
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    // Coincide con la PK real: CONSTRAINT user_roles_user_id_pk PRIMARY KEY(user_id)
+    pk: primaryKey({
+      name: "user_roles_user_id_pk",
+      columns: [t.userId],
+    }),
+  })
+);
+
+
+
 
 export const rolePermissions = pgTable("role_permissions", {
   roleId: roleIdEnum("role_id").references(() => roles.id).notNull(),
@@ -175,8 +191,8 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-
-/** * Tabla de trades
+/**
+ * Tabla de trades
  * - Registra cada operación de trading realizada por los usuarios
  */
 export const trades = pgTable("trades", {
@@ -189,14 +205,14 @@ export const trades = pgTable("trades", {
 
   // Información del trade
   symbol: text("symbol").notNull(),
-  side: text("side").$type<"buy" | "sell">().notNull(), // ✅ lado de la operación
-  entryPrice: numeric("entry_price", { precision: 12, scale: 4 }).notNull(), // ✅ precio de entrada
-  closePrice: numeric("close_price", { precision: 12, scale: 4 }), // ✅ precio de cierre (nullable)
-  quantity: numeric("quantity", { precision: 12, scale: 4 }).notNull(), // ✅ cantidad
-  leverage: numeric("leverage", { precision: 12, scale: 2 }).default("1"), // ✅ apalancamiento
+  side: text("side").$type<"buy" | "sell">().notNull(), // lado de la operación
+  entryPrice: numeric("entry_price", { precision: 12, scale: 4 }), // ✅ permite NULL, igual que la BD
+  closePrice: numeric("close_price", { precision: 12, scale: 4 }), // precio de cierre (nullable)
+  quantity: numeric("quantity", { precision: 12, scale: 4 }).notNull(), // cantidad
+  leverage: numeric("leverage", { precision: 12, scale: 2 }).default("1"), // apalancamiento
 
   // Resultados
-  profit: numeric("profit", { precision: 12, scale: 2 }).default("0.00"), // ✅ PnL
+  profit: numeric("profit", { precision: 12, scale: 2 }).default("0.00"), // PnL
   status: text("status").$type<"open" | "closed">().default("open").notNull(),
 
   // Metadatos flexibles (puedes guardar fees, timestamps, condiciones, etc.)
@@ -205,4 +221,56 @@ export const trades = pgTable("trades", {
   // Tiempos
   createdAt: timestamp("created_at").defaultNow().notNull(),
   closedAt: timestamp("closed_at"),
+
+  // Campos de trigger que ya existen en la BD
+  triggerPrice: numeric("trigger_price", { precision: 12, scale: 4 }),
+  triggerRule: text("trigger_rule"),
+  expiresAt: timestamp("expires_at"),
 });
+
+/**
+ * Tabla de cuentas de trading (para las cards de "Mis Cuentas")
+ */
+export const tradingAccounts = pgTable("trading_accounts", {
+  id: text("id").primaryKey(), // usaremos randomUUID() al insertar
+
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  // Número visible de la cuenta (ej: BL-ABC123-0001)
+  accountNumber: text("account_number").notNull(),
+
+  // Nombre amigable
+  name: text("name").notNull().default("Cuenta estándar"),
+
+  // REAL / DEMO / INVERSION
+  type: text("type").notNull().default("REAL"),
+
+  // ACTIVE / INACTIVE / SUSPENDED / CLOSED
+  status: text("status").notNull().default("ACTIVE"),
+
+  // Marca si es la cuenta principal del usuario
+  isDefault: boolean("is_default").notNull().default(false),
+
+  // Moneda base de la cuenta
+  currency: text("currency").notNull().default("USD"),
+
+  // Apalancamiento numérico (1:100 → 100)
+  leverage: integer("leverage").notNull().default(100),
+
+  // Balance actual de la cuenta
+  balance: numeric("balance", { precision: 12, scale: 2 })
+    .notNull()
+    .default("0.00"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(() => new Date())
+    .defaultNow()
+    .notNull(),
+});
+
+// Tipos de ayuda (opcionales)
+export type TradingAccount = typeof tradingAccounts.$inferSelect;
+export type NewTradingAccount = typeof tradingAccounts.$inferInsert;
