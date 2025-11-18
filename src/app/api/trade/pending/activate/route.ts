@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
     const [t] = await db.select().from(trades).where(eq(trades.id, String(tradeId)));
     if (!t) return NextResponse.json({ success: false, error: "Trade no encontrado" }, { status: 404 });
-    if (t.status !== "pending") {
+    if (String(t.status) !== "pending") {
       return NextResponse.json({ success: false, error: "El trade no está en estado pending" }, { status: 400 });
     }
 
