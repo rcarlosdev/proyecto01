@@ -11,13 +11,13 @@ export function OrderPanelMarket({
 }) {
   return (
     <div className="flex gap-2 pt-2">
-      <Button
+      {/* <Button
         variant="outline"
         className="flex-1 cursor-pointer"
         onClick={() => history.back()} // mantiene UX de cierre manual si lo usas
       >
         Cancelar
-      </Button>
+      </Button> */}
       <Button
         className="flex-1 bg-green-600 hover:bg-green-700 text-white cursor-pointer"
         onClick={onConfirm}
