@@ -151,7 +151,28 @@ export const useUserStore = create<UserState>((set, get) => ({
   /* ---------------------------- Métodos existentes ---------------------------- */
   setUser: (user) => set({ user }),
   setSession: (session) => set({ session }),
-  clearUser: () => set({ user: null, session: null, role: "user", permissions: {}, lastSyncedAt: Date.now() }),
+  // clearUser: () => set({ user: null, session: null, role: "user", permissions: {}, lastSyncedAt: Date.now() }),
+  clearUser: () =>
+  set((state) => {
+    // ⛔ Si YA está limpio, no hagas nada → No hay re-render → no hay loop
+    if (
+      state.user === null &&
+      state.session === null &&
+      state.role === "user" &&
+      Object.keys(state.permissions || {}).length === 0
+    ) {
+      return state; // No changes → React no re-render
+    }
+
+    // ✅ Solo si hay algo que limpiar
+    return {
+      user: null,
+      session: null,
+      role: "user",
+      permissions: {},
+      lastSyncedAt: Date.now(),
+    };
+  }),
 
   mergeUser: (partial) =>
     set((state) => {
