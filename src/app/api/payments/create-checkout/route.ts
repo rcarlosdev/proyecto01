@@ -1,23 +1,34 @@
-// src/app/api/payments/create-checkout/route.ts
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { db } from "@/db";
+import { payments } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-
     const {
-      amount,         // en centavos: 1000 = 10.00
-      currency,       // "usd", "cop", etc.
-      referenceId,    // tu referencia interna (ej: id de orden)
-      description,    // texto que verá el usuario
-      customerEmail,  // opcional: correo del cliente
+      amount,
+      currency,
+      referenceId,
+      description,
+      customerEmail,
     } = body;
 
     if (!amount || !currency || !referenceId) {
       return NextResponse.json(
         { error: "Faltan campos requeridos (amount, currency, referenceId)" },
         { status: 400 }
+      );
+    }
+
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_APP_URL;
+
+    if (!baseUrl || (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://"))) {
+      return NextResponse.json(
+        { error: "Config error: base URL inválida" },
+        { status: 500 }
       );
     }
 
@@ -29,26 +40,43 @@ export async function POST(req: Request) {
           quantity: 1,
           price_data: {
             currency,
-            unit_amount: amount,
+            unit_amount: amount, // ya viene en centavos
             product_data: {
-              name: description || "Pago",
+              name: description || `Pago referencia ${referenceId}`,
             },
           },
         },
       ],
-      // donde redirige después de pagar o cancelar
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/pagos/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pagos/cancelled`,
+      success_url: `${baseUrl}/pagos/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/pagos/cancelled`,
       customer_email: customerEmail,
       metadata: {
-        referenceId, // aquí va tu referencia
-        origen: "web_app_demo", // opcional
+        referenceId,
       },
+    });
+
+    if (!session.url) {
+      return NextResponse.json(
+        { error: "Stripe no devolvió URL de checkout" },
+        { status: 500 }
+      );
+    }
+
+    // 👉 Guardar en BD
+    await db.insert(payments).values({
+      referenceId,
+      stripeSessionId: session.id,
+      stripeUrl: session.url,
+      amount,
+      currency,
+      status: "pending",
+      accountId: "default_account", // Aquí debes asignar la cuenta correspondiente
+      customerEmail: customerEmail ?? null,
     });
 
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
-    console.error("Error creando checkout:", err);
+    console.error("❌ Error creando checkout:", err);
     return NextResponse.json(
       { error: "Error creando checkout", details: err.message },
       { status: 500 }

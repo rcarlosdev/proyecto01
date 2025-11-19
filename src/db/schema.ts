@@ -10,6 +10,7 @@ import {
   primaryKey,
   pgEnum,
   integer,
+  varchar,
 } from "drizzle-orm/pg-core";
 
 export const roleIdEnum = pgEnum("role_id_enum", ["user", "collaborator", "admin", "super"]);
@@ -298,3 +299,25 @@ export const tradingAccounts = pgTable("trading_accounts", {
 // Tipos de ayuda (opcionales)
 export type TradingAccount = typeof tradingAccounts.$inferSelect;
 export type NewTradingAccount = typeof tradingAccounts.$inferInsert;
+
+
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+
+  referenceId: varchar("reference_id", { length: 100 }).notNull(),
+
+  stripeSessionId: varchar("stripe_session_id", { length: 255 }).notNull(),
+  stripeUrl: text("stripe_url").notNull(),
+
+  amount: integer("amount").notNull(),          // en centavos
+  currency: varchar("currency", { length: 10 }).notNull(),
+
+  status: varchar("status", { length: 30 }).notNull().default("pending"),
+  customerEmail: varchar("customer_email", { length: 255 }),
+
+  // 👇 NUEVO: cuenta a la que se acredita
+  accountId: varchar("account_id", { length: 50 }).notNull(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
