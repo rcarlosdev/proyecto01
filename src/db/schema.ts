@@ -192,38 +192,6 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-/**
- * Tabla de trades
- * - Registra cada operación de trading realizada por los usuarios
- */
-// export const trades = pgTable("trades", {
-//   id: text("id").primaryKey(),
-
-//   // Relación con el usuario
-//   userId: text("user_id")
-//     .notNull()
-//     .references(() => user.id, { onDelete: "cascade" }),
-
-//   // Información del trade
-//   symbol: text("symbol").notNull(),
-//   side: text("side").$type<"buy" | "sell">().notNull(), // ✅ lado de la operación
-//   entryPrice: numeric("entry_price", { precision: 12, scale: 4 }).notNull(), // ✅ precio de entrada
-//   closePrice: numeric("close_price", { precision: 12, scale: 4 }), // ✅ precio de cierre (nullable)
-//   quantity: numeric("quantity", { precision: 12, scale: 4 }).notNull(), // ✅ cantidad
-//   leverage: numeric("leverage", { precision: 12, scale: 2 }).default("1"), // ✅ apalancamiento
-
-//   // Resultados
-//   profit: numeric("profit", { precision: 12, scale: 2 }).default("0.00"), // ✅ PnL
-//   status: text("status").$type<"open" | "closed">().default("open").notNull(),
-
-//   // Metadatos flexibles (puedes guardar fees, timestamps, condiciones, etc.)
-//   metadata: jsonb("metadata").$type<Record<string, unknown>>(),
-
-//   // Tiempos
-//   createdAt: timestamp("created_at").defaultNow().notNull(),
-//   closedAt: timestamp("closed_at"),
-// });
-
 export const trades = pgTable("trades", {
   id: text("id").primaryKey(),
 
@@ -302,22 +270,15 @@ export type NewTradingAccount = typeof tradingAccounts.$inferInsert;
 
 
 export const payments = pgTable("payments", {
-  id: serial("id").primaryKey(),
-
+  id: text("id").primaryKey(),
   referenceId: varchar("reference_id", { length: 100 }).notNull(),
-
   stripeSessionId: varchar("stripe_session_id", { length: 255 }).notNull(),
   stripeUrl: text("stripe_url").notNull(),
-
-  amount: integer("amount").notNull(),          // en centavos
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),          // en centavos
   currency: varchar("currency", { length: 10 }).notNull(),
-
   status: varchar("status", { length: 30 }).notNull().default("pending"),
   customerEmail: varchar("customer_email", { length: 255 }),
-
-  // 👇 NUEVO: cuenta a la que se acredita
   accountId: varchar("account_id", { length: 50 }).notNull(),
-
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
