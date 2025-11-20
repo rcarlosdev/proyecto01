@@ -130,7 +130,7 @@ export const useMarketStore = create<MarketState>((set, get) => ({
     set((state) => ({ filters: { ...state.filters, search: term } })),
   setDataSymbolOperation: (data) => set({ dataSymbolOperation: data }),
 
-  /** Snapshot REST: /api/markets-symbols */
+    /** Snapshot REST: /api/markets-symbols */
   fetchMarket: async (marketKey: string) => {
     const prev = get().fetchController;
     prev?.abort();
@@ -154,13 +154,13 @@ export const useMarketStore = create<MarketState>((set, get) => ({
       const data: MarketQuote[] = await res.json();
       if (version !== get().requestVersion) return;
 
-      const live = get().livePrices;
-      const merged = mergePrices(data, live);
-
+      // ⬇⬇⬇  CAMBIO CLAVE AQUÍ  ⬇⬇⬇
+      // No mezclamos livePrices en este punto.
+      // El SSE se encargará de ir actualizando luego.
       set({
-        dataMarket: merged,
+        dataMarket: data,
         isLoading: false,
-        selectedSymbol: merged[0]?.symbol ?? null,
+        selectedSymbol: data[0]?.symbol ?? null,
       });
     } catch (e: any) {
       if (e?.name === "AbortError") return;
@@ -172,6 +172,7 @@ export const useMarketStore = create<MarketState>((set, get) => ({
       }
     }
   },
+
 
   /** SSE de mercados: /api/alpha-stream */
   startMarketStream: (marketKey: string) => {
