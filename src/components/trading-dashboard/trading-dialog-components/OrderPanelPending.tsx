@@ -95,13 +95,13 @@ export function OrderPanelPending({
       </ScrollArea>
 
       <div className="flex gap-2 pt-2">
-        <Button
+        {/* <Button
           variant="outline"
           className="flex-1 cursor-pointer"
           // onClick={() => setTriggerPrice("")}
         >
           Cancelar
-        </Button>
+        </Button> */}
         <Button
           className="flex-1 bg-amber-600 hover:bg-amber-700 text-white cursor-pointer"
           onClick={onCreatePending}

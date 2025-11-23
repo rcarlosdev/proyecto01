@@ -6,14 +6,32 @@ import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
-    const { userId, symbol, side, quantity, leverage = 1, triggerPrice, triggerRule, expiresAt } = await req.json();
+    const {
+      userId,
+      symbol,
+      side,
+      quantity,
+      leverage = 1,
+      triggerPrice,
+      triggerRule,
+      expiresAt,
+
+      // Nuevo 🟢
+      takeProfit = null,
+      stopLoss = null,
+    } = await req.json();
 
     if (!userId || !symbol || !side || !quantity || !triggerPrice || !triggerRule) {
-      return NextResponse.json({ success: false, error: "Faltan campos obligatorios" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Faltan campos obligatorios" },
+        { status: 400 }
+      );
     }
+
     if (!["buy", "sell"].includes(side)) {
       return NextResponse.json({ success: false, error: "Side inválido" }, { status: 400 });
     }
+
     if (!["gte", "lte"].includes(triggerRule)) {
       return NextResponse.json({ success: false, error: "TriggerRule inválido" }, { status: 400 });
     }
@@ -22,22 +40,32 @@ export async function POST(req: Request) {
     const [u] = await db.select().from(user).where(eq(user.id, String(userId)));
     if (!u) return NextResponse.json({ success: false, error: "Usuario no encontrado" }, { status: 404 });
 
-    // Importante: NO descontamos margen aún. Se descuenta al activar.
-    const [pendingTrade] = await db.insert(trades).values({
-      id: crypto.randomUUID(),
-      userId,
-      symbol,
-      side,
-      quantity,
-      leverage,
-      status: "pending",
-      triggerPrice,
-      triggerRule, // "gte" (al alza) o "lte" (a la baja)
-      expiresAt: expiresAt ? new Date(expiresAt) : null,
-      metadata: { createdFrom: "pending-ui" },
-    } as any).returning();
+    // Insertar orden pendiente (sin descontar margen todavía)
+    const [pendingTrade] = await db
+      .insert(trades)
+      .values({
+        id: crypto.randomUUID(),
+        userId,
+        symbol,
+        side,
+        orderType: "pending",
+        quantity,
+        leverage,
+        status: "pending",
 
-    // Registro transaccional en estado pending (opcional, pero útil para auditoría)
+        triggerPrice,
+        triggerRule,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+
+        // Nuevo 🟢
+        takeProfit,
+        stopLoss,
+
+        metadata: { createdFrom: "pending-ui" },
+      })
+      .returning();
+
+    // Registrar auditoría
     await db.insert(transactions).values({
       id: crypto.randomUUID(),
       userId,
@@ -53,8 +81,10 @@ export async function POST(req: Request) {
         leverage,
         triggerPrice,
         triggerRule,
-      } as any,
-    } as any);
+        takeProfit,
+        stopLoss,
+      },
+    });
 
     return NextResponse.json({ success: true, trade: pendingTrade });
   } catch (error) {

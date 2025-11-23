@@ -1,1 +1,1 @@
-export const MARKETS = ['indices','acciones','commodities','crypto','fx','all'] as const;
+export const MARKETS = ['fx', 'indices','acciones','commodities','crypto','all'] as const;

@@ -27,7 +27,7 @@ export function FilterSelect() {
     if (didInitRef.current) return;
     didInitRef.current = true;
 
-    const def = markets.find((m) => m === "indices") || markets[0] || null;
+    const def = markets.find((m) => m === "fx") || markets[0] || null;
     if (!selectedMarket && def) {
       // selectMarket acepta string; no hace falta castear a Market
       void selectMarket(def);
@@ -52,7 +52,7 @@ export function FilterSelect() {
 
   // Valor controlado (si no hay selección y existe 'indices', úsalo)
   const controlledValue: string | undefined =
-    selectedMarket ?? (markets.includes("indices") ? "indices" : undefined);
+    selectedMarket ?? (markets.includes("fx") ? "fx" : undefined);
 
   return (
     <Select
@@ -67,7 +67,9 @@ export function FilterSelect() {
       <SelectContent className="text-yellow-300 border border-gray-50/80 bg-[#181a20e7]">
         {markets.map((market) => (
           <SelectItem key={market} value={market}>
-            {market}
+            {market === "fx"
+              ? "Forex"
+              : market}
           </SelectItem>
         ))}
       </SelectContent>

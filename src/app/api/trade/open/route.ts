@@ -6,7 +6,16 @@ import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
-    const { userId, symbol, side, entryPrice, quantity, leverage = 1 } = await req.json();
+    const {
+      userId,
+      symbol,
+      side,
+      entryPrice,
+      quantity,
+      leverage = 1,
+      takeProfit = null,
+      stopLoss = null,
+    } = await req.json();
 
     if (!userId || !symbol || !side || !entryPrice || !quantity) {
       return NextResponse.json(
@@ -15,69 +24,79 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1️⃣ Obtener información del usuario
+    // Obtener usuario
     const [userData] = await db.select().from(user).where(eq(user.id, userId));
+    if (!userData)
+      return NextResponse.json(
+        { success: false, error: "Usuario no encontrado" },
+        { status: 404 }
+      );
 
-    if (!userData) {
-      return NextResponse.json({ success: false, error: "Usuario no encontrado" }, { status: 404 });
-    }
-
-    // 2️⃣ Calcular el margen usado (simplificado)
-    const price = parseFloat(entryPrice);
-    const qty = parseFloat(quantity);
-    const lev = parseFloat(leverage);
+    // Calcular margen
+    const price = Number(entryPrice);
+    const qty = Number(quantity);
+    const lev = Number(leverage);
     const marginUsed = (price * qty) / lev;
 
-    if (parseFloat(userData.balance ?? "0") < marginUsed) {
+    if (Number(userData.balance ?? 0) < marginUsed) {
       return NextResponse.json(
-        { success: false, error: "Saldo insuficiente para abrir la operación" },
+        { success: false, error: "Saldo insuficiente" },
         { status: 400 }
       );
     }
 
-    // 3️⃣ Crear el trade
+    // Crear operación mercado
     const [newTrade] = await db
       .insert(trades)
       .values({
-        id: crypto.randomUUID(), // ✅ genera ID único
+        id: crypto.randomUUID(),
         userId,
         symbol,
         side,
+        orderType: "market",
         entryPrice,
-        closePrice: null, // ✅ evita error de columna sin default
+        closePrice: null,
         quantity,
         leverage,
         status: "open",
+
+        // Nuevo 🟢
+        takeProfit,
+        stopLoss,
+
         metadata: { marginUsed },
       })
       .returning();
 
-    // 4️⃣ Actualizar el balance del usuario
-    const newBalance = parseFloat(userData.balance ?? "0") - marginUsed;
+    // Actualizar balance
+    const newBalance = Number(userData.balance) - marginUsed;
 
     await db
       .update(user)
       .set({ balance: newBalance.toFixed(2) })
       .where(eq(user.id, userId));
 
-    // 5️⃣ Registrar transacción del trade
+    // Registrar transacción AUDITORÍA
     await db.insert(transactions).values({
-      id: crypto.randomUUID(), // ✅ también agregamos ID único aquí
-      userId: userId as any,
+      id: crypto.randomUUID(),
+      userId,
       type: "trade",
       amount: (-marginUsed).toFixed(2),
       status: "completed",
+      currency: "USD",
       metadata: {
+        tradeId: newTrade.id,
         symbol,
         side,
         entryPrice,
         quantity,
         leverage,
         marginUsed,
-      } as any,
-    } as any);
+        takeProfit,
+        stopLoss,
+      },
+    });
 
-    // 6️⃣ Devolver respuesta
     return NextResponse.json({
       success: true,
       trade: {
@@ -88,6 +107,9 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("❌ Error abriendo operación:", error);
-    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: String(error) },
+      { status: 500 }
+    );
   }
 }
