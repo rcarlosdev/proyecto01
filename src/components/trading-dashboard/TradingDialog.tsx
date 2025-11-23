@@ -234,7 +234,7 @@ export function TradingDialog({
   const unitOptions = useMemo(() => {
     if (maxUnits <= 0) return [];
     const options: number[] = [];
-    for (let i = 1; i <= maxUnits; ) {
+    for (let i = 1; i <= maxUnits;) {
       options.push(i);
       let step;
       if (i < 10) step = 1;
@@ -573,14 +573,6 @@ export function TradingDialog({
             marginEstimate={calculations.margenEstimado}
             formatCurrency={formatCurrency}
           />
-
-          {/* 🔍 Precio actual completo (más precisión) */}
-          {/* <div className="mt-1 text-xs text-muted-foreground">
-            Precio actual{" "}
-            <span className="font-mono text-[var(--amarillo-principal)]">
-              {formattedFullPrice}
-            </span>
-          </div> */}
         </DialogHeader>
 
         <DialogDescription>
@@ -617,9 +609,8 @@ export function TradingDialog({
           >
             <span className="font-medium">Opciones avanzadas</span>
             <ChevronDown
-              className={`h-4 w-4 transition-transform ${
-                showAdvanced ? "rotate-180" : ""
-              }`}
+              className={`h-4 w-4 transition-transform ${showAdvanced ? "rotate-180" : ""
+                }`}
             />
           </button>
 
@@ -631,11 +622,10 @@ export function TradingDialog({
                   <span>Orden de Stop Loss</span>
                   {slMetrics && (
                     <span
-                      className={`text-[11px] ${
-                        slMetrics.pnl <= 0
+                      className={`text-[11px] ${slMetrics.pnl <= 0
                           ? "text-red-400"
                           : "text-emerald-400"
-                      }`}
+                        }`}
                     >
                       {formatCurrency(slMetrics.pnl)} (
                       {slMetrics.pct.toFixed(2)}%)
@@ -661,11 +651,10 @@ export function TradingDialog({
                   <span>Orden de Take Profit</span>
                   {tpMetrics && (
                     <span
-                      className={`text-[11px] ${
-                        tpMetrics.pnl >= 0
+                      className={`text-[11px] ${tpMetrics.pnl >= 0
                           ? "text-emerald-400"
                           : "text-red-400"
-                      }`}
+                        }`}
                     >
                       {formatCurrency(tpMetrics.pnl)} (
                       {tpMetrics.pct.toFixed(2)}%)

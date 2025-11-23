@@ -31,13 +31,6 @@ export function DialogHeaderTrade({
             ? currentPrice
             : "—"}
         </Badge>
-
-        {/* 🔍 Precio exacto sin recorte */}
-        {/* {hasPrice && (
-          <span className="mt-1 text-[11px] text-muted-foreground font-mono">
-            {currentPrice}
-          </span>
-        )} */}
       </div>
 
       {/* Margen estimado */}
