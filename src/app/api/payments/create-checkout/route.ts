@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/db";
-import { payments, tradingAccounts, user } from "@/db/schema";
+import { payments, tradingAccounts } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
+
+export const dynamic = "force-dynamic"; // evita problemas de pre-render/SSG
 
 export async function POST(req: Request) {
   try {
@@ -14,13 +16,16 @@ export async function POST(req: Request) {
       referenceId,    // referencia interna
       description,
       customerEmail,
-      accountId,      // 👈 ID de trading_accounts.id
-      userId,         // opcional: por si lo quieres para validar
+      accountId,      // ID de tradingAccounts.id
+      userId,         // opcional: para validar dueño de la cuenta
     } = body;
 
     if (!amount || !currency || !referenceId || !accountId) {
       return NextResponse.json(
-        { error: "Faltan campos requeridos (amount, currency, referenceId, accountId)" },
+        {
+          error:
+            "Faltan campos requeridos (amount, currency, referenceId, accountId)",
+        },
         { status: 400 }
       );
     }
@@ -80,14 +85,14 @@ export async function POST(req: Request) {
           quantity: 1,
           price_data: {
             currency,
-            unit_amount: amount,
+            unit_amount: amount, // ya viene en centavos
             product_data: {
               name: description || `Depósito a cuenta ${account.accountNumber}`,
             },
           },
         },
       ],
-      success_url: `${baseUrl}//pagos/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${baseUrl}/pagos/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/pagos/cancelled`,
       customer_email: customerEmail,
       metadata: {
@@ -103,6 +108,7 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
+
     // 4) Registrar el payment en tu tabla
     await db.insert(payments).values({
       id: randomUUID(),
@@ -118,7 +124,6 @@ export async function POST(req: Request) {
       updatedAt: new Date(),
     });
 
-    return NextResponse.json({ url: session.url });
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
     console.error("❌ Error creando checkout:", err);
