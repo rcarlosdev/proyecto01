@@ -1,3 +1,4 @@
+// src/app/api/markets/route.ts
 import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { MOCK_BASE } from "@/lib/mockData";

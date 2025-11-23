@@ -194,32 +194,34 @@ export const transactions = pgTable("transactions", {
 
 export const trades = pgTable("trades", {
   id: text("id").primaryKey(),
-
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-
   symbol: text("symbol").notNull(),
-  side: text("side").$type<"buy" | "sell">().notNull(), // lado de la operación
-  entryPrice: numeric("entry_price", { precision: 12, scale: 4 }), // ✅ permite NULL, igual que la BD
-  closePrice: numeric("close_price", { precision: 12, scale: 4 }), // precio de cierre (nullable)
-  quantity: numeric("quantity", { precision: 12, scale: 4 }).notNull(), // cantidad
-  leverage: numeric("leverage", { precision: 12, scale: 2 }).default("1"), // apalancamiento
-
-  // Resultados
-  profit: numeric("profit", { precision: 12, scale: 2 }).default("0.00"), // PnL
-  status: text("status").$type<"open" | "closed">().default("open").notNull(),
-
+  side: text("side").$type<"buy" | "sell">().notNull(),
+  orderType: text("order_type")
+    .$type<"market" | "pending">()
+    .notNull()
+    .default("market"),
+  entryPrice: numeric("entry_price", { precision: 12, scale: 4 }),
+  closePrice: numeric("close_price", { precision: 12, scale: 4 }),
+  quantity: numeric("quantity", { precision: 12, scale: 4 }).notNull(),
+  leverage: numeric("leverage", { precision: 12, scale: 2 }).default("1"),
+  takeProfit: numeric("take_profit", { precision: 12, scale: 4 }),
+  stopLoss:  numeric("stop_loss",  { precision: 12, scale: 4 }),
+  profit: numeric("profit", { precision: 12, scale: 2 }).default("0.00"),
+  status: text("status")
+    .$type<"open" | "closed" | "pending">()
+    .default("open")
+    .notNull(),
   metadata: jsonb("metadata").$type<Record<string, unknown>>(),
-
   createdAt: timestamp("created_at").defaultNow().notNull(),
   closedAt: timestamp("closed_at"),
-
-  // Campos de trigger que ya existen en la BD
   triggerPrice: numeric("trigger_price", { precision: 12, scale: 4 }),
   triggerRule: text("trigger_rule"),
   expiresAt: timestamp("expires_at"),
 });
+
 
 /**
  * Tabla de cuentas de trading (para las cards de "Mis Cuentas")
@@ -230,33 +232,16 @@ export const tradingAccounts = pgTable("trading_accounts", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-
-  // Número visible de la cuenta (ej: BL-ABC123-0001)
   accountNumber: text("account_number").notNull(),
-
-  // Nombre amigable
   name: text("name").notNull().default("Cuenta estándar"),
-
-  // REAL / DEMO / INVERSION
   type: text("type").notNull().default("REAL"),
-
-  // ACTIVE / INACTIVE / SUSPENDED / CLOSED
   status: text("status").notNull().default("ACTIVE"),
-
-  // Marca si es la cuenta principal del usuario
   isDefault: boolean("is_default").notNull().default(false),
-
-  // Moneda base de la cuenta
   currency: text("currency").notNull().default("USD"),
-
-  // Apalancamiento numérico (1:100 → 100)
   leverage: integer("leverage").notNull().default(100),
-
-  // Balance actual de la cuenta
   balance: numeric("balance", { precision: 12, scale: 2 })
     .notNull()
     .default("0.00"),
-
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .$onUpdate(() => new Date())

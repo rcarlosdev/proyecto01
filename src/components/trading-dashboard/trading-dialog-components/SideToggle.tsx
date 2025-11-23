@@ -28,7 +28,7 @@ export function SideToggle({
           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           } transition-colors duration-200 cursor-pointer`}
         onClick={() => onChange("sell")}
-        disabled={disableSell}
+        // disabled={disableSell}
       >
         Vender
       </Button>

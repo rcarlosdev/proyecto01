@@ -83,7 +83,7 @@ export default function TradingDashboardMobile() {
 
         <div className="rounded-xl overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface)]">
           {!!selectedSymbol ? (
-            <AlphaCandleChart interval="1min" />
+            <AlphaCandleChart interval="15min" />
           ) : (
             <div className="p-4 text-center text-[var(--color-text-muted)]">Selecciona un símbolo para ver el gráfico</div>
           )}

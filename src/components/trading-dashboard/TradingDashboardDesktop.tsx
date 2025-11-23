@@ -38,7 +38,7 @@ const TradingDashboard = () => {
         {/* Contenido principal */}
         <div className="flex-1 flex flex-col">
           {selectedSymbol
-            ? <AlphaCandleChart interval="1min" />
+            ? <AlphaCandleChart interval="15min" />
             : <div className="p-4">Selecciona un símbolo para ver el gráfico</div>}
         </div>
       </div>
