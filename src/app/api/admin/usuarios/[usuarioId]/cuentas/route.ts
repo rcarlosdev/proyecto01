@@ -6,10 +6,10 @@ import { eq } from "drizzle-orm";
 
 export async function GET(
   _req: Request,
-  context: { params: { usuarioId: string } }
+  context: { params: Promise<{ usuarioId: string }> }
 ) {
   try {
-    const { usuarioId } = context.params;
+    const { usuarioId } = await context.params;
 
     if (!usuarioId) {
       return NextResponse.json(
