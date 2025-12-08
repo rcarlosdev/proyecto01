@@ -1,3 +1,4 @@
+// src/components/trading-dashboard/TradingDashboardDesktop.tsx
 "use client";
 
 import { Separator } from "@/components/ui/separator";
@@ -15,15 +16,15 @@ const TradingDashboard = () => {
 
   return (
     /**
-     * 🔹 Grid principal del MAIN (contenido):
-     * - 2 filas: 3fr (60%) arriba, 2fr (40%) abajo
-     * - min-h-[calc(100vh-80px)]: ajusta 80px al alto aproximado de tu header
-     *   si ya tienes eso resuelto en el layout padre, puedes dejar solo "h-full min-h-0".
+     * Layout desktop:
+     * - Columna flex:
+     *    - Arriba: símbolos + gráfico (flex-1, ocupa el espacio disponible)
+     *    - Abajo: información de cuenta + operaciones (alto automático)
      */
-    <section className="grid w-full min-h-[calc(100vh-80px)] grid-rows-[3fr_2fr] gap-4">
-      {/* ===== FILA SUPERIOR (60% alto): símbolos + gráfico ===== */}
-      <div className="grid min-h-0 gap-4 grid-cols-[minmax(320px,2fr)_minmax(0,8fr)]">
-        {/* Columna izquierda (30% ancho): símbolos */}
+    <section className="flex flex-col w-full min-h-[calc(100vh-80px)] gap-4">
+      {/* ===== PARTE SUPERIOR: símbolos + gráfico ===== */}
+      <div className="flex-1 min-h-0 grid grid-cols-[minmax(260px,3fr)_minmax(0,7fr)] gap-4">
+        {/* Columna izquierda (símbolos) */}
         <div className="flex flex-col min-h-0 border-r border-gray-200 overflow-hidden">
           {/* Header del panel de mercado */}
           <div className="bg-accent-foreground border-gray-200 pb-4 px-2">
@@ -44,10 +45,9 @@ const TradingDashboard = () => {
           </div>
         </div>
 
-        {/* Columna derecha (70% ancho): gráfico */}
+        {/* Columna derecha (gráfico) */}
         <div className="flex flex-col min-h-0">
           {selectedSymbol ? (
-            // Contenedor del gráfico ocupa todo el alto de su celda
             <div className="flex-1 min-h-0">
               <AlphaCandleChart interval="15min" />
             </div>
@@ -59,9 +59,9 @@ const TradingDashboard = () => {
         </div>
       </div>
 
-      {/* ===== FILA INFERIOR (40% alto): información de cuenta + operaciones ===== */}
-      <footer className="min-h-0 overflow-y-auto border-t border-gray-200">
-        <div className="p-4 h-full">
+      {/* ===== PARTE INFERIOR: información de cuenta + operaciones ===== */}
+      <footer className="border-t border-gray-200">
+        <div className="p-4">
           <ConfirmProvider>
             <OperationsInfo />
           </ConfirmProvider>
