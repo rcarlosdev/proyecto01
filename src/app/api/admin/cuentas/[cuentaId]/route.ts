@@ -1,4 +1,3 @@
-// src/app/api/admin/cuentas/[cuentaId]/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { tradingAccounts } from "@/db/schema";
@@ -6,10 +5,10 @@ import { eq } from "drizzle-orm";
 
 export async function GET(
   _req: Request,
-  context: { params: { cuentaId: string } }
+  ctx: { params: Promise<{ cuentaId: string }> } // 👈 params es una Promise
 ) {
   try {
-    const { cuentaId } = context.params;
+    const { cuentaId } = await ctx.params; // 👈 ahora se hace await
 
     if (!cuentaId) {
       return NextResponse.json(
@@ -34,7 +33,7 @@ export async function GET(
 
     const c = cuenta[0];
 
-    // Mapeo de status BD → UI
+    // 🔄 Mapeo de status BD → UI
     let estado: "activa" | "suspendida" | "cerrada";
     switch (c.status) {
       case "ACTIVE":
@@ -50,7 +49,7 @@ export async function GET(
         estado = "activa";
     }
 
-    // Mapear tipo BD → UI
+    // 🔄 Tipo BD → UI
     const tipo =
       c.type === "REAL"
         ? "trading"
@@ -61,7 +60,7 @@ export async function GET(
     const badges: string[] = [];
     if (c.type === "DEMO") badges.push("DEMO");
 
-    // Armado del objeto final
+    // 🔧 Armado del objeto final
     const response = {
       id: c.id,
       numero: c.accountNumber,

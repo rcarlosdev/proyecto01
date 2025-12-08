@@ -1,4 +1,3 @@
-// src/app/api/admin/cuentas/[cuentaId]/historial/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import {
@@ -12,9 +11,10 @@ import { getUserRoleId } from "@/modules/rbac/service";
 
 export async function GET(
   req: Request,
-  ctx: { params: Promise<{ cuentaId: string }> } // 👈 patrón Next 15
+  ctx: { params: Promise<{ cuentaId: string }> } // 🔥 Next.js 15 dynamic params
 ) {
   try {
+    // 1) Obtener params dinámicos
     const { cuentaId } = await ctx.params;
 
     if (!cuentaId) {
@@ -24,17 +24,19 @@ export async function GET(
       );
     }
 
-    // 1) Actor autenticado
+    // 2) Actor autenticado
     const actor = await getActor(req);
+
     if (!actor?.user?.id) {
       return NextResponse.json(
         { error: "No autenticado" },
         { status: 401 }
       );
     }
+
     const adminUserId = actor.user.id;
 
-    // 2) Permisos (mismo patrón que /permissions y /ajuste)
+    // 3) Cargar permisos vía RBAC
     const roleId = await getUserRoleId(adminUserId);
 
     const roleRows = await db
@@ -48,15 +50,17 @@ export async function GET(
       .where(eq(userPermissions.userId, adminUserId));
 
     const permissions: Record<string, boolean> = {};
+
     for (const p of roleRows) {
       if (p.type === "mandatory") permissions[p.permissionId] = true;
       else if (p.type === "blocked") permissions[p.permissionId] = false;
     }
+
     for (const u of userRows) {
       permissions[u.permissionId] = u.allow;
     }
 
-    // 👁️ Permiso para ver logs / historial
+    // 🔐 Permiso requerido para ver historial
     const canViewHistory =
       permissions["admin2_view_logs"] ||
       permissions["admin_balance_mgmt"] ||
@@ -64,12 +68,15 @@ export async function GET(
 
     if (!canViewHistory) {
       return NextResponse.json(
-        { error: "No tienes permisos para ver el historial de esta cuenta" },
+        {
+          error:
+            "No tienes permisos para ver el historial de esta cuenta",
+        },
         { status: 403 }
       );
     }
 
-    // 3) Leer auditoría de la cuenta
+    // 4) Consultar historial de auditoría
     const rows = await db
       .select()
       .from(accountAuditLogs)
@@ -77,22 +84,23 @@ export async function GET(
       .orderBy(desc(accountAuditLogs.createdAt))
       .limit(100);
 
-    // 4) Normalizar para UI
+    // 5) Normalizar para UI
     const history = rows.map((row) => {
-      const action = row.action ?? "UNKNOWN";
+      const rawAction = row.action ?? "UNKNOWN";
 
       let type: "state_change" | "balance_adjustment" | "other" = "other";
-      if (action === "STATE_CHANGE") type = "state_change";
-      else if (action === "BALANCE_ADJUSTMENT") type = "balance_adjustment";
+
+      if (rawAction === "STATE_CHANGE") type = "state_change";
+      else if (rawAction === "BALANCE_ADJUSTMENT") type = "balance_adjustment";
 
       return {
         id: row.id,
         accountId: row.accountId,
         adminId: row.adminId,
-        action,
+        action: rawAction,
         type,
         metadata: row.metadata ?? {},
-        createdAt: row.createdAt?.toISOString() ?? null,
+        createdAt: row.createdAt ? row.createdAt.toISOString() : null,
       };
     });
 
