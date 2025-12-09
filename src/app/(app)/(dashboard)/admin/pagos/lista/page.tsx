@@ -8,18 +8,17 @@ import { toast } from "sonner";
 type PaymentRow = {
   id: number;
   referenceId: string;
-  stripeSessionId: string;
-  stripeUrl: string;
+  checkoutUrl: string;       // actualizado
+  providerPaymentId: string | null;
   amount: number;
   currency: string;
-  status: string;
-  customerEmail: string | null;
+  status: string;                   // ejemplo: pending | paid | cancelled
+  buyerEmail: string | null;        // actualizado
   createdAt: string;
   updatedAt: string;
 };
 
 export default function PaymentsListPage() {
-  // === Estados ===
   const [items, setItems] = useState<PaymentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,9 +37,11 @@ export default function PaymentsListPage() {
       try {
         const res = await fetch("/api/payments");
         const data = await res.json();
+
         if (!res.ok) {
           throw new Error(data.error || "Error cargando pagos");
         }
+
         setItems(data);
       } catch (err: any) {
         setError(err.message ?? "Error inesperado");
@@ -60,7 +61,7 @@ export default function PaymentsListPage() {
       )
       .filter((p) =>
         filterEmail.trim()
-          ? (p.customerEmail ?? "").toLowerCase().includes(filterEmail.toLowerCase())
+          ? (p.buyerEmail ?? "").toLowerCase().includes(filterEmail.toLowerCase())
           : true
       )
       .filter((p) =>
@@ -88,8 +89,9 @@ export default function PaymentsListPage() {
 
   const statusColor = (status: string) => {
     switch (status) {
-      case "paid_and_credited":
+      case "paid":
         return "bg-emerald-500/15 text-emerald-300 border-emerald-500/40";
+      case "cancelled":
       case "failed":
         return "bg-red-500/15 text-red-300 border-red-500/40";
       case "pending":
@@ -103,11 +105,7 @@ export default function PaymentsListPage() {
   }
 
   if (error) {
-    return (
-      <div className="p-6 text-red-300">
-        Error al cargar pagos: {error}
-      </div>
-    );
+    return <div className="p-6 text-red-300">Error: {error}</div>;
   }
 
   return (
@@ -118,14 +116,12 @@ export default function PaymentsListPage() {
         </Button>
       </Link>
 
-      <h1 className="text-2xl font-semibold mb-4">Links de pago generados</h1>
-      <p className="text-sm text-neutral-400 mb-6">
-        Filtra, busca y administra todos los pagos recibidos o pendientes.
-      </p>
+      <h1 className="text-2xl font-semibold mb-4">Pagos generados (Hotmart)</h1>
 
       {/* Filtros */}
       <div className="mb-6 p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
           {/* Estado */}
           <div>
             <label className="text-sm mb-1 block">Estado</label>
@@ -135,18 +131,18 @@ export default function PaymentsListPage() {
                 setFilterStatus(e.target.value);
                 setPage(1);
               }}
-              className="px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 focus:ring-2 focus:ring-yellow-400 w-full"
+              className="px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 w-full"
             >
               <option value="all">Todos</option>
               <option value="pending">Pendiente</option>
-              <option value="paid_and_credited">Pagado y acreditado</option>
-              <option value="failed">Fallido</option>
+              <option value="paid">Pagado</option>
+              <option value="cancelled">Cancelado</option>
             </select>
           </div>
 
-          {/* Buscar email */}
+          {/* Email */}
           <div>
-            <label className="text-sm mb-1 block">Email del cliente</label>
+            <label className="text-sm mb-1 block">Email del comprador</label>
             <input
               type="text"
               value={filterEmail}
@@ -154,12 +150,12 @@ export default function PaymentsListPage() {
                 setFilterEmail(e.target.value);
                 setPage(1);
               }}
-              placeholder="cliente@email.com"
+              placeholder="email@cliente.com"
               className="px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 w-full"
             />
           </div>
 
-          {/* Buscar referencia */}
+          {/* Referencia */}
           <div>
             <label className="text-sm mb-1 block">Referencia</label>
             <input
@@ -169,7 +165,7 @@ export default function PaymentsListPage() {
                 setFilterRef(e.target.value);
                 setPage(1);
               }}
-              placeholder="ORD-1234"
+              placeholder="REF-ABC-123"
               className="px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 w-full"
             />
           </div>
@@ -179,7 +175,7 @@ export default function PaymentsListPage() {
       {/* Tabla */}
       <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900">
         <table className="min-w-full text-sm">
-          <thead className="bg-neutral-900/70 border-b border-neutral-800">
+          <thead className="bg-neutral-900 border-b border-neutral-800">
             <tr>
               <th className="px-4 py-3 text-left">Referencia</th>
               <th className="px-4 py-3 text-left">Monto</th>
@@ -192,49 +188,48 @@ export default function PaymentsListPage() {
 
           <tbody>
             {paginatedItems.map((p) => (
-              <tr
-                key={p.id}
-                className="border-b border-neutral-800/70 hover:bg-neutral-800/40"
-              >
-                <td className="px-4 py-3 font-mono text-xs">{p.referenceId}</td>
+              <tr key={p.id} className="border-b border-neutral-800/70 hover:bg-neutral-800/50">
+                <td className="px-4 py-3 text-xs font-mono">{p.referenceId}</td>
                 <td className="px-4 py-3">{formatAmount(p.amount, p.currency)}</td>
-                <td className="px-4 py-3 text-xs">{p.customerEmail || "—"}</td>
+                <td className="px-4 py-3 text-xs">{p.buyerEmail || "—"}</td>
+
                 <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex items-center px-2 py-1 rounded-full border text-xs font-medium ${statusColor(
-                      p.status
-                    )}`}
-                  >
+                  <span className={`px-2 py-1 rounded-full border text-xs ${statusColor(p.status)}`}>
                     {p.status.toUpperCase()}
                   </span>
                 </td>
+
                 <td className="px-4 py-3 text-xs text-neutral-400">
                   {new Date(p.createdAt).toLocaleString()}
                 </td>
+
                 <td className="px-4 py-3 text-xs">
-                  <Link
-                    href={p.stripeUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3 py-2 rounded-lg bg-yellow-400 text-black text-xs font-medium hover:bg-yellow-300"
-                  >
-                    Abrir
-                  </Link>
-                  {/* copiar */}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(p.stripeUrl);
-                        toast.success("Link copiado al portapapeles");
-                      } catch {
-                        toast.error("No se pudo copiar el link automáticamente.");
-                      }
-                    }}
-                    className="px-3 py-2 rounded-lg bg-yellow-400 text-black text-xs font-medium hover:bg-yellow-300 ml-2 cursor-pointer"
-                  >
-                    Copiar
-                  </button>
+                  {p.checkoutUrl ? (
+                    <>
+                      <Link
+                        href={p.checkoutUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-2 rounded-lg bg-yellow-400 text-black text-xs font-medium hover:bg-yellow-300"
+                      >
+                        Abrir
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!p.checkoutUrl) return;
+                          await navigator.clipboard.writeText(p.checkoutUrl);
+                          toast.success("Link copiado");
+                        }}
+                        className="px-3 py-2 rounded-lg bg-yellow-400 text-black text-xs font-medium hover:bg-yellow-300 ml-2"
+                      >
+                        Copiar
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-neutral-500">Sin link</span>
+                  )}
                 </td>
               </tr>
             ))}
@@ -252,9 +247,7 @@ export default function PaymentsListPage() {
 
       {/* PAGINACIÓN */}
       <div className="flex justify-between items-center mt-4 text-sm text-neutral-300">
-        <div>
-          Página {page} de {totalPages || 1}
-        </div>
+        <div>Página {page} de {totalPages || 1}</div>
 
         <div className="flex gap-3">
           <button

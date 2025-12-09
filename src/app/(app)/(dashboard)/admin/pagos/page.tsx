@@ -29,7 +29,7 @@ export default function CrearPagoPage() {
   const [form, setForm] = useState<FormState>({
     amount: "",
     currency: "usd",
-    referenceId: "",
+    referenceId: "C103328736Y",
     description: "",
     customerEmail: "",
   });
@@ -222,6 +222,7 @@ export default function CrearPagoPage() {
                 value={form.referenceId}
                 onChange={handleChange}
                 placeholder="ORD-2025-0001"
+                disabled
                 className="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700"
               />
             </div>
