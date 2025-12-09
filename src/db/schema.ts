@@ -261,16 +261,33 @@ export type TradingAccount = typeof tradingAccounts.$inferSelect;
 export type NewTradingAccount = typeof tradingAccounts.$inferInsert;
 
 
+// export const payments = pgTable("payments", {
+//   id: text("id").primaryKey(),
+//   referenceId: varchar("reference_id", { length: 100 }).notNull(),
+//   stripeSessionId: varchar("stripe_session_id", { length: 255 }).notNull(),
+//   stripeUrl: text("stripe_url").notNull(),
+//   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),          // en centavos
+//   currency: varchar("currency", { length: 10 }).notNull(),
+//   status: varchar("status", { length: 30 }).notNull().default("pending"),
+//   customerEmail: varchar("customer_email", { length: 255 }),
+//   accountId: varchar("account_id", { length: 50 }).notNull(),
+//   createdAt: timestamp("created_at").defaultNow().notNull(),
+//   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+// });
+
 export const payments = pgTable("payments", {
   id: text("id").primaryKey(),
   referenceId: varchar("reference_id", { length: 100 }).notNull(),
-  stripeSessionId: varchar("stripe_session_id", { length: 255 }).notNull(),
-  stripeUrl: text("stripe_url").notNull(),
-  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),          // en centavos
+  provider: varchar("provider", { length: 50 }).notNull(),
+  providerPaymentId: varchar("provider_payment_id", { length: 255 }),
+  checkoutUrl: text("checkout_url"),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 10 }).notNull(),
   status: varchar("status", { length: 30 }).notNull().default("pending"),
   customerEmail: varchar("customer_email", { length: 255 }),
-  accountId: varchar("account_id", { length: 50 }).notNull(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  providerRequest: jsonb("provider_request"),
+  providerWebhook: jsonb("provider_webhook"), 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
