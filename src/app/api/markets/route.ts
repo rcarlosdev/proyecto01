@@ -7,10 +7,6 @@ import SYMBOLS_MAP from "@/lib/symbolsMap";
 
 type DataSource = "real" | "simulated" | "mock";
 
-/* ===================== Types ===================== */
-
-type DataSource = "real" | "simulated" | "mock";
-
 type Quote = {
   symbol: string;
   price: number;
@@ -130,7 +126,7 @@ async function setCache(
       });
       return;
     } catch {}
-    } catch {}
+    
   }
 
   memoryCache.set(key, wrapper);
