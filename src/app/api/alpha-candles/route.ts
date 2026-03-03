@@ -9,6 +9,7 @@ type Candle = {
   low: number;
   close: number;
   volume?: number;
+  source?: string;
 };
 
 /* ---------------------- Configuración ---------------------- */
@@ -48,6 +49,10 @@ function removeDuplicatesAndSort(candles: Candle[]): Candle[] {
 }
 
 /* ---------------------- Cache helpers (tolerante) ---------------------- */
+
+// Almacenamiento local de respaldo si Redis no disponible
+const localCandleCache = new Map<string, { ts: number; data: Candle[] }>();
+
 async function getCachedData(
   symbol: string,
   interval: string,
@@ -55,23 +60,38 @@ async function getCachedData(
   direction?: string | null,
   referenceTime?: string | null
 ): Promise<Candle[] | null> {
-  try {
-    const cacheKey = `alpha:${symbol}:${interval}:${historical}:${direction}:${referenceTime}`;
-    const cached = await redis.get(cacheKey);
+  const cacheKey = `alpha:${symbol}:${interval}:${historical}:${direction}:${referenceTime}`;
+  
+  // Primero intentar Redis
+  if (redis) {
+    try {
+      const cached = await redis.get(cacheKey);
 
-    if (cached) {
-      if (typeof cached === "string") {
-        try { return JSON.parse(cached) as Candle[]; } catch {}
+      if (cached) {
+        if (typeof cached === "string") {
+          try { 
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed)) return parsed as Candle[];
+          } catch {} 
+        }
+        if (Array.isArray(cached)) return cached as Candle[];
+        if ((cached as any).value && Array.isArray((cached as any).value)) {
+          return (cached as any).value as Candle[];
+        }
       }
-      if (Array.isArray(cached)) return cached as Candle[];
-      if ((cached as any).value && Array.isArray((cached as any).value)) return (cached as any).value as Candle[];
-      console.warn("⚠️ Cached value con formato inesperado:", typeof cached);
+    } catch (error) {
+      console.warn("⚠️ Error Redis GET en candles, usando fallback local:", error);
+      // Continuar a fallback local
     }
-    return null;
-  } catch (error) {
-    console.error("Error accediendo a Redis:", error);
-    return null;
   }
+  
+  // Fallback a memoria local
+  const localData = localCandleCache.get(cacheKey);
+  if (localData && (Date.now() - localData.ts) < (CACHE_TTL * 1000)) {
+    return localData.data;
+  }
+  
+  return null;
 }
 
 async function setCachedData(
@@ -82,11 +102,21 @@ async function setCachedData(
   referenceTime: string | null,
   data: Candle[]
 ): Promise<void> {
-  try {
-    const cacheKey = `alpha:${symbol}:${interval}:${historical}:${direction}:${referenceTime}`;
-    await redis.set(cacheKey, JSON.stringify(data), { ex: CACHE_TTL });
-  } catch (error) {
-    console.error("Error guardando en Redis:", error);
+  const cacheKey = `alpha:${symbol}:${interval}:${historical}:${direction}:${referenceTime}`;
+  
+  // Siempre guardar en memoria local como fallback
+  localCandleCache.set(cacheKey, {
+    ts: Date.now(),
+    data
+  });
+  
+  // Intentar guardar en Redis si disponible
+  if (redis) {
+    try {
+      await redis.set(cacheKey, JSON.stringify(data), { ex: CACHE_TTL });
+    } catch (error) {
+      console.warn("⚠️ Error guardando en Redis candles, usando memory cache:", error);
+    }
   }
 }
 
@@ -121,20 +151,29 @@ async function fetchWithTimeout(url: string, ms: number): Promise<Response> {
 function parseAlphaSeries(json: any, interval: string, isFx: boolean): Candle[] {
   const seriesKey = isFx ? `Time Series FX (${interval})` : `Time Series (${interval})`;
   const series = json?.[seriesKey];
-  if (!series) throw new Error("No series found from Alpha");
+  
+  if (!series) {
+    console.error("❌ No time series found in Alpha response. Keys:", Object.keys(json || {}));
+    throw new Error("No series found from Alpha");
+  }
 
   const candles: Candle[] = Object.entries(series).map(([time, v]: any) => {
-    // time Alpha: "YYYY-MM-DD hh:mm:ss"
-    const t = String(time).replace(" ", "T");
-    return {
-      time: Math.floor(new Date(t + "Z").getTime() / 1000),
-      open: parseFloat(v["1. open"]),
-      high: parseFloat(v["2. high"]),
-      low: parseFloat(v["3. low"]),
-      close: parseFloat(v["4. close"]),
-      // FX no trae volumen (omitimos); en TIME_SERIES sí, pero no es vital para el front
-      volume: v["5. volume"] !== undefined ? parseFloat(v["5. volume"]) : undefined,
-    };
+    try {
+      // time Alpha: "YYYY-MM-DD hh:mm:ss"
+      const t = String(time).replace(" ", "T");
+      return {
+        time: Math.floor(new Date(t + "Z").getTime() / 1000),
+        open: parseFloat(v["1. open"]),
+        high: parseFloat(v["2. high"]),
+        low: parseFloat(v["3. low"]),
+        close: parseFloat(v["4. close"]),
+        volume: v["5. volume"] !== undefined ? parseFloat(v["5. volume"]) : undefined,
+        source: "real"
+      };
+    } catch (e) {
+      console.error("❌ Error parsing candle:", time, v, e);
+      throw new Error(`Invalid candle format: ${time}`);
+    }
   });
 
   return removeDuplicatesAndSort(candles);
@@ -145,14 +184,31 @@ async function fetchFromAlpha(symbol: string, interval: string, outputsize: "com
   const isFx = isFxPair(symbol);
   const endpoint = buildAlphaUrl(symbol, interval, outputsize);
 
-  const res = await fetchWithTimeout(endpoint, REQUEST_TIMEOUT_MS);
-  const json = await safeJson(res);
+  try {
+    const res = await fetchWithTimeout(endpoint, REQUEST_TIMEOUT_MS);
+    const json = await safeJson(res);
 
-  if (!res.ok || !json || isRateLimitOrError(json)) {
-    throw new Error("Rate limit or invalid data");
+    if (!res.ok) {
+      console.error(`❌ Alpha returned HTTP ${res.status} for ${symbol}/${interval}`);
+      throw new Error(`HTTP ${res.status}`);
+    }
+    
+    if (!json) {
+      console.error(`❌ Alpha returned empty/invalid JSON for ${symbol}/${interval}`);
+      throw new Error("Empty response from Alpha");
+    }
+    
+    if (isRateLimitOrError(json)) {
+      const errMsg = (json as any).Note || (json as any)["Error Message"] || "Unknown error";
+      console.error(`❌ Alpha API error for ${symbol}/${interval}: ${errMsg}`);
+      throw new Error(errMsg);
+    }
+
+    return parseAlphaSeries(json, interval, isFx);
+  } catch (error) {
+    console.error(`❌ fetchFromAlpha failed for ${symbol}/${interval}:`, error);
+    throw error;
   }
-
-  return parseAlphaSeries(json, interval, isFx);
 }
 
 async function fetchHistoricalData(

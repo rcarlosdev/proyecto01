@@ -2,6 +2,7 @@
 import { MARKETS } from "@/lib/markets";
 import { MarketQuote } from "@/types/interfaces";
 import { create } from "zustand";
+import { fetchMarketData, cancelMarketRequest } from "@/lib/marketFetcher";
 
 /* ===================== Tipos ===================== */
 
@@ -24,7 +25,6 @@ interface MarketState {
   livePrices: Prices;
   sseMarket: string | null;
   switchingMarket: boolean;
-  fetchController: AbortController | null;
   requestVersion: number;
 
   setDataMarket: (markets: MarketQuote[]) => void;
@@ -41,6 +41,7 @@ interface MarketState {
   selectMarket: (marketKey: string) => Promise<void>;
   applyLivePrices: () => void;
   getLivePrice: (symbol: string) => number | undefined;
+  cleanup: () => void;
 }
 
 /* ===================== SSE globals ===================== */
@@ -139,7 +140,6 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   livePrices: {},
   sseMarket: null,
   switchingMarket: false,
-  fetchController: null,
   requestVersion: 0,
 
   /* ---------- setters ---------- */
@@ -157,27 +157,20 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   /* ---------- REST snapshot ---------- */
 
   fetchMarket: async (marketKey: string) => {
-    const prev = get().fetchController;
-    prev?.abort();
-
     const version = get().requestVersion + 1;
-    const controller = new AbortController();
 
     set({
       isLoading: true,
-      fetchController: controller,
       requestVersion: version,
     });
 
     try {
-      const res = await fetch(
-        `/api/markets?market=${encodeURIComponent(marketKey)}`,
-        { cache: "no-store", signal: controller.signal }
-      );
-      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await fetchMarketData(marketKey);
 
-      const data: MarketQuote[] = await res.json();
-      if (version !== get().requestVersion) return;
+      if (version !== get().requestVersion) {
+        console.log(`[useMarketStore] Ignoring stale data for ${marketKey}`);
+        return;
+      }
 
       set({
         dataMarket: data,
@@ -185,12 +178,13 @@ export const useMarketStore = create<MarketState>((set, get) => ({
         selectedSymbol: data[0]?.symbol ?? null,
       });
     } catch (e: any) {
-      if (e?.name === "AbortError") return;
-      console.error("fetchMarket error:", e);
-      set({ isLoading: false });
-    } finally {
+      if (e?.name === "AbortError") {
+        console.warn("[useMarketStore] Request aborted or timeout");
+        return;
+      }
+      console.error("[useMarketStore] fetchMarket error:", e);
       if (version === get().requestVersion) {
-        set({ fetchController: null });
+        set({ dataMarket: [], isLoading: false });
       }
     }
   },
@@ -275,5 +269,15 @@ export const useMarketStore = create<MarketState>((set, get) => ({
     );
 
     return typeof row?.price === "number" ? row.price : undefined;
+  },
+
+  /* ---------- cleanup ---------- */
+
+  cleanup: () => {
+    const market = get().selectedMarket;
+    if (market) {
+      cancelMarketRequest(market);
+    }
+    get().stopMarketStream();
   },
 }));
